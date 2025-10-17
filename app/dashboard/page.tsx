@@ -7,10 +7,14 @@ import {
   SidebarInset,
   SidebarProvider,
 } from "@/components/ui/sidebar"
+import { requireAdmin } from "@/lib/auth-server"
 
 import data from "./data.json"
 
-export default function Page() {
+export default async function Page() {
+  // Require admin role - will redirect to home page (/) if not admin
+  await requireAdmin();
+
   return (
     <SidebarProvider
       style={

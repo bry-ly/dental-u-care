@@ -1,6 +1,6 @@
 import {  ShellIcon } from "lucide-react"
 
-import { SignupForm } from "@/components/auth/signup-form"
+import { SignupForm } from "@/components/forms/signup-form"
 
 export default function SignupPage() {
   return (

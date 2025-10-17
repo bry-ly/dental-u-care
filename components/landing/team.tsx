@@ -25,7 +25,7 @@ const Team = ({
   members = [
     {
       id: "member-1",
-      name: "Dr. Maria Santos",
+      name: "Kath Estrada",
       role: "Chief Dentist & Orthodontist",
       avatar:
         "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&h=400&fit=crop",
@@ -33,42 +33,26 @@ const Team = ({
     },
     {
       id: "member-2",
-      name: "Dr. Juan Reyes",
+      name: "Clyrelle Jade Cervantes",
       role: "Cosmetic Dentistry Specialist",
-      avatar:
-        "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=400&h=400&fit=crop",
-      linkedin: "#",
-    },
-    {
-      id: "member-3",
-      name: "Dr. Angela Cruz",
-      role: "Pediatric Dentist",
       avatar:
         "https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=400&h=400&fit=crop",
       linkedin: "#",
     },
     {
-      id: "member-4",
-      name: "Dr. Miguel Torres",
+      id: "member-3",
+      name: "Von Vryan Arguelles",
       role: "Oral Surgeon",
       avatar:
-        "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=400&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=400&h=400&fit=crop",
       linkedin: "#",
     },
     {
-      id: "member-5",
-      name: "Dr. Sofia Bautista",
-      role: "Endodontist",
-      avatar:
-        "https://images.unsplash.com/photo-1638202993928-7267aad84c31?w=400&h=400&fit=crop",
-      linkedin: "#",
-    },
-    {
-      id: "member-6",
-      name: "Dr. Carlos Mendoza",
+      id: "member-4",
+      name: "Dexter Cabanag",
       role: "Periodontist",
       avatar:
-        "https://images.unsplash.com/photo-1537368910025-700350fe46c7?w=400&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=400&h=400&fit=crop",
       linkedin: "#",
     },
   ],
@@ -85,7 +69,7 @@ const Team = ({
           </p>
         </div>
 
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 [&>*:last-child:nth-child(3n-2)]:col-start-2">
           {members.map((member) => (
             <div
               key={member.id}

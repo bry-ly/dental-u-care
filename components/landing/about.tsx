@@ -44,7 +44,7 @@ const defaultAchievements = [
   { label: "Happy Patients", value: "500+" },
   { label: "Appointments Booked", value: "1000+" },
   { label: "Satisfaction Rate", value: "98%" },
-  { label: "Expert Dentists", value: "6" },
+  { label: "Expert Dentists", value: "4" },
 ];
 
 const About = ({
@@ -65,7 +65,7 @@ const About = ({
     description:
       "Our easy-to-use online booking system lets you schedule appointments 24/7, choose your preferred dentist, and manage your dental health journey.",
     buttonText: "Book Now",
-    buttonUrl: "/signup",
+    buttonUrl: "/booking",
   },
   companiesTitle = "Trusted Insurance Partners",
   companies = defaultCompanies,

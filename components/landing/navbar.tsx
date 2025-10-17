@@ -1,9 +1,21 @@
 "use client";
 
-import { MenuIcon, SearchIcon } from "lucide-react";
+import { MenuIcon, SearchIcon, LogOut, User, Shield } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import { authClient } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Accordion,
   AccordionContent,
@@ -35,8 +47,21 @@ import {
 import { ModeToggle } from "../ui/mode-toggle";
 import { cn } from "@/lib/utils";
 
-const Navbar = () => {
+type User = {
+  id: string;
+  name: string;
+  email: string;
+  image?: string | null;
+} | null;
+
+type NavbarProps = {
+  user?: User;
+  isAdmin?: boolean;
+};
+
+const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
   const [isScrolled, setIsScrolled] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -46,6 +71,26 @@ const Navbar = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const handleSignOut = async () => {
+    try {
+      await authClient.signOut();
+      toast.success("Signed out successfully");
+      router.push("/");
+      router.refresh();
+    } catch {
+      toast.error("Failed to sign out");
+    }
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
   const features = [
     {
       title: "Preventive Care",
@@ -118,15 +163,15 @@ const Navbar = () => {
               : "border-2 border-accent dark:border-gray-800 bg-background/95 shadow-lg"
           )}
         >
-          <a
-            href="https://www.shadcnblocks.com"
+          <Link
+            href="/#home"
             className="flex items-center gap-2"
           >
             <Image src="/tooth.svg" alt="Dental U Care" width={32} height={32} className="h-8 w-8" />
             <span className="text-lg font-semibold tracking-tighter">
               Dental U Care
             </span>
-          </a>
+          </Link>
           <NavigationMenu className="hidden lg:block">
             <NavigationMenuList>
               <NavigationMenuItem>
@@ -185,7 +230,14 @@ const Navbar = () => {
                   </div>
                 </NavigationMenuContent>
               </NavigationMenuItem>
-
+              <NavigationMenuItem>
+                <NavigationMenuLink
+                  href="/#pricing"
+                  className="group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"
+                >
+                  Pricing
+                </NavigationMenuLink>
+              </NavigationMenuItem>
               <NavigationMenuItem>
                 <NavigationMenuLink
                   href="/#contact"
@@ -207,12 +259,66 @@ const Navbar = () => {
               </InputGroupAddon>
             </InputGroup>
             <ModeToggle />
-            <Button variant="outline" className={cn(isScrolled ? 'hidden' : 'lg:inline-flex')}>
-              <Link href="/login">Sign In</Link>
-            </Button>
-            <Button className={cn(isScrolled ? 'hidden' : 'lg:inline-flex')}>
-              <Link href="/register">Book Now</Link>
-            </Button>
+            
+            {user ? (
+              <>
+                <Button className={cn(isScrolled ? 'hidden' : 'lg:inline-flex')}>
+                  <Link href="/booking">Book Appointment</Link>
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="icon" className="rounded-full">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={user.image || undefined} alt={user.name} />
+                        <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel>
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">{user.name}</p>
+                        <p className="text-xs leading-none text-muted-foreground">
+                          {user.email}
+                        </p>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {userIsAdmin && (
+                      <>
+                        <DropdownMenuItem asChild>
+                          <Link href="/dashboard" className="cursor-pointer">
+                            <Shield className="mr-2 h-4 w-4" />
+                            <span>Dashboard</span>
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                      </>
+                    )}
+                    <DropdownMenuItem asChild>
+                      <Link href="/profile" className="cursor-pointer">
+                        <User className="mr-2 h-4 w-4" />
+                        <span>Profile</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-red-600">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Sign Out</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            ) : (
+              <>
+                <Button variant="outline" className={cn(isScrolled ? 'hidden' : 'lg:inline-flex')}>
+                  <Link href="/login">Sign In</Link>
+                </Button>
+                <Button className={cn(isScrolled ? 'hidden' : 'lg:inline-flex')}>
+                  <Link href="/signup">Book Now</Link>
+                </Button>
+              </>
+            )}
           </div>
           <Sheet>
             <SheetTrigger asChild className="lg:hidden">
@@ -299,13 +405,52 @@ const Navbar = () => {
                   </Link>
                 </div>
                 <div className="mt-6 flex flex-col gap-4">
-                  
-                  <Button variant="outline">
-                    <Link href="/login">Sign in</Link>
-                  </Button>
-                  <Button>
-                    <Link href="/register">Book Now</Link>
-                  </Button>
+                  {user ? (
+                    <>
+                      <div className="flex items-center gap-3 rounded-lg border p-4">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={user.image || undefined} alt={user.name} />
+                          <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-col">
+                          <p className="text-sm font-medium leading-none">{user.name}</p>
+                          <p className="text-xs leading-none text-muted-foreground mt-1">
+                            {user.email}
+                          </p>
+                        </div>
+                      </div>
+                      <Button asChild>
+                        <Link href="/booking">Book Appointment</Link>
+                      </Button>
+                      {userIsAdmin && (
+                        <Button variant="outline" asChild>
+                          <Link href="/dashboard">
+                            <Shield className="mr-2 h-4 w-4" />
+                            Dashboard
+                          </Link>
+                        </Button>
+                      )}
+                      <Button variant="outline" asChild>
+                        <Link href="/profile">
+                          <User className="mr-2 h-4 w-4" />
+                          Profile
+                        </Link>
+                      </Button>
+                      <Button variant="destructive" onClick={handleSignOut}>
+                        <LogOut className="mr-2 h-4 w-4" />
+                        Sign Out
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button variant="outline">
+                        <Link href="/login">Sign in</Link>
+                      </Button>
+                      <Button>
+                        <Link href="/signup">Book Now</Link>
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
             </SheetContent>

@@ -1,4 +1,4 @@
-import { ArrowRight, Calendar, Clock } from "lucide-react";
+import { ArrowRight, Calendar} from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { ShimmeringText } from "@/components/ui/shimmering-text";
@@ -31,7 +31,8 @@ const Hero = () => {
                 text={[
                   "Your Smile, Our Priority",
                   "Book Appointments Online",
-                  "Smile with Confidence"
+                  "Smile with Confidence",
+                  "Expert Dental Care for you"
                 ]}
                 typingSpeed={80}
                 deletingSpeed={50}
@@ -64,7 +65,7 @@ const Hero = () => {
                 <p className="text-muted-foreground text-xs">Happy Patients</p>
               </div>
               <div>
-                <p className="text-2xl font-bold">6</p>
+                <p className="text-2xl font-bold">4</p>
                 <p className="text-muted-foreground text-xs">Expert Dentists</p>
               </div>
               <div>
@@ -75,7 +76,7 @@ const Hero = () => {
               </div>
             </div>
           </div>
-          <div className="relative h-full w-full overflow-hidden rounded-lg">
+          <div className="relative h-full w-full overflow-hidden rounded-r-lg">
             <Image
               src="/smile.jpg"
               alt="Professional dental care at Dental U Care"

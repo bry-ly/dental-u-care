@@ -1,6 +1,7 @@
-import {  ShellIcon } from "lucide-react"
+import { ShellIcon } from "lucide-react"
+import Image from "next/image"
 
-import { LoginForm } from "@/components/auth/login-form"
+import { LoginForm } from "@/components/forms/login-form"
 
 export default function LoginPage() {
   return (
@@ -21,11 +22,12 @@ export default function LoginPage() {
         </div>
       </div>
       <div className="bg-muted relative hidden lg:block">
-        <img
+        <Image
           src="/dentist.jpg"
-          alt="Image"
-          className="absolute inset-0 h-full w-full object-cover dark:brightness-80 "
-          loading="lazy"
+          alt="Dental clinic interior"
+          fill
+          className="object-cover dark:brightness-80"
+          priority
         />
       </div>
     </div>
