@@ -26,6 +26,7 @@
       "headers": {
         "Authorization": "Bearer ${SHADCNBLOCKS_API_KEY}"
       }
-    }
+    },
+    "@shadcnio": "https://www.shadcn.io/r/{name}.json"
   }
 }

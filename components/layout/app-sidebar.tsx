@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Image from "next/image"
 import {
   IconCamera,
   IconChartBar,
@@ -8,10 +9,8 @@ import {
   IconDatabase,
   IconFileAi,
   IconFileDescription,
-  IconFileWord,
   IconFolder,
   IconHelp,
-  IconInnerShadowTop,
   IconListDetails,
   IconReport,
   IconSearch,
@@ -35,18 +34,18 @@ import {
 
 const data = {
   user: {
-    name: "shadcn",
-    email: "m@example.com",
+    name: "Admin User",
+    email: "admin@dentalucare.com",
     avatar: "/avatars/shadcn.jpg",
   },
   navMain: [
     {
       title: "Dashboard",
-      url: "#",
+      url: "/dashboard",
       icon: IconDashboard,
     },
     {
-      title: "Lifecycle",
+      title: "Appointments",
       url: "#",
       icon: IconListDetails,
     },
@@ -56,12 +55,12 @@ const data = {
       icon: IconChartBar,
     },
     {
-      title: "Projects",
+      title: "Patients",
       url: "#",
-      icon: IconFolder,
+      icon: IconUsers,
     },
     {
-      title: "Team",
+      title: "Dentists",
       url: "#",
       icon: IconUsers,
     },
@@ -119,11 +118,21 @@ const data = {
       title: "Settings",
       url: "#",
       icon: IconSettings,
+    },
+    {
+      title: "Help & Support",
+      url: "#",
+      icon: IconHelp,
     }
   ],
   documents: [
     {
-      name: "Data Library",
+      name: "Services Management",
+      url: "#",
+      icon: IconFolder,
+    },
+    {
+      name: "Payment & Billing",
       url: "#",
       icon: IconDatabase,
     },
@@ -131,11 +140,6 @@ const data = {
       name: "Reports",
       url: "#",
       icon: IconReport,
-    },
-    {
-      name: "Word Assistant",
-      url: "#",
-      icon: IconFileWord,
     },
   ],
 }
@@ -150,9 +154,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
-              <a href="#">
-                <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold">Dental U Care</span>
+              <a href="/dashboard" className="flex items-center gap-2">
+                <Image src="/tooth.svg" alt="Dental U Care" width={24} height={24} className="!size-6" />
+                <span className="text-base font-semibold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Dental U-Care</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>

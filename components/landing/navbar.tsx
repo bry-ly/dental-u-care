@@ -18,7 +18,6 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
-  navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import {
   Sheet,
@@ -133,21 +132,21 @@ const Navbar = () => {
               <NavigationMenuItem>
                 <NavigationMenuLink
                   href="/#home"
-                  className={navigationMenuTriggerStyle()}
+                  className="group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"
                 >
                   Home
                 </NavigationMenuLink>
               </NavigationMenuItem>
               
               <NavigationMenuItem>
-                <NavigationMenuTrigger>About</NavigationMenuTrigger>
+                <NavigationMenuTrigger className="bg-transparent hover:bg-transparent focus:bg-transparent data-[active]:bg-transparent data-[state=open]:bg-transparent">About</NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <div className="grid w-[500px] grid-cols-2 p-3">
                     {aboutItems.map((item, index) => (
                       <NavigationMenuLink
                         href={item.href}
                         key={index}
-                        className="hover:bg-muted/70 rounded-md p-3 transition-colors"
+                        className="rounded-md p-3 transition-colors"
                       >
                         <div key={item.title}>
                           <p className="text-foreground mb-1 font-semibold">
@@ -164,14 +163,14 @@ const Navbar = () => {
               </NavigationMenuItem>
 
               <NavigationMenuItem>
-                <NavigationMenuTrigger>Services</NavigationMenuTrigger>
+                <NavigationMenuTrigger className="bg-transparent hover:bg-transparent focus:bg-transparent data-[active]:bg-transparent data-[state=open]:bg-transparent">Services</NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <div className="grid w-[600px] grid-cols-2 p-3">
                     {features.map((feature, index) => (
                       <NavigationMenuLink
                         href={feature.href}
                         key={index}
-                        className="hover:bg-muted/70 rounded-md p-3 transition-colors"
+                        className="rounded-md p-3 transition-colors"
                       >
                         <div key={feature.title}>
                           <p className="text-foreground mb-1 font-semibold">
@@ -190,7 +189,7 @@ const Navbar = () => {
               <NavigationMenuItem>
                 <NavigationMenuLink
                   href="/#contact"
-                  className={navigationMenuTriggerStyle()}
+                  className="group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"
                 >
                   Contact
                 </NavigationMenuLink>
@@ -250,7 +249,7 @@ const Navbar = () => {
                           <a
                             href={item.href}
                             key={index}
-                            className="hover:bg-muted/70 rounded-md p-3 transition-colors"
+                            className="rounded-md p-3 transition-colors"
                           >
                             <div key={item.title}>
                               <p className="text-foreground mb-1 font-semibold">
@@ -275,7 +274,7 @@ const Navbar = () => {
                           <a
                             href={feature.href}
                             key={index}
-                            className="hover:bg-muted/70 rounded-md p-3 transition-colors"
+                            className="rounded-md p-3 transition-colors"
                           >
                             <div key={feature.title}>
                               <p className="text-foreground mb-1 font-semibold">
