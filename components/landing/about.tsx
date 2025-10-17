@@ -36,7 +36,7 @@ const defaultCompanies = [
   {
     src: "/tooth.svg",
     alt: "tooth",
-  }
+  },
 ];
 
 const defaultAchievements = [

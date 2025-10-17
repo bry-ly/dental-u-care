@@ -1,57 +1,61 @@
 "use client";
 
-import { 
-  Calendar, 
-  Clock, 
-  CreditCard, 
-  Bell, 
-  UserCheck,
-  Search
+import {
+  Stethoscope,
+  Sparkles,
+  Brackets,
+  Drill,
+  Baby,
+  ShieldAlert,
 } from "lucide-react";
 
 const Services = () => {
   const services = [
     {
-      icon: <Calendar className="h-6 w-6" />,
-      title: "Easy Online Booking",
+      icon: <Stethoscope className="h-6 w-6" />,
+      title: "General Dentistry",
       description:
-        "Book your dental appointment online anytime, anywhere. Choose your preferred date, time slot, and specific dental service with real-time availability.",
-      items: ["Real-time Availability", "Choose Date & Time", "Service Selection"],
+        "Comprehensive oral health care including routine checkups, professional cleanings, and preventive treatments to maintain your dental health.",
+      items: [
+        "Routine Checkups",
+        "Professional Cleaning",
+        "Cavity Fillings",
+      ],
     },
     {
-      icon: <UserCheck className="h-6 w-6" />,
-      title: "Secure Patient Portal",
+      icon: <Sparkles className="h-6 w-6" />,
+      title: "Cosmetic Dentistry",
       description:
-        "Create your secure account with captcha verification. Manage your profile, medical history, and view all your appointments in one dashboard.",
-      items: ["Profile Management", "Medical History", "Appointment Overview"],
+        "Transform your smile with our advanced cosmetic procedures. From teeth whitening to complete smile makeovers, we help you achieve the perfect smile.",
+      items: ["Teeth Whitening", "Veneers", "Smile Makeover"],
     },
     {
-      icon: <Bell className="h-6 w-6" />,
-      title: "Smart Reminders",
+      icon: <Brackets className="h-6 w-6" />,
+      title: "Orthodontics",
       description:
-        "Never miss an appointment with automatic email and SMS reminders. Stay informed about upcoming visits and important updates.",
-      items: ["Email Notifications", "SMS Reminders", "Real-time Updates"],
+        "Straighten your teeth and correct bite issues with traditional braces or modern clear aligners for both children and adults.",
+      items: ["Traditional Braces", "Clear Aligners", "Retainers"],
     },
     {
-      icon: <CreditCard className="h-6 w-6" />,
-      title: "Flexible Payments",
+      icon: <Drill className="h-6 w-6" />,
+      title: "Restorative Care",
       description:
-        "Pay consultation and booking fees conveniently online via credit card, e-wallet, or bank transfer. Secure and hassle-free transactions.",
-      items: ["Multiple Payment Methods", "Secure Checkout", "Payment History"],
+        "Restore damaged or missing teeth with dental implants, crowns, bridges, and root canal therapy using advanced techniques.",
+      items: ["Dental Implants", "Crowns & Bridges", "Root Canal Therapy"],
     },
     {
-      icon: <Clock className="h-6 w-6" />,
-      title: "Appointment Management",
+      icon: <Baby className="h-6 w-6" />,
+      title: "Pediatric Dentistry",
       description:
-        "Full control over your appointments. View, reschedule, or cancel upcoming visits easily through your patient dashboard.",
-      items: ["View Appointments", "Reschedule Anytime", "Easy Cancellation"],
+        "Gentle, kid-friendly dental care designed to make children feel comfortable and establish healthy oral hygiene habits from an early age.",
+      items: ["Children's Checkups", "Fluoride Treatment", "Sealants"],
     },
     {
-      icon: <Search className="h-6 w-6" />,
-      title: "Find Your Dentist",
+      icon: <ShieldAlert className="h-6 w-6" />,
+      title: "Emergency Dental Care",
       description:
-        "Search for dentists by specialty or service. View detailed profiles with qualifications, experience, and patient reviews to make informed decisions.",
-      items: ["Dentist Profiles", "Read Reviews", "Compare Specialists"],
+        "Same-day emergency services for dental injuries, severe toothaches, broken teeth, and other urgent dental issues.",
+      items: ["Tooth Pain Relief", "Broken Tooth Repair", "Same-Day Treatment"],
     },
   ];
 
@@ -61,10 +65,10 @@ const Services = () => {
         <div className="mx-auto max-w-6xl space-y-12">
           <div className="space-y-4 text-center">
             <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
-              Features
+              Our Dental Services
             </h2>
             <p className="text-muted-foreground mx-auto max-w-2xl text-lg tracking-tight md:text-xl">
-              Everything you need to manage your dental health journey. Book appointments, track your history, and connect with top dentists.
+              Comprehensive dental care tailored to your needs. From preventive treatments to advanced procedures, we provide exceptional care for the whole family.
             </p>
           </div>
 

@@ -1,7 +1,9 @@
 "use client";
 
-import { MenuIcon } from "lucide-react";
+import { MenuIcon, SearchIcon } from "lucide-react";
 import Link from "next/link";
+import { useState, useEffect } from "react";
+import Image from "next/image";
 import {
   Accordion,
   AccordionContent,
@@ -25,9 +27,26 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import { ModeToggle } from "../ui/mode-toggle";
+import { cn } from "@/lib/utils";
 
 const Navbar = () => {
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
   const features = [
     {
       title: "Preventive Care",
@@ -61,25 +80,89 @@ const Navbar = () => {
     },
   ];
 
+  const aboutItems = [
+    {
+      title: "Our Story",
+      description: "Learn about Dental U Care's mission and values",
+      href: "/#about",
+    },
+    {
+      title: "Our Team",
+      description: "Meet our expert dental professionals",
+      href: "/#team",
+    },
+    {
+      title: "Features",
+      description: "Discover our online booking system features",
+      href: "/#features",
+    },
+    {
+      title: "Pricing",
+      description: "Transparent pricing for all dental services",
+      href: "/#pricing",
+    },
+  ];
+
   return (
     <section className="sticky top-0 z-50 py-4">
-      <div className="container">
-        <nav className="flex items-center justify-between border rounded-full px-6 py-3 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 shadow-sm">
+      <div
+        className={cn(
+          "container transition-all duration-300",
+          isScrolled && "px-6 lg:px-12"
+        )}
+      >
+        <nav
+          className={cn(
+            "flex items-center justify-between rounded-full px-6 py-4 transition-all duration-300",
+            isScrolled
+              ? "border-2 border-accent dark:border-gray-900 bg-background/50 backdrop-blur-lg shadow-lg"
+              : "border-2 border-accent dark:border-gray-800 bg-background/95 shadow-lg"
+          )}
+        >
           <a
             href="https://www.shadcnblocks.com"
             className="flex items-center gap-2"
           >
-            <img
-              src="/tooth.svg"
-              className="max-h-8"
-              alt="Dental U Care"
-            />
+            <Image src="/tooth.svg" alt="Dental U Care" width={32} height={32} className="h-8 w-8" />
             <span className="text-lg font-semibold tracking-tighter">
               Dental U Care
             </span>
           </a>
           <NavigationMenu className="hidden lg:block">
             <NavigationMenuList>
+              <NavigationMenuItem>
+                <NavigationMenuLink
+                  href="/#home"
+                  className={navigationMenuTriggerStyle()}
+                >
+                  Home
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+              
+              <NavigationMenuItem>
+                <NavigationMenuTrigger>About</NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <div className="grid w-[500px] grid-cols-2 p-3">
+                    {aboutItems.map((item, index) => (
+                      <NavigationMenuLink
+                        href={item.href}
+                        key={index}
+                        className="hover:bg-muted/70 rounded-md p-3 transition-colors"
+                      >
+                        <div key={item.title}>
+                          <p className="text-foreground mb-1 font-semibold">
+                            {item.title}
+                          </p>
+                          <p className="text-muted-foreground text-sm">
+                            {item.description}
+                          </p>
+                        </div>
+                      </NavigationMenuLink>
+                    ))}
+                  </div>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+
               <NavigationMenuItem>
                 <NavigationMenuTrigger>Services</NavigationMenuTrigger>
                 <NavigationMenuContent>
@@ -103,47 +186,7 @@ const Navbar = () => {
                   </div>
                 </NavigationMenuContent>
               </NavigationMenuItem>
-              <NavigationMenuItem>
-                <NavigationMenuLink
-                  href="/#home"
-                  className={navigationMenuTriggerStyle()}
-                >
-                  Home
-                </NavigationMenuLink>
-              </NavigationMenuItem>
 
-              <NavigationMenuItem>
-                <NavigationMenuLink
-                  href="/#about"
-                  className={navigationMenuTriggerStyle()}
-                >
-                  About
-                </NavigationMenuLink>
-              </NavigationMenuItem>
-              <NavigationMenuItem>
-                <NavigationMenuLink
-                  href="/#team"
-                  className={navigationMenuTriggerStyle()}
-                >
-                  Team
-                </NavigationMenuLink>
-              </NavigationMenuItem>
-              <NavigationMenuItem>
-                <NavigationMenuLink
-                  href="/#services"
-                  className={navigationMenuTriggerStyle()}
-                >
-                  Services
-                </NavigationMenuLink>
-              </NavigationMenuItem>
-              <NavigationMenuItem>
-                <NavigationMenuLink
-                  href="/#pricing"
-                  className={navigationMenuTriggerStyle()}
-                >
-                  Pricing
-                </NavigationMenuLink>
-              </NavigationMenuItem>
               <NavigationMenuItem>
                 <NavigationMenuLink
                   href="/#contact"
@@ -155,9 +198,22 @@ const Navbar = () => {
             </NavigationMenuList>
           </NavigationMenu>
           <div className="hidden items-center gap-4 lg:flex">
-            <ModeToggle/>
-            <Button variant="outline"><Link href="/login">Sign In</Link></Button>
-            <Button><Link href="/register">Book Now</Link></Button>
+            <InputGroup className={cn("w-64 transition-all duration-300 border-1 border-gray-400", isScrolled && "w-48")}>
+              <InputGroupInput placeholder="Search services..." />
+              <InputGroupAddon>
+                <SearchIcon className="h-4 w-4" />
+              </InputGroupAddon>
+              <InputGroupAddon align="inline-end">
+                <InputGroupButton size="sm">Search</InputGroupButton>
+              </InputGroupAddon>
+            </InputGroup>
+            <ModeToggle />
+            <Button variant="outline" className={cn(isScrolled ? 'hidden' : 'lg:inline-flex')}>
+              <Link href="/login">Sign In</Link>
+            </Button>
+            <Button className={cn(isScrolled ? 'hidden' : 'lg:inline-flex')}>
+              <Link href="/register">Book Now</Link>
+            </Button>
           </div>
           <Sheet>
             <SheetTrigger asChild className="lg:hidden">
@@ -168,14 +224,13 @@ const Navbar = () => {
             <SheetContent side="top" className="max-h-screen overflow-auto">
               <SheetHeader>
                 <SheetTitle>
-                  <a
-                    href="#"
-                    className="flex items-center gap-2"
-                  >
-                    <img
+                  <a href="#" className="flex items-center gap-2">
+                    <Image
                       src="/tooth.svg"
-                      className="max-h-8"
                       alt="Dental U Care"
+                      width={32}
+                      height={32}
+                      className="h-8 w-8"
                     />
                     <span className="text-lg font-semibold tracking-tighter">
                       Dental U Care
@@ -185,6 +240,31 @@ const Navbar = () => {
               </SheetHeader>
               <div className="flex flex-col p-4">
                 <Accordion type="single" collapsible className="mb-2 mt-4">
+                  <AccordionItem value="about" className="border-none">
+                    <AccordionTrigger className="text-base hover:no-underline">
+                      About
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="grid gap-2">
+                        {aboutItems.map((item, index) => (
+                          <a
+                            href={item.href}
+                            key={index}
+                            className="hover:bg-muted/70 rounded-md p-3 transition-colors"
+                          >
+                            <div key={item.title}>
+                              <p className="text-foreground mb-1 font-semibold">
+                                {item.title}
+                              </p>
+                              <p className="text-muted-foreground text-sm">
+                                {item.description}
+                              </p>
+                            </div>
+                          </a>
+                        ))}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
                   <AccordionItem value="solutions" className="border-none">
                     <AccordionTrigger className="text-base hover:no-underline">
                       Services
@@ -215,25 +295,18 @@ const Navbar = () => {
                   <Link href="/#home" className="font-medium">
                     Home
                   </Link>
-                  <Link href="/#about" className="font-medium">
-                    About
-                  </Link>
-                  <Link href="/#team" className="font-medium">
-                    Team
-                  </Link>
-                  <Link href="/#services" className="font-medium">
-                    Services
-                  </Link>
-                  <Link href="/#pricing" className="font-medium">
-                    Pricing
-                  </Link>
                   <Link href="/#contact" className="font-medium">
                     Contact
                   </Link>
                 </div>
                 <div className="mt-6 flex flex-col gap-4">
-                  <Button variant="outline"><Link href="/login">Sign in</Link></Button>
-                  <Button><Link href="/register">Book Now</Link></Button>
+                  
+                  <Button variant="outline">
+                    <Link href="/login">Sign in</Link>
+                  </Button>
+                  <Button>
+                    <Link href="/register">Book Now</Link>
+                  </Button>
                 </div>
               </div>
             </SheetContent>

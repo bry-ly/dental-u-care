@@ -25,6 +25,7 @@ export default function SignupPage() {
           src="/doctor-image.jpg"
           alt="Doctor"
           className="absolute inset-0 h-full w-full object-cover dark:brightness-80"
+          loading="lazy"
         />
       </div>
     </div>

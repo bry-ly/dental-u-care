@@ -59,7 +59,7 @@ const defaultSections = [
 
 const defaultSocialLinks = [
   { icon: <FaInstagram className="size-5" />, href: "#", label: "Instagram" },
-  { icon: <FaFacebook className="size-5" />, href: "#", label: "Facebook" }
+  { icon: <FaFacebook className="size-5" />, href: "#", label: "Facebook" },
 ];
 
 const defaultLegalLinks = [

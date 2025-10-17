@@ -86,4 +86,4 @@ const Contact = ({
   );
 };
 
-export { Contact};
+export { Contact };
