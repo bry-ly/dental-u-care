@@ -159,15 +159,18 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
           className={cn(
             "flex items-center justify-between rounded-full px-6 py-4 transition-all duration-300",
             isScrolled
-              ? "border-2 border-accent dark:border-gray-900 bg-background/50 backdrop-blur-lg shadow-lg"
+              ? "border-2 border-accent dark:border-gray-900 bg-background/40 backdrop-blur-lg shadow-lg"
               : "border-2 border-accent dark:border-gray-800 bg-background/95 shadow-lg"
           )}
         >
-          <Link
-            href="/#home"
-            className="flex items-center gap-2"
-          >
-            <Image src="/tooth.svg" alt="Dental U Care" width={32} height={32} className="h-8 w-8" />
+          <Link href="/#home" className="flex items-center gap-2">
+            <Image
+              src="/tooth.svg"
+              alt="Dental U Care"
+              width={32}
+              height={32}
+              className="h-8 w-8"
+            />
             <span className="text-lg font-semibold tracking-tighter">
               Dental U Care
             </span>
@@ -177,14 +180,16 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
               <NavigationMenuItem>
                 <NavigationMenuLink
                   href="/#home"
-                  className="group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"
+                  className="group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-all hover:text-accent-foreground hover:border-b-2 hover:border-primary focus:outline-none disabled:pointer-events-none disabled:opacity-50"
                 >
                   Home
                 </NavigationMenuLink>
               </NavigationMenuItem>
-              
+
               <NavigationMenuItem>
-                <NavigationMenuTrigger className="bg-transparent hover:bg-transparent focus:bg-transparent data-[active]:bg-transparent data-[state=open]:bg-transparent">About</NavigationMenuTrigger>
+                <NavigationMenuTrigger className="bg-transparent hover:bg-transparent focus:bg-transparent data-[active]:bg-transparent data-[state=open]:bg-transparent">
+                  About
+                </NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <div className="grid w-[500px] grid-cols-2 p-3">
                     {aboutItems.map((item, index) => (
@@ -208,7 +213,9 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
               </NavigationMenuItem>
 
               <NavigationMenuItem>
-                <NavigationMenuTrigger className="bg-transparent hover:bg-transparent focus:bg-transparent data-[active]:bg-transparent data-[state=open]:bg-transparent">Services</NavigationMenuTrigger>
+                <NavigationMenuTrigger className="bg-transparent hover:bg-transparent focus:bg-transparent data-[active]:bg-transparent data-[state=open]:bg-transparent">
+                  Services
+                </NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <div className="grid w-[600px] grid-cols-2 p-3">
                     {features.map((feature, index) => (
@@ -233,7 +240,7 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
               <NavigationMenuItem>
                 <NavigationMenuLink
                   href="/#pricing"
-                  className="group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"
+                  className="group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-all hover:text-accent-foreground hover:border-b-2 hover:border-primary focus:outline-none disabled:pointer-events-none disabled:opacity-50"
                 >
                   Pricing
                 </NavigationMenuLink>
@@ -241,7 +248,7 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
               <NavigationMenuItem>
                 <NavigationMenuLink
                   href="/#contact"
-                  className="group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50"
+                  className="group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-all hover:text-accent-foreground hover:border-b-2 hover:border-primary focus:outline-none disabled:pointer-events-none disabled:opacity-50"
                 >
                   Contact
                 </NavigationMenuLink>
@@ -249,8 +256,16 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
             </NavigationMenuList>
           </NavigationMenu>
           <div className="hidden items-center gap-4 lg:flex">
-            <InputGroup className={cn("w-64 transition-all duration-300 border-1 border-gray-400", isScrolled && "w-48")}>
-              <InputGroupInput placeholder="Search services..." />
+            <InputGroup
+              className={cn(
+                "w-64 transition-all duration-300 border border-gray-300 hover:border-primary hover:shadow-sm dark:border-gray-700 dark:hover:border-primary rounded-md",
+                isScrolled && "w-58"
+              )}
+            >
+              <InputGroupInput
+                placeholder="Search services..."
+                className="border-0 focus-visible:ring-0"
+              />
               <InputGroupAddon>
                 <SearchIcon className="h-4 w-4" />
               </InputGroupAddon>
@@ -259,25 +274,38 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
               </InputGroupAddon>
             </InputGroup>
             <ModeToggle />
-            
+
             {user ? (
               <>
-                <Button className={cn(isScrolled ? 'hidden' : 'lg:inline-flex')}>
+                <Button
+                  className={cn(isScrolled ? "hidden" : "lg:inline-flex")}
+                >
                   <Link href="/booking">Book Appointment</Link>
                 </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="icon" className="rounded-full">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="rounded-full"
+                    >
                       <Avatar className="h-8 w-8">
-                        <AvatarImage src={user.image || undefined} alt={user.name} />
-                        <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                        <AvatarImage
+                          src={user.image || undefined}
+                          alt={user.name}
+                        />
+                        <AvatarFallback>
+                          {getInitials(user.name)}
+                        </AvatarFallback>
                       </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
                     <DropdownMenuLabel>
                       <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium leading-none">{user.name}</p>
+                        <p className="text-sm font-medium leading-none">
+                          {user.name}
+                        </p>
                         <p className="text-xs leading-none text-muted-foreground">
                           {user.email}
                         </p>
@@ -302,7 +330,10 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-red-600">
+                    <DropdownMenuItem
+                      onClick={handleSignOut}
+                      className="cursor-pointer text-red-600"
+                    >
                       <LogOut className="mr-2 h-4 w-4" />
                       <span>Sign Out</span>
                     </DropdownMenuItem>
@@ -311,10 +342,15 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
               </>
             ) : (
               <>
-                <Button variant="outline" className={cn(isScrolled ? 'hidden' : 'lg:inline-flex')}>
+                <Button
+                  variant="outline"
+                  className={cn(isScrolled ? "hidden" : "lg:inline-flex")}
+                >
                   <Link href="/login">Sign In</Link>
                 </Button>
-                <Button className={cn(isScrolled ? 'hidden' : 'lg:inline-flex')}>
+                <Button
+                  className={cn(isScrolled ? "hidden" : "lg:inline-flex")}
+                >
                   <Link href="/signup">Book Now</Link>
                 </Button>
               </>
@@ -409,11 +445,18 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
                     <>
                       <div className="flex items-center gap-3 rounded-lg border p-4">
                         <Avatar className="h-10 w-10">
-                          <AvatarImage src={user.image || undefined} alt={user.name} />
-                          <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                          <AvatarImage
+                            src={user.image || undefined}
+                            alt={user.name}
+                          />
+                          <AvatarFallback>
+                            {getInitials(user.name)}
+                          </AvatarFallback>
                         </Avatar>
                         <div className="flex flex-col">
-                          <p className="text-sm font-medium leading-none">{user.name}</p>
+                          <p className="text-sm font-medium leading-none">
+                            {user.name}
+                          </p>
                           <p className="text-xs leading-none text-muted-foreground mt-1">
                             {user.email}
                           </p>

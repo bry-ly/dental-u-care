@@ -3,6 +3,9 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/provider/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import ConsentManager from "./consent-manager";
+import { ReactNode } from "react";
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,11 +22,7 @@ export const metadata: Metadata = {
   description: "Your one-stop solution for dental care",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head />
@@ -32,11 +31,12 @@ export default function RootLayout({
       >
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
+          defaultTheme="light"
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <ConsentManager>{children}</ConsentManager>
+          
           <Toaster />
         </ThemeProvider>
       </body>

@@ -20,11 +20,11 @@ export async function getSession() {
  */
 export async function requireAuth() {
   const session = await getSession();
-  
+
   if (!session) {
     redirect("/login");
   }
-  
+
   return session;
 }
 
@@ -93,12 +93,12 @@ export async function getUserRole() {
  */
 export async function requireAdmin() {
   const session = await requireAuth();
-  
+
   // @ts-expect-error - role field will be available after Prisma generation
   if (session.user?.role !== "admin") {
     redirect("/");
   }
-  
+
   return session;
 }
 
@@ -109,12 +109,12 @@ export async function requireAdmin() {
  */
 export async function requireDentist() {
   const session = await requireAuth();
-  
+
   // @ts-expect-error - role field will be available after Prisma generation
   if (session.user?.role !== "dentist") {
     redirect("/");
   }
-  
+
   return session;
 }
 
@@ -125,12 +125,12 @@ export async function requireDentist() {
  */
 export async function requireStaff() {
   const session = await requireAuth();
-  
+
   // @ts-expect-error - role field will be available after Prisma generation
   const role = session.user?.role;
   if (role !== "admin" && role !== "dentist") {
     redirect("/");
   }
-  
+
   return session;
 }

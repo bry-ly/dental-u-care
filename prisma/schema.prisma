@@ -31,38 +31,41 @@ enum PaymentStatus {
 
 enum PaymentMethod {
   card
-  ewallet
+  e_wallet
   bank_transfer
   cash
 }
 
 model User {
-  id               String         @id @map("_id")
-  name             String
-  email            String
-  emailVerified    Boolean        @default(false)
-  image            String?
-  role             UserRole       @default(patient)
-  phone            String?
-  address          String?
-  dateOfBirth      DateTime?
-  medicalHistory   String?
+  id                    String         @id @map("_id")
+  name                  String
+  email                 String
+  emailVerified         Boolean        @default(false)
+  image                 String?
+  role                  UserRole       @default(patient)
+  phone                 String?
+  address               String?
+  dateOfBirth           DateTime?
+  medicalHistory        String?
   // Dentist-specific fields
-  specialization   String?
-  qualifications   String?
-  experience       String?
-  workingHours     Json?          // {monday: {start: "9:00", end: "17:00"}, ...}
-  isAvailable      Boolean        @default(true)
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @default(now()) @updatedAt
-  sessions         Session[]
-  accounts         Account[]
+  specialization        String?
+  qualifications        String?
+  experience            String?
+  workingHours          Json? // {monday: {start: "9:00", end: "17:00"}, ...}
+  isAvailable           Boolean        @default(true)
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @default(now()) @updatedAt
+  sessions              Session[]
+  accounts              Account[]
   // Relations
-  appointmentsAsPatient  Appointment[] @relation("PatientAppointments")
-  appointmentsAsDentist  Appointment[] @relation("DentistAppointments")
-  payments         Payment[]
-  notifications    Notification[]
-  chatMessages     ChatMessage[]
+  appointmentsAsPatient Appointment[]  @relation("PatientAppointments")
+  appointmentsAsDentist Appointment[]  @relation("DentistAppointments")
+  payments              Payment[]
+  notifications         Notification[]
+  chatMessages          ChatMessage[]
+
+  members     Member[]
+  invitations Invitation[]
 
   @@unique([email])
   @@map("user")
@@ -72,7 +75,7 @@ model Service {
   id           String        @id @default(auto()) @map("_id") @db.ObjectId
   name         String
   description  String
-  duration     Int           // in minutes
+  duration     Int // in minutes
   price        Float
   category     String
   isActive     Boolean       @default(true)
@@ -84,22 +87,22 @@ model Service {
 }
 
 model Appointment {
-  id          String            @id @default(auto()) @map("_id") @db.ObjectId
-  patientId   String
-  dentistId   String
-  serviceId   String            @db.ObjectId
-  date        DateTime
-  timeSlot    String            // e.g., "09:00-10:00"
-  status      AppointmentStatus @default(pending)
-  notes       String?
+  id           String            @id @default(auto()) @map("_id") @db.ObjectId
+  patientId    String
+  dentistId    String
+  serviceId    String            @db.ObjectId
+  date         DateTime
+  timeSlot     String // e.g., "09:00-10:00"
+  status       AppointmentStatus @default(pending)
+  notes        String?
   cancelReason String?
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
   // Relations
-  patient     User              @relation("PatientAppointments", fields: [patientId], references: [id], onDelete: Cascade)
-  dentist     User              @relation("DentistAppointments", fields: [dentistId], references: [id], onDelete: Cascade)
-  service     Service           @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-  payment     Payment?
+  patient      User              @relation("PatientAppointments", fields: [patientId], references: [id], onDelete: Cascade)
+  dentist      User              @relation("DentistAppointments", fields: [dentistId], references: [id], onDelete: Cascade)
+  service      Service           @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  payment      Payment?
 
   @@map("appointment")
 }
@@ -127,7 +130,7 @@ model Notification {
   userId    String
   title     String
   message   String
-  type      String   // email, sms, push
+  type      String // email, sms, push
   isRead    Boolean  @default(false)
   sentAt    DateTime @default(now())
   createdAt DateTime @default(now())
@@ -138,13 +141,13 @@ model Notification {
 }
 
 model ChatMessage {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String
-  message   String
-  isFromUser Boolean @default(true)
-  createdAt DateTime @default(now())
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String
+  message    String
+  isFromUser Boolean  @default(true)
+  createdAt  DateTime @default(now())
   // Relations
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("chat_message")
 }
@@ -159,6 +162,8 @@ model Session {
   userAgent String?
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  activeOrganizationId String?
 
   @@unique([token])
   @@map("session")
@@ -192,4 +197,44 @@ model Verification {
   updatedAt  DateTime @default(now()) @updatedAt
 
   @@map("verification")
+}
+
+model Organization {
+  id          String       @id @map("_id")
+  name        String
+  slug        String
+  logo        String?
+  createdAt   DateTime
+  metadata    String?
+  members     Member[]
+  invitations Invitation[]
+
+  @@unique([slug])
+  @@map("organization")
+}
+
+model Member {
+  id             String       @id @map("_id")
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role           String
+  createdAt      DateTime
+
+  @@map("member")
+}
+
+model Invitation {
+  id             String       @id @map("_id")
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  email          String
+  role           String?
+  status         String
+  expiresAt      DateTime
+  inviterId      String
+  user           User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+
+  @@map("invitation")
 }
