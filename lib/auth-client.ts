@@ -1,3 +1,18 @@
+/**
+ * Resend verification email
+ * @param email - User's email address
+ */
+export const resendVerificationEmail = async (email: string) => {
+  const res = await fetch("/api/auth/resend-verification", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  if (!res.ok) {
+    throw new Error("Failed to resend verification email.");
+  }
+  return res.json();
+};
 import { createAuthClient } from "better-auth/react";
 import { toast } from "sonner";
 

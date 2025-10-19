@@ -27,6 +27,9 @@ export function LoginForm({
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
+  const [showVerifyNotice, setShowVerifyNotice] = useState(false)
+  const [resendLoading, setResendLoading] = useState(false)
+  const [resendSuccess, setResendSuccess] = useState(false)
 
   function togglePassword(e: React.MouseEvent<HTMLButtonElement>) {
     e.preventDefault()
@@ -46,15 +49,18 @@ export function LoginForm({
 
       if (error) {
         if (error.status === 403) {
+          setShowVerifyNotice(true)
           toast.error("Please verify your email address", {
             description: "Check your inbox for the verification link.",
           })
         } else {
+          setShowVerifyNotice(false)
           toast.error("Login failed", {
             description: error.message || "Invalid email or password.",
           })
         }
       } else {
+        setShowVerifyNotice(false)
         toast.success("Login successful!", {
           description: "Redirecting to dashboard...",
         })
@@ -82,6 +88,55 @@ export function LoginForm({
       })
     } finally {
       setIsLoading(false)
+    }
+  async function handleResendVerification(e: React.MouseEvent<HTMLButtonElement>) {
+    e.preventDefault()
+    setResendLoading(true)
+    setResendSuccess(false)
+    try {
+      const res = await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      })
+      if (res.ok) {
+        setResendSuccess(true)
+        toast.success("Verification email sent!", {
+          description: "Check your inbox for the verification link.",
+        })
+      } else {
+        toast.error("Failed to resend verification email.")
+      }
+    } catch {
+      toast.error("Failed to resend verification email.")
+    } finally {
+      setResendLoading(false)
+    }
+  }
+  }
+
+  async function handleResendVerification(e: React.MouseEvent<HTMLButtonElement>) {
+    e.preventDefault()
+    setResendLoading(true)
+    setResendSuccess(false)
+    try {
+      const res = await fetch("/api/auth/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      })
+      if (res.ok) {
+        setResendSuccess(true)
+        toast.success("Verification email sent!", {
+          description: "Check your inbox for the verification link.",
+        })
+      } else {
+        toast.error("Failed to resend verification email.")
+      }
+    } catch {
+      toast.error("Failed to resend verification email.")
+    } finally {
+      setResendLoading(false)
     }
   }
 
@@ -119,8 +174,21 @@ export function LoginForm({
   }
 
   return (
-    <form className={cn("flex flex-col gap-6", className)} {...props} onSubmit={handleSubmit}>
+  <form className={cn("flex flex-col gap-6", className)} {...props} onSubmit={handleSubmit}>
       <FieldGroup>
+        {showVerifyNotice && (
+          <div className="bg-yellow-100 border border-yellow-300 text-yellow-800 rounded p-3 text-center mb-2">
+            <div className="mb-2">Your email is not verified. Please check your inbox for the verification link.</div>
+            <button
+              type="button"
+              className="underline text-sm text-blue-700 disabled:opacity-60"
+              onClick={handleResendVerification}
+              disabled={resendLoading || resendSuccess}
+            >
+              {resendLoading ? "Resending..." : resendSuccess ? "Verification Sent!" : "Resend Verification Email"}
+            </button>
+          </div>
+        )}
         <div className="flex flex-col items-center gap-1 text-center">
           <h1 className="text-2xl font-bold">Login to your account</h1>
           <p className="text-muted-foreground text-sm text-balance">
