@@ -8,11 +8,7 @@ generator client {
   provider = "prisma-client-js"
 }
 
-enum UserRole {
-  patient
-  dentist
-  admin
-}
+
 
 enum AppointmentStatus {
   pending
@@ -42,7 +38,7 @@ model User {
   email                 String
   emailVerified         Boolean        @default(false)
   image                 String?
-  role                  UserRole       @default(patient)
+  role                  String?      @default("patient")
   phone                 String?
   address               String?
   dateOfBirth           DateTime?
