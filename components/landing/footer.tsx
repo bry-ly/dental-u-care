@@ -63,8 +63,8 @@ const defaultSocialLinks = [
 ];
 
 const defaultLegalLinks = [
-  { name: "Terms and Conditions", href: "#" },
-  { name: "Privacy Policy", href: "#" },
+  { name: "Terms and Conditions", href: "/docs/terms-and-conditions" },
+  { name: "Privacy Policy", href: "/docs/privacy-policy" },
 ];
 
 const Footer = ({
@@ -134,8 +134,8 @@ const Footer = ({
           <p className="order-2 lg:order-1">{copyright}</p>
           <ul className="order-1 flex flex-col gap-2 md:order-2 md:flex-row">
             {legalLinks.map((link, idx) => (
-              <li key={idx} className="hover:text-primary">
-                <a href={link.href}> {link.name}</a>
+              <li key={idx} className="hover:text-primary font-medium">
+                <a href={link.href}>{link.name}</a>
               </li>
             ))}
           </ul>

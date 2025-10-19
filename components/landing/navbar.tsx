@@ -2,7 +2,7 @@
 
 import { MenuIcon, SearchIcon, LogOut, User, Shield } from "lucide-react";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -56,11 +56,13 @@ import {
 import { ModeToggle } from "../ui/mode-toggle";
 import { cn } from "@/lib/utils";
 
+
 type User = {
   id: string;
   name: string;
   email: string;
   image?: string | null;
+  roles?: string[];
 } | null;
 
 type NavbarProps = {
@@ -69,6 +71,8 @@ type NavbarProps = {
 };
 
 const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
+  // Debug: log user roles to verify admin detection
+  console.log('Navbar user roles:', user?.roles);
   const [isScrolled, setIsScrolled] = useState(false);
   const router = useRouter();
 
@@ -82,6 +86,9 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
   }, []);
 
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
   const handleSignOut = async () => {
     setShowLogoutDialog(false);
     try {
@@ -94,6 +101,14 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
     }
   };
 
+  // Handle search submit
+  const handleSearch = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (searchValue.trim()) {
+      router.push(`/search?query=${encodeURIComponent(searchValue.trim())}`);
+    }
+  };
+
   const getInitials = (name: string) => {
     return name
       .split(" ")
@@ -102,7 +117,7 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
       .toUpperCase()
       .slice(0, 2);
   };
-  const features = [
+  const Services = [
     {
       title: "Preventive Care",
       description: "Cleanings, exams, and routine check-ups to keep smiles healthy",
@@ -134,6 +149,15 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
       href: "/patient-resources",
     },
   ];
+
+  // Filtered suggestions based on searchValue
+  const suggestions =
+    searchValue.trim().length > 0
+      ? Services.filter((s) =>
+          s.title.toLowerCase().includes(searchValue.toLowerCase()) ||
+          s.description.toLowerCase().includes(searchValue.toLowerCase())
+        )
+      : [];
 
   const aboutItems = [
     {
@@ -170,8 +194,8 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
           className={cn(
             "flex items-center justify-between rounded-full px-6 py-4 transition-all duration-300",
             isScrolled
-              ? "border-2 border-accent dark:border-gray-900 bg-background/40 backdrop-blur-lg shadow-lg"
-              : "border-2 border-accent dark:border-gray-800 bg-background/95 shadow-lg"
+              ? "border-2 border-accent dark:border-gray-900 bg-background shadow-lg"
+              : "border-2 border-accent dark:border-gray-800 bg-background shadow-lg"
           )}
         >
           <Link href="/#home" className="flex items-center gap-2">
@@ -229,18 +253,18 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
                 </NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <div className="grid w-[600px] grid-cols-2 p-3">
-                    {features.map((feature, index) => (
+                    {Services.map((service, index) => (
                       <NavigationMenuLink
-                        href={feature.href}
+                        href={service.href}
                         key={index}
                         className="rounded-md p-3 transition-colors"
                       >
-                        <div key={feature.title}>
+                        <div key={service.title}>
                           <p className="text-foreground mb-1 font-semibold">
-                            {feature.title}
+                            {service.title}
                           </p>
                           <p className="text-muted-foreground text-sm">
-                            {feature.description}
+                            {service.description}
                           </p>
                         </div>
                       </NavigationMenuLink>
@@ -267,23 +291,58 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
             </NavigationMenuList>
           </NavigationMenu>
           <div className="hidden items-center gap-4 lg:flex">
-            <InputGroup
-              className={cn(
-                "w-64 transition-all duration-300 border border-gray-300 hover:border-primary hover:shadow-sm dark:border-gray-700 dark:hover:border-primary rounded-md",
-                isScrolled && "w-58"
-              )}
-            >
-              <InputGroupInput
-                placeholder="Search services..."
-                className="border-0 focus-visible:ring-0"
-              />
-              <InputGroupAddon>
-                <SearchIcon className="h-4 w-4" />
-              </InputGroupAddon>
-              <InputGroupAddon align="inline-end">
-                <InputGroupButton size="sm">Search</InputGroupButton>
-              </InputGroupAddon>
-            </InputGroup>
+            <div className="relative">
+              <form onSubmit={handleSearch} className="contents">
+                <InputGroup
+                  className={cn(
+                    "w-64 transition-all duration-300 border border-gray-300 hover:border-primary hover:shadow-sm dark:border-gray-700 dark:hover:border-primary rounded-md",
+                    isScrolled && "w-58"
+                  )}
+                >
+                  <InputGroupInput
+                    ref={inputRef}
+                    placeholder="Search services..."
+                    className="border-0 focus-visible:ring-0"
+                    value={searchValue}
+                    onChange={e => {
+                      setSearchValue(e.target.value);
+                      setShowSuggestions(true);
+                    }}
+                    onFocus={() => setShowSuggestions(true)}
+                    onBlur={() => setTimeout(() => setShowSuggestions(false), 100)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') handleSearch();
+                    }}
+                    aria-label="Search services"
+                    autoComplete="off"
+                  />
+                  <InputGroupAddon>
+                    <SearchIcon className="h-4 w-4" />
+                  </InputGroupAddon>
+                  <InputGroupAddon align="inline-end">
+                    <InputGroupButton size="sm" type="submit">Search</InputGroupButton>
+                  </InputGroupAddon>
+                </InputGroup>
+                {showSuggestions && suggestions.length > 0 && (
+                  <ul className="absolute left-0 z-50 mt-1 w-full bg-background border border-gray-200 dark:border-gray-700 rounded-md shadow-lg max-h-56 overflow-auto">
+                    {suggestions.map((s) => (
+                      <li
+                        key={s.title}
+                        className="px-4 py-2 cursor-pointer hover:bg-accent"
+                        onMouseDown={() => {
+                          setShowSuggestions(false);
+                          setSearchValue("");
+                          router.push(s.href);
+                        }}
+                      >
+                        <span className="font-semibold">{s.title}</span>
+                        <span className="block text-xs text-muted-foreground">{s.description}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </form>
+            </div>
             <ModeToggle />
 
             {user ? (
@@ -334,12 +393,14 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
                         <DropdownMenuSeparator />
                       </>
                     )}
-                    <DropdownMenuItem asChild>
-                      <Link href="/profile" className="cursor-pointer">
-                        <User className="mr-2 h-4 w-4" />
-                        <span>Profile</span>
-                      </Link>
-                    </DropdownMenuItem>
+                    {!(user?.roles?.includes("admin")) && (
+                      <DropdownMenuItem asChild>
+                        <Link href="/profile" className="cursor-pointer">
+                          <User className="mr-2 h-4 w-4" />
+                          <span>Profile</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={() => setShowLogoutDialog(true)}
@@ -423,18 +484,18 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
                     </AccordionTrigger>
                     <AccordionContent>
                       <div className="grid md:grid-cols-2">
-                        {features.map((feature, index) => (
+                        {Services.map((service, index) => (
                           <a
-                            href={feature.href}
+                            href={service.href}
                             key={index}
                             className="rounded-md p-3 transition-colors"
                           >
-                            <div key={feature.title}>
+                            <div key={service.title}>
                               <p className="text-foreground mb-1 font-semibold">
-                                {feature.title}
+                                {service.title}
                               </p>
                               <p className="text-muted-foreground text-sm">
-                                {feature.description}
+                                {service.description}
                               </p>
                             </div>
                           </a>
@@ -484,12 +545,14 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
                           </Link>
                         </Button>
                       )}
-                      <Button variant="outline" asChild>
-                        <Link href="/profile">
-                          <User className="mr-2 h-4 w-4" />
-                          Profile
-                        </Link>
-                      </Button>
+                      {!(user?.roles?.includes("admin")) && (
+                        <Button variant="outline" asChild>
+                          <Link href="/profile">
+                            <User className="mr-2 h-4 w-4" />
+                            Profile
+                          </Link>
+                        </Button>
+                      )}
                       <Button
                         variant="destructive"
                         onClick={() => setShowLogoutDialog(true)}
