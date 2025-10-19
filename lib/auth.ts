@@ -49,8 +49,18 @@ export const auth = betterAuth({
       prompt: "select_account consent",
     },
   },
+  user: {
+    additionalFields: {
+      role: {
+        type: "string",
+        input: false,
+      },
+    },
+  },
   plugins: [
     nextCookies(),
-    organization() // This must be the last plugin in the array
+    organization(), // This must be the last plugin in the array
   ],
 });
+export type Session = typeof auth.$Infer.Session;
+export type User = typeof auth.$Infer.Session.user;

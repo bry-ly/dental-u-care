@@ -22,7 +22,7 @@ export async function requireAuth() {
   const session = await getSession();
 
   if (!session) {
-    redirect("/login");
+    redirect("/sign-in");
   }
 
   return session;
@@ -52,7 +52,6 @@ export async function isAuthenticated() {
  */
 export async function isAdmin() {
   const session = await getSession();
-  // @ts-expect-error - role field will be available after Prisma generation
   return session?.user?.role === "admin";
 }
 
@@ -62,7 +61,6 @@ export async function isAdmin() {
  */
 export async function isDentist() {
   const session = await getSession();
-  // @ts-expect-error - role field will be available after Prisma generation
   return session?.user?.role === "dentist";
 }
 
@@ -72,7 +70,7 @@ export async function isDentist() {
  */
 export async function isPatient() {
   const session = await getSession();
-  // @ts-expect-error - role field will be available after Prisma generation
+
   return session?.user?.role === "patient";
 }
 
@@ -82,7 +80,6 @@ export async function isPatient() {
  */
 export async function getUserRole() {
   const session = await getSession();
-  // @ts-expect-error - role field will be available after Prisma generation
   return session?.user?.role ?? null;
 }
 
@@ -94,7 +91,6 @@ export async function getUserRole() {
 export async function requireAdmin() {
   const session = await requireAuth();
 
-  // @ts-expect-error - role field will be available after Prisma generation
   if (session.user?.role !== "admin") {
     redirect("/");
   }
@@ -110,7 +106,6 @@ export async function requireAdmin() {
 export async function requireDentist() {
   const session = await requireAuth();
 
-  // @ts-expect-error - role field will be available after Prisma generation
   if (session.user?.role !== "dentist") {
     redirect("/");
   }
@@ -126,7 +121,6 @@ export async function requireDentist() {
 export async function requireStaff() {
   const session = await requireAuth();
 
-  // @ts-expect-error - role field will be available after Prisma generation
   const role = session.user?.role;
   if (role !== "admin" && role !== "dentist") {
     redirect("/");
