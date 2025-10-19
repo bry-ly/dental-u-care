@@ -3,6 +3,15 @@
 import { MenuIcon, SearchIcon, LogOut, User, Shield } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
 import Image from "next/image";
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
@@ -72,7 +81,9 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const handleSignOut = async () => {
+    setShowLogoutDialog(false);
     try {
       await authClient.signOut();
       toast.success("Signed out successfully");
@@ -315,7 +326,7 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
                     {userIsAdmin && (
                       <>
                         <DropdownMenuItem asChild>
-                          <Link href="/dashboard" className="cursor-pointer">
+                          <Link href="/admin" className="cursor-pointer">
                             <Shield className="mr-2 h-4 w-4" />
                             <span>Dashboard</span>
                           </Link>
@@ -331,7 +342,7 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
-                      onClick={handleSignOut}
+                      onClick={() => setShowLogoutDialog(true)}
                       className="cursor-pointer text-red-600"
                     >
                       <LogOut className="mr-2 h-4 w-4" />
@@ -346,7 +357,7 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
                   variant="outline"
                   className={cn(isScrolled ? "hidden" : "lg:inline-flex")}
                 >
-                  <Link href="/login">Sign In</Link>
+                  <Link href="/sign-in">Sign In</Link>
                 </Button>
                 <Button
                   className={cn(isScrolled ? "hidden" : "lg:inline-flex")}
@@ -467,7 +478,7 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
                       </Button>
                       {userIsAdmin && (
                         <Button variant="outline" asChild>
-                          <Link href="/dashboard">
+                          <Link href="/admin">
                             <Shield className="mr-2 h-4 w-4" />
                             Dashboard
                           </Link>
@@ -479,7 +490,10 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
                           Profile
                         </Link>
                       </Button>
-                      <Button variant="destructive" onClick={handleSignOut}>
+                      <Button
+                        variant="destructive"
+                        onClick={() => setShowLogoutDialog(true)}
+                      >
                         <LogOut className="mr-2 h-4 w-4" />
                         Sign Out
                       </Button>
@@ -500,6 +514,24 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
           </Sheet>
         </nav>
       </div>
+      <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Log out</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to log out?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button variant="destructive" onClick={handleSignOut}>
+              Log out
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 };

@@ -28,32 +28,32 @@ const Team = ({
       name: "Kath Estrada",
       role: "Chief Dentist & Orthodontist",
       avatar:
-        "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=400&h=400&fit=crop",
-      linkedin: "#",
+        "/kath.jpg",
+   
     },
     {
       id: "member-2",
       name: "Clyrelle Jade Cervantes",
       role: "Cosmetic Dentistry Specialist",
       avatar:
-        "https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=400&h=400&fit=crop",
-      linkedin: "#",
+        "/cervs.jpg",
+      
     },
     {
       id: "member-3",
       name: "Von Vryan Arguelles",
       role: "Oral Surgeon",
       avatar:
-        "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=400&h=400&fit=crop",
-      linkedin: "#",
+        "/von.jpg",
+     
     },
     {
       id: "member-4",
       name: "Dexter Cabanag",
       role: "Periodontist",
       avatar:
-        "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=400&h=400&fit=crop",
-      linkedin: "#",
+        "/dexter.jpg",
+      
     },
   ],
 }: Team1Props) => {
