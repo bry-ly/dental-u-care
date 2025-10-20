@@ -69,12 +69,13 @@ export function LoginForm({
           const sessionRes = await fetch("/api/auth/session")
           const session = await sessionRes.json()
           const role = session?.user?.role
+          const token = session?.token || session?.accessToken || ""
           if (role === "admin") {
             router.push("/admin")
           } else if (role === "dentist") {
             router.push("/dentist")
           } else if (role === "patient") {
-            router.push("/patient")
+            router.push(`/patient${token ? `?token=${token}` : ""}`)
           } else {
             router.push("/")
           }
@@ -152,12 +153,13 @@ export function LoginForm({
         const sessionRes = await fetch("/api/auth/session")
         const session = await sessionRes.json()
         const role = session?.user?.role
+        const token = session?.token || session?.accessToken || ""
         if (role === "admin") {
           router.push("/admin")
         } else if (role === "dentist") {
           router.push("/dentist")
         } else if (role === "patient") {
-          router.push("/patient")
+          router.push(`/patient${token ? `?token=${token}` : ""}`)
         } else {
           router.push("/")
         }
