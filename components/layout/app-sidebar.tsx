@@ -16,13 +16,17 @@ import {
   IconSearch,
   IconSettings,
   IconUsers,
+  IconStethoscope,
+  IconCalendar,
+  IconMedicalCross,
+  IconUserCog,
 } from "@tabler/icons-react"
 
 import { NavDocuments } from "@/components/layout/nav-documents"
 import { NavMain } from "@/components/layout/nav-main"
 import { NavSecondary } from "@/components/layout/nav-secondary"
 import { NavUser } from "@/components/layout/nav-user"
-
+import Link from "next/link"
 import {
   Sidebar,
   SidebarContent,
@@ -33,80 +37,37 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
-const data = {
+const adminData = {
   navMain: [
     {
       title: "Dashboard",
-      url: "/dashboard",
+      url: "/admin",
       icon: IconDashboard,
     },
     {
       title: "Appointments",
-      url: "#",
-      icon: IconListDetails,
-    },
-    {
-      title: "Analytics",
-      url: "#",
-      icon: IconChartBar,
+      url: "/admin/appointment-management",
+      icon: IconCalendar,
     },
     {
       title: "Patients",
-      url: "#",
+      url: "/admin/patient-management",
       icon: IconUsers,
     },
     {
       title: "Dentists",
-      url: "#",
-      icon: IconUsers,
-    },
-  ],
-  navClouds: [
-    {
-      title: "Capture",
-      icon: IconCamera,
-      isActive: true,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
+      url: "/admin/dentist-management",
+      icon: IconStethoscope,
     },
     {
-      title: "Proposal",
-      icon: IconFileDescription,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
+      title: "Services",
+      url: "/admin/service-management",
+      icon: IconMedicalCross,
     },
     {
-      title: "Prompts",
-      icon: IconFileAi,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
+      title: "Users",
+      url: "/admin/user-management",
+      icon: IconUserCog,
     },
   ],
   navSecondary: [
@@ -123,14 +84,9 @@ const data = {
   ],
   documents: [
     {
-      name: "Services Management",
+      name: "Analytics",
       url: "#",
-      icon: IconFolder,
-    },
-    {
-      name: "Payment & Billing",
-      url: "#",
-      icon: IconDatabase,
+      icon: IconChartBar,
     },
     {
       name: "Reports",
@@ -140,18 +96,103 @@ const data = {
   ],
 }
 
+const patientData = {
+  navMain: [
+    {
+      title: "Dashboard",
+      url:"/",
+      icon: IconDashboard,
+    },
+    {
+      title: "Book Appointment",
+      url: "/patient/book-appointment",
+      icon: IconCalendar,
+    },
+    {
+      title: "My Appointments",
+      url: "/patient/appointments",
+      icon: IconListDetails,
+    },
+    {
+      title: "Payments",
+      url: "/patient/payments",
+      icon: IconFileDescription,
+    },
+    {
+      title: "Health Records",
+      url: "/patient/health-records",
+      icon: IconDatabase,
+    },
+  ],
+  navSecondary: [
+    {
+      title: "Settings",
+      url: "#",
+      icon: IconSettings,
+    },
+    {
+      title: "Help & Support",
+      url: "#",
+      icon: IconHelp,
+    }
+  ],
+  documents: [],
+}
+
+const dentistData = {
+  navMain: [
+    {
+      title: "Dashboard",
+      url: "/dentist",
+      icon: IconDashboard,
+    },
+    {
+      title: "My Appointments",
+      url: "/dentist/appointments",
+      icon: IconCalendar,
+    },
+    {
+      title: "My Patients",
+      url: "/dentist/patients",
+      icon: IconUsers,
+    },
+    {
+      title: "Schedule",
+      url: "/dentist/schedule",
+      icon: IconListDetails,
+    },
+  ],
+  navSecondary: [
+    {
+      title: "Settings",
+      url: "#",
+      icon: IconSettings,
+    },
+    {
+      title: "Help & Support",
+      url: "#",
+      icon: IconHelp,
+    }
+  ],
+  documents: [],
+}
+
 type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
   user?: {
     id: string;
     name: string;
     email: string;
     image?: string | null;
-    roles?: string[];
+    role?: string | null;
   } | null;
   isAdmin?: boolean;
 };
 
 export function AppSidebar({ user, isAdmin, ...props }: AppSidebarProps) {
+  // Determine which data to use based on user role
+  const role = user?.role || 'patient'
+  const data = role === 'admin' ? adminData : role === 'dentist' ? dentistData : patientData
+  const homeUrl = role === 'admin' ? '/admin' : role === 'dentist' ? '/dentist' : '/'
   return (
     <>
       <Sidebar collapsible="offcanvas" {...props}>
@@ -162,17 +203,17 @@ export function AppSidebar({ user, isAdmin, ...props }: AppSidebarProps) {
                 asChild
                 className="data-[slot=sidebar-menu-button]:!p-1.5"
               >
-                <a href="/dashboard" className="flex items-center gap-2">
+                <Link href={homeUrl} className="flex items-center gap-2">
                   <Image src="/tooth.svg" alt="Dental U Care" width={24} height={24} className="!size-6" />
                   <span className="text-base font-semibold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Dental U-Care</span>
-                </a>
+                </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarHeader>
         <SidebarContent>
           <NavMain items={data.navMain} />
-          <NavDocuments items={data.documents} />
+          {data.documents.length > 0 && <NavDocuments items={data.documents} />}
           <NavSecondary items={data.navSecondary} className="mt-auto" />
         </SidebarContent>
         <SidebarFooter>

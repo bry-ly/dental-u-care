@@ -82,7 +82,7 @@ const VerificationEmail = (props: VerificationEmailProps) => {
                   href="mailto:support@dentalucare.com"
                   className="text-blue-600 no-underline"
                 >
-                  info@dentalucare.com
+                  send@dentalucare.tech
                 </a>{" "}
                 or call us at (+63) 917-123-4567.
               </Text>

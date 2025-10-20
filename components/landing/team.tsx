@@ -36,8 +36,7 @@ const Team = ({
       name: "Clyrelle Jade Cervantes",
       role: "Cosmetic Dentistry Specialist",
       avatar:
-        "/cervs.jpg",
-      
+        " /cervs.jpg",
     },
     {
       id: "member-3",

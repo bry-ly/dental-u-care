@@ -395,9 +395,9 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
                     )}
                     {!(user?.roles?.includes("admin")) && (
                       <DropdownMenuItem asChild>
-                        <Link href="/profile" className="cursor-pointer">
+                        <Link href="/patient" className="cursor-pointer">
                           <User className="mr-2 h-4 w-4" />
-                          <span>Profile</span>
+                          <span>Dashboard</span>
                         </Link>
                       </DropdownMenuItem>
                     )}
