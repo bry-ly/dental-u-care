@@ -20,7 +20,7 @@ export const auth = betterAuth({
     sendResetPassword: async ({ user, url }) => {
       try {
         const { data, error } = await resend.emails.send({
-          from: `${process.env.EMAIL_SENDER_NAME || "Dental U Care"} <${process.env.EMAIL_SENDER_ADDRESS || "onboarding@dentalucare.tech"}>`,
+          from: `${process.env.EMAIL_SENDER_NAME || "Dental U Care"} <${process.env.EMAIL_SENDER_ADDRESS || "send@dentalucare.tech"}>`,
           to: user.email,
           subject: "Reset your password",
           react: ForgotPasswordEmail({ username: user.name, resetUrl: url }),
@@ -52,14 +52,6 @@ export const auth = betterAuth({
             });
         },
     },
-  socialProviders: {
-    google: {
-      clientId: process.env.GOOGLE_CLIENT_ID as string,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
-      accessType: "offline",
-      prompt: "select_account consent",
-    },
-  },
   user: {
     additionalFields: {
       role: {
