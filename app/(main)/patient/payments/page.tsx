@@ -4,30 +4,35 @@ import {
   SidebarInset,
   SidebarProvider,
 } from "@/components/ui/sidebar"
-import { AdminPatientsTable } from "@/components/admin/patients-table"
-import { requireAdmin } from "@/lib/auth-server"
+import { PaymentHistory } from "@/components/patient/payment-history"
+import { requireAuth } from "@/lib/auth-server"
 import { prisma } from "@/lib/prisma"
+import { redirect } from "next/navigation"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Patient Management",
+  title: "Payment History",
 };
 
-export default async function PatientManagementPage() {
-  await requireAdmin();
+export default async function PaymentsPage() {
+  const session = await requireAuth();
+  const user = session.user;
 
-  const patients = await prisma.user.findMany({
+  if (user.role !== "patient") {
+    redirect("/");
+  }
+
+  const payments = await prisma.payment.findMany({
     where: {
-      role: "patient",
+      userId: user.id,
     },
     include: {
-      appointmentsAsPatient: {
+      appointment: {
         include: {
           service: true,
           dentist: true,
         },
       },
-      payments: true,
     },
     orderBy: {
       createdAt: "desc",
@@ -43,18 +48,18 @@ export default async function PatientManagementPage() {
         } as React.CSSProperties
       }
     >
-      <AppSidebar variant="inset" />
+      <AppSidebar variant="inset" user={user} />
       <SidebarInset>
-        <SiteHeader role="admin" />
+        <SiteHeader role={user.role} />
         <div className="flex flex-1 flex-col">
           <div className="@container/main flex flex-1 flex-col gap-2">
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6 px-4 lg:px-6">
               <div>
-                <h1 className="text-3xl font-bold">Patient Management</h1>
-                <p className="text-muted-foreground">Manage all patients in the system</p>
+                <h1 className="text-3xl font-bold">Payment History</h1>
+                <p className="text-muted-foreground">View your payment transactions</p>
               </div>
 
-              <AdminPatientsTable patients={patients} />
+              <PaymentHistory payments={payments} />
             </div>
           </div>
         </div>

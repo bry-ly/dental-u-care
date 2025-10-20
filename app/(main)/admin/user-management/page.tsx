@@ -4,31 +4,19 @@ import {
   SidebarInset,
   SidebarProvider,
 } from "@/components/ui/sidebar"
-import { AdminPatientsTable } from "@/components/admin/patients-table"
+import { AdminUsersTable } from "@/components/admin/users-table"
 import { requireAdmin } from "@/lib/auth-server"
 import { prisma } from "@/lib/prisma"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Patient Management",
+  title: "User Management",
 };
 
-export default async function PatientManagementPage() {
+export default async function UserManagementPage() {
   await requireAdmin();
 
-  const patients = await prisma.user.findMany({
-    where: {
-      role: "patient",
-    },
-    include: {
-      appointmentsAsPatient: {
-        include: {
-          service: true,
-          dentist: true,
-        },
-      },
-      payments: true,
-    },
+  const users = await prisma.user.findMany({
     orderBy: {
       createdAt: "desc",
     },
@@ -50,11 +38,11 @@ export default async function PatientManagementPage() {
           <div className="@container/main flex flex-1 flex-col gap-2">
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6 px-4 lg:px-6">
               <div>
-                <h1 className="text-3xl font-bold">Patient Management</h1>
-                <p className="text-muted-foreground">Manage all patients in the system</p>
+                <h1 className="text-3xl font-bold">User Management</h1>
+                <p className="text-muted-foreground">Manage all users in the system</p>
               </div>
 
-              <AdminPatientsTable patients={patients} />
+              <AdminUsersTable users={users} />
             </div>
           </div>
         </div>
