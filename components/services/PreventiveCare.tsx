@@ -21,7 +21,7 @@ export function PreventiveCare() {
             <Stethoscope className="h-6 w-6" />
           </div>
           <h3 className="text-xl font-bold">General Dentistry</h3>
-          <div className="flex items-center gap-4 sm:ml-4">
+          <div className="flex items-center gap-4 sm:ml-15">
             <Image
               src="/dexter.jpg"
               alt="Dexter Cabanag"
