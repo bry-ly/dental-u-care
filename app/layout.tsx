@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/provider/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
-import ConsentManager from "./consent-manager";
+import ConsentManager from "./cookie-consent/consent-manager";
 import { ReactNode } from "react";
 
 
@@ -36,7 +36,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           disableTransitionOnChange
         >
           <ConsentManager>{children}</ConsentManager>
-          
           <Toaster />
         </ThemeProvider>
       </body>
