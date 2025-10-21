@@ -65,7 +65,7 @@ const About = ({
     description:
       "Our easy-to-use online booking system lets you schedule appointments 24/7, choose your preferred dentist, and manage your dental health journey.",
     buttonText: "Book Now",
-    buttonUrl: "/booking",
+    buttonUrl: "patient/book-appointment",
   },
   companiesTitle = "Trusted Insurance Partners",
   companies = defaultCompanies,
