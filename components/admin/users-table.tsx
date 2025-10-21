@@ -163,29 +163,31 @@ const columns: ColumnDef<User>[] = [
   },
   {
     id: "actions",
-    cell: ({ row }) => (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            className="data-[state=open]:bg-muted text-muted-foreground flex size-8"
-            size="icon"
-          >
-            <IconDotsVertical />
-            <span className="sr-only">Open menu</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-40">
-          <DropdownMenuItem>View Profile</DropdownMenuItem>
-          <DropdownMenuItem>Edit User</DropdownMenuItem>
-          <DropdownMenuItem>Change Role</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem>Reset Password</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem variant="destructive">Delete User</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    ),
+    cell: ({ row }) => {
+      const isAdmin = row.original.role === "admin";
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              className="data-[state=open]:bg-muted text-muted-foreground flex size-8"
+              size="icon"
+            >
+              <IconDotsVertical />
+              <span className="sr-only">Open menu</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-40">
+            <DropdownMenuItem>View Profile</DropdownMenuItem>
+            <DropdownMenuItem>Edit User</DropdownMenuItem>
+            <DropdownMenuItem>Change Role</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem>Reset Password</DropdownMenuItem>
+            {!isAdmin && <><DropdownMenuSeparator /><DropdownMenuItem variant="destructive">Delete User</DropdownMenuItem></>}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    },
   },
 ]
 

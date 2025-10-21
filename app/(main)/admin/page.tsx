@@ -1,22 +1,19 @@
-import { AppSidebar } from "@/components/layout/app-sidebar"
-import { ChartAreaInteractive } from "@/components/chart/chart-area-interactive"
-import { AdminAppointmentsTable } from "@/components/admin/appointments-table"
-import { SectionCards } from "@/components/layout/section-cards"
-import { SiteHeader } from "@/components/layout/site-header"
-import {
-  SidebarInset,
-  SidebarProvider,
-} from "@/components/ui/sidebar"
-import type { Metadata } from "next"
-import { requireAdmin } from "@/lib/auth-server"
-import { prisma } from "@/lib/prisma"
+import { AppSidebar } from "@/components/layout/app-sidebar";
+import { ChartAreaInteractive } from "@/components/chart/chart-area-interactive";
+import { AdminAppointmentsTable } from "@/components/admin/appointments-table";
+import { SectionCards } from "@/components/layout/section-cards";
+import { SiteHeader } from "@/components/layout/site-header";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import type { Metadata } from "next";
+import { requireAdmin } from "@/lib/auth-server";
+import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
   title: "Dashboard",
 };
 export default async function Page() {
   // Require admin role - will redirect to home page (/) if not admin
-  await requireAdmin();
+  const { user } = await requireAdmin();
 
   // Fetch dashboard statistics
   const now = new Date();
@@ -93,18 +90,23 @@ export default async function Page() {
   });
 
   // Calculate percentage changes
-  const appointmentChange = previousAppointments > 0
-    ? ((totalAppointments - previousAppointments) / previousAppointments) * 100
-    : 0;
-  const patientChange = previousPatients > 0
-    ? ((newPatients - previousPatients) / previousPatients) * 100
-    : 0;
-  const revenueChange = previousRevenue > 0
-    ? ((revenue - previousRevenue) / previousRevenue) * 100
-    : 0;
-  const satisfactionChange = previousCompleted > 0
-    ? ((completedAppointments - previousCompleted) / previousCompleted) * 100
-    : 0;
+  const appointmentChange =
+    previousAppointments > 0
+      ? ((totalAppointments - previousAppointments) / previousAppointments) *
+        100
+      : 0;
+  const patientChange =
+    previousPatients > 0
+      ? ((newPatients - previousPatients) / previousPatients) * 100
+      : 0;
+  const revenueChange =
+    previousRevenue > 0
+      ? ((revenue - previousRevenue) / previousRevenue) * 100
+      : 0;
+  const satisfactionChange =
+    previousCompleted > 0
+      ? ((completedAppointments - previousCompleted) / previousCompleted) * 100
+      : 0;
 
   // Mock satisfaction rate (in a real app, this would come from reviews/ratings)
   const satisfactionRate = 98.5;
@@ -124,11 +126,14 @@ export default async function Page() {
   });
 
   // Group appointments by date
-  const chartData = appointmentsForChart.reduce((acc: Record<string, number>, appointment) => {
-    const date = appointment.createdAt.toISOString().split('T')[0];
-    acc[date] = (acc[date] || 0) + 1;
-    return acc;
-  }, {});
+  const chartData = appointmentsForChart.reduce(
+    (acc: Record<string, number>, appointment) => {
+      const date = appointment.createdAt.toISOString().split("T")[0];
+      acc[date] = (acc[date] || 0) + 1;
+      return acc;
+    },
+    {}
+  );
 
   // Convert to array format for chart
   const chartDataArray = Object.entries(chartData).map(([date, count]) => ({
@@ -143,27 +148,10 @@ export default async function Page() {
       createdAt: "desc",
     },
     include: {
-      patient: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-        },
-      },
-      dentist: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-        },
-      },
-      service: {
-        select: {
-          id: true,
-          name: true,
-          price: true,
-        },
-      },
+      patient: true,
+      dentist: true,
+      service: true,
+      payment: true,
     },
   });
 
@@ -187,7 +175,7 @@ export default async function Page() {
         } as React.CSSProperties
       }
     >
-      <AppSidebar variant="inset" />
+  <AppSidebar variant="inset" user={user} />
       <SidebarInset>
         <SiteHeader role="admin" />
         <div className="flex flex-1 flex-col">
@@ -205,5 +193,5 @@ export default async function Page() {
         </div>
       </SidebarInset>
     </SidebarProvider>
-  )
+  );
 }

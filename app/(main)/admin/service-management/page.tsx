@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 };
 
 export default async function ServiceManagementPage() {
-  await requireAdmin();
+  const { user } = await requireAdmin();
 
   const services = await prisma.service.findMany({
     include: {
@@ -34,7 +34,7 @@ export default async function ServiceManagementPage() {
         } as React.CSSProperties
       }
     >
-      <AppSidebar variant="inset" />
+  <AppSidebar variant="inset" user={user} />
       <SidebarInset>
         <SiteHeader role="admin" />
         <div className="flex flex-1 flex-col">

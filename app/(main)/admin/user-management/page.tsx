@@ -14,13 +14,14 @@ export const metadata: Metadata = {
 };
 
 export default async function UserManagementPage() {
-  await requireAdmin();
+  const { user } = await requireAdmin();
 
-  const users = await prisma.user.findMany({
+  const usersRaw = await prisma.user.findMany({
     orderBy: {
       createdAt: "desc",
     },
   });
+  const users = usersRaw.map(u => ({ ...u, role: u.role ?? undefined }));
 
   return (
     <SidebarProvider
@@ -31,7 +32,7 @@ export default async function UserManagementPage() {
         } as React.CSSProperties
       }
     >
-      <AppSidebar variant="inset" />
+  <AppSidebar variant="inset" user={user} />
       <SidebarInset>
         <SiteHeader role="admin" />
         <div className="flex flex-1 flex-col">

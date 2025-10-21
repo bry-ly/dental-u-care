@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 };
 
 export default async function DentistManagementPage() {
-  await requireAdmin();
+  const { user } = await requireAdmin();
 
   const dentists = await prisma.user.findMany({
     where: {
@@ -42,7 +42,7 @@ export default async function DentistManagementPage() {
         } as React.CSSProperties
       }
     >
-      <AppSidebar variant="inset" />
+  <AppSidebar variant="inset" user={user} />
       <SidebarInset>
         <SiteHeader role="admin" />
         <div className="flex flex-1 flex-col">
