@@ -8,8 +8,6 @@ generator client {
   provider = "prisma-client-js"
 }
 
-
-
 enum AppointmentStatus {
   pending
   confirmed
@@ -38,7 +36,7 @@ model User {
   email                 String
   emailVerified         Boolean        @default(false)
   image                 String?
-  role                  String?      @default("patient")
+  role                  String?        @default("patient")
   phone                 String?
   address               String?
   dateOfBirth           DateTime?
@@ -62,6 +60,10 @@ model User {
 
   members     Member[]
   invitations Invitation[]
+
+  banned     Boolean?  @default(false)
+  banReason  String?
+  banExpires DateTime?
 
   @@unique([email])
   @@map("user")
@@ -160,6 +162,8 @@ model Session {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   activeOrganizationId String?
+
+  impersonatedBy String?
 
   @@unique([token])
   @@map("session")
