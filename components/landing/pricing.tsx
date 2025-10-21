@@ -6,7 +6,16 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-
+import Link from "next/link";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 interface Service {
   name: string;
   price: string;
@@ -20,7 +29,11 @@ interface ServiceCategory {
   services: Service[];
 }
 
+import React, { useState } from "react";
+
 const Pricing = () => {
+  const [showRequiredDialog, setShowRequiredDialog] = useState(false);
+
   const serviceCategories: ServiceCategory[] = [
     {
       id: "basic",
@@ -231,8 +244,14 @@ const Pricing = () => {
                       ))}
                     </div>
                     <div className="mt-6 flex justify-center animate-in fade-in-50 zoom-in-95 duration-500 delay-300">
-                      <Button size="lg" className="w-full sm:w-auto">
-                        Book Appointment
+                      <Button
+                        size="lg"
+                        className="w-full sm:w-auto"
+                        onClick={() => setShowRequiredDialog(true)}
+                      >
+                        <Link href="patient/book-appointment" className="flex items-center">
+                          Book Appointment
+                        </Link>
                       </Button>
                     </div>
                   </CardContent>
@@ -242,6 +261,24 @@ const Pricing = () => {
           </Tabs>
         </div>
       </div>
+       <Dialog open={showRequiredDialog} onOpenChange={setShowRequiredDialog}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Required To Sign In & Sign Up</DialogTitle>
+                  <DialogDescription>
+                    Please sign in or sign up to access this content.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button variant="outline"><Link href="/sign-in">Sign In</Link></Button>
+                  </DialogClose>
+                  <Button variant="default">
+                    <Link href="/sign-up">Sign Up</Link>
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
     </section>
   );
 };

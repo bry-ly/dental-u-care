@@ -1,5 +1,4 @@
 "use client";
-
 import { MenuIcon, SearchIcon, LogOut, User, Shield } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
@@ -86,6 +85,7 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
   }, []);
 
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const [showRequiredDialog, setShowRequiredDialog] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -206,21 +206,12 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
               height={32}
               className="h-8 w-8"
             />
-            <span className="text-lg font-semibold tracking-tighter">
+            <span className="text-lg font-semibold bg-gradient-to-r from-blue-600 to-blue-800 text-transparent bg-clip-text tracking-tighter">
               Dental U Care
             </span>
           </Link>
           <NavigationMenu className="hidden lg:block">
             <NavigationMenuList>
-              <NavigationMenuItem>
-                <NavigationMenuLink
-                  href="/#home"
-                  className="group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-all hover:text-accent-foreground hover:border-b-2 hover:border-primary focus:outline-none disabled:pointer-events-none disabled:opacity-50"
-                >
-                  Home
-                </NavigationMenuLink>
-              </NavigationMenuItem>
-
               <NavigationMenuItem>
                 <NavigationMenuTrigger className="bg-transparent hover:bg-transparent focus:bg-transparent data-[active]:bg-transparent data-[state=open]:bg-transparent">
                   About
@@ -304,14 +295,16 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
                     placeholder="Search services..."
                     className="border-0 focus-visible:ring-0"
                     value={searchValue}
-                    onChange={e => {
+                    onChange={(e) => {
                       setSearchValue(e.target.value);
                       setShowSuggestions(true);
                     }}
                     onFocus={() => setShowSuggestions(true)}
-                    onBlur={() => setTimeout(() => setShowSuggestions(false), 100)}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter') handleSearch();
+                    onBlur={() =>
+                      setTimeout(() => setShowSuggestions(false), 100)
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSearch();
                     }}
                     aria-label="Search services"
                     autoComplete="off"
@@ -320,7 +313,9 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
                     <SearchIcon className="h-4 w-4" />
                   </InputGroupAddon>
                   <InputGroupAddon align="inline-end">
-                    <InputGroupButton size="sm" type="submit">Search</InputGroupButton>
+                    <InputGroupButton size="sm" type="submit">
+                      Search
+                    </InputGroupButton>
                   </InputGroupAddon>
                 </InputGroup>
                 {showSuggestions && suggestions.length > 0 && (
@@ -336,7 +331,9 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
                         }}
                       >
                         <span className="font-semibold">{s.title}</span>
-                        <span className="block text-xs text-muted-foreground">{s.description}</span>
+                        <span className="block text-xs text-muted-foreground">
+                          {s.description}
+                        </span>
                       </li>
                     ))}
                   </ul>
@@ -349,8 +346,9 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
               <>
                 <Button
                   className={cn(isScrolled ? "hidden" : "lg:inline-flex")}
+                  asChild
                 >
-                  <Link href="/booking">Book Appointment</Link>
+                  <Link href="/patient/book-appointment">Book Now</Link>
                 </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -393,7 +391,7 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
                         <DropdownMenuSeparator />
                       </>
                     )}
-                    {!(user?.roles?.includes("admin")) && (
+                    {!user?.roles?.includes("admin") && (
                       <DropdownMenuItem asChild>
                         <Link href="/patient" className="cursor-pointer">
                           <User className="mr-2 h-4 w-4" />
@@ -422,8 +420,9 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
                 </Button>
                 <Button
                   className={cn(isScrolled ? "hidden" : "lg:inline-flex")}
+                  onClick={() => setShowRequiredDialog(true)}
                 >
-                  <Link href="/signup">Book Now</Link>
+                  Book Now
                 </Button>
               </>
             )}
@@ -505,9 +504,6 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
                   </AccordionItem>
                 </Accordion>
                 <div className="flex flex-col gap-6">
-                  <Link href="/#home" className="font-medium">
-                    Home
-                  </Link>
                   <Link href="/#contact" className="font-medium">
                     Contact
                   </Link>
@@ -535,7 +531,7 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
                         </div>
                       </div>
                       <Button asChild>
-                        <Link href="/booking">Book Appointment</Link>
+                        <Link href="/patient/book-appointment">Book Now</Link>
                       </Button>
                       {userIsAdmin && (
                         <Button variant="outline" asChild>
@@ -545,7 +541,7 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
                           </Link>
                         </Button>
                       )}
-                      {!(user?.roles?.includes("admin")) && (
+                      {!user?.roles?.includes("admin") && (
                         <Button variant="outline" asChild>
                           <Link href="/profile">
                             <User className="mr-2 h-4 w-4" />
@@ -566,8 +562,8 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
                       <Button variant="outline">
                         <Link href="/login">Sign in</Link>
                       </Button>
-                      <Button>
-                        <Link href="/signup">Book Now</Link>
+                      <Button onClick={() => setShowRequiredDialog(true)}>
+                        Book Now
                       </Button>
                     </>
                   )}

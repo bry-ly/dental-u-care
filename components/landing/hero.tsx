@@ -3,12 +3,12 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { ShimmeringText } from "@/components/ui/shimmering-text";
 import TypingText from "@/components/ui/typing-text";
-
+import Link from "next/link";
 const Hero = () => {
   return (
     <section>
       <div className="container mt-5 ">
-        <div className="bg-muted grid items-center gap-8 lg:grid-cols-2 border rounded-lg shadow-lg">
+        <div className="bg-muted/25 grid items-center gap-8 lg:grid-cols-2 border rounded-lg shadow-lg">
           <div className="flex flex-col items-center p-16 text-center lg:items-start lg:text-left">
             <div className="mb-6 flex items-center gap-3">
               <Image
@@ -56,7 +56,9 @@ const Hero = () => {
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
               <Button variant="outline" size="lg">
-                Get Started
+                <Link href="/get-started" className="flex items-center">
+                  Get Started
+                </Link>
               </Button>
             </div>
             <div className="mt-8 grid grid-cols-3 gap-6 text-center lg:text-left">
