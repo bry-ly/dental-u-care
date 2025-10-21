@@ -21,12 +21,13 @@
   "registries": {
     "@acme": "https://registry.acme.com/{name}.json",
     "@tailark": "https://tailark.com/r/{name}.json",
-     "@shadcnblocks": {
+    "@shadcnblocks": {
       "url": "https://shadcnblocks.com/r/{name}",
       "headers": {
         "Authorization": "Bearer ${SHADCNBLOCKS_API_KEY}"
       }
     },
-    "@shadcnio": "https://www.shadcn.io/r/{name}.json"
+    "@shadcnio": "https://www.shadcn.io/r/{name}.json",
+    "@reui": "https://reui.io/r/{name}.json"
   }
 }
