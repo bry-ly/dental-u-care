@@ -17,11 +17,13 @@ import { createAuthClient } from "better-auth/react";
 import { toast } from "sonner";
 
 import { organizationClient } from "better-auth/client/plugins";
+import { adminClient } from "better-auth/client/plugins";
 
 
 export const authClient = createAuthClient({
   plugins: [
-    organizationClient(), // Add any plugins you need here
+    adminClient(),
+    organizationClient(),
   ],
   // You can pass client configuration here
   baseURL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",

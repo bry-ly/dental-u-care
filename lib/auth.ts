@@ -1,4 +1,5 @@
 import { betterAuth } from "better-auth";
+import { admin } from "better-auth/plugins";
 import { nextCookies } from "better-auth/next-js";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { Resend } from "resend";
@@ -25,12 +26,10 @@ export const auth = betterAuth({
           subject: "Reset your password",
           react: ForgotPasswordEmail({ username: user.name, resetUrl: url }),
         });
-
         if (error) {
           console.error("❌ Password reset email error:", error);
           throw error;
         }
-
         console.log("✅ Password reset email sent successfully:", data);
       } catch (error) {
         console.error("❌ Failed to send password reset email:", error);
@@ -42,16 +41,22 @@ export const auth = betterAuth({
       console.log(`Password for user ${user.email} has been reset.`);
     },
   },
-   emailVerification: {
-        sendVerificationEmail: async ({ user, url }) => {
-            resend.emails.send({
-                from: `${process.env.EMAIL_SENDER_NAME} <${process.env.EMAIL_SENDER_ADDRESS}>`,
-                to: user.email,
-                subject: "Verify your email",
-                react: VerificationEmail({ username: user.name, verificationUrl: url }),
-            });
-        },
+  emailVerification: {
+    sendVerificationEmail: async ({ user, url }) => {
+      resend.emails.send({
+        from: `${process.env.EMAIL_SENDER_NAME} <${process.env.EMAIL_SENDER_ADDRESS}>`,
+        to: user.email,
+        subject: "Verify your email",
+        react: VerificationEmail({ username: user.name, verificationUrl: url }),
+      });
     },
+  },
+  socialProviders: {
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID as string,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+    },
+  },
   user: {
     additionalFields: {
       role: {
@@ -62,7 +67,8 @@ export const auth = betterAuth({
   },
   plugins: [
     nextCookies(),
-    organization(), // This must be the last plugin in the array
+    organization(),
+    admin(), // This must be the last plugin in the array
   ],
 });
 export type Session = typeof auth.$Infer.Session;
