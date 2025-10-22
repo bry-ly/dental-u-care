@@ -1,6 +1,6 @@
 import Image from "next/image"
 import { Metadata } from "next"
-import { LoginForm } from "@/app/(auth)/sign-in/login-form"
+import { LoginForm } from "@/app/(auth)/sign-in/sign-in-form"
 import Link from "next/link";
 
 export const metadata: Metadata = {
