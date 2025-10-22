@@ -94,7 +94,7 @@ export function SignupForm({
       } else {
         setShowVerifyNotice(false)
         toast.success("Account created successfully!", {
-          description: "Redirecting to login page...",
+          description: "Please check your email to verify your account.",
         })
         // Redirect to login page after successful signup
         setTimeout(() => {
