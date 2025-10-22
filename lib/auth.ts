@@ -51,12 +51,6 @@ export const auth = betterAuth({
       });
     },
   },
-  socialProviders: {
-    google: {
-      clientId: process.env.GOOGLE_CLIENT_ID as string,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
-    },
-  },
   user: {
     additionalFields: {
       role: {
@@ -65,10 +59,14 @@ export const auth = betterAuth({
       },
     },
   },
+  socialProviders: {
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID as string,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+    },
+  },
   plugins: [
-    nextCookies(),
-    organization(),
-    admin(), // This must be the last plugin in the array
+    nextCookies(), // This must be the last plugin in the array
   ],
 });
 export type Session = typeof auth.$Infer.Session;

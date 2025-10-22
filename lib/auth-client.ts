@@ -17,12 +17,11 @@ import { createAuthClient } from "better-auth/react";
 import { toast } from "sonner";
 
 import { organizationClient } from "better-auth/client/plugins";
-import { adminClient } from "better-auth/client/plugins";
+
 
 
 export const authClient = createAuthClient({
   plugins: [
-    adminClient(),
     organizationClient(),
   ],
   // You can pass client configuration here
