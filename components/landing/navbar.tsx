@@ -94,7 +94,7 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
     try {
       await authClient.signOut();
       toast.success("Signed out successfully");
-      router.push("/");
+      router.push("/sign-in");
       router.refresh();
     } catch {
       toast.error("Failed to sign out");
@@ -587,6 +587,30 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
             </DialogClose>
             <Button variant="destructive" onClick={handleSignOut}>
               Log out
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showRequiredDialog} onOpenChange={setShowRequiredDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Sign in required</DialogTitle>
+            <DialogDescription>
+              You need to sign in to book an appointment. Would you like to sign in now?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button
+              onClick={() => {
+                setShowRequiredDialog(false);
+                router.push("/sign-in");
+              }}
+            >
+              Sign in
             </Button>
           </DialogFooter>
         </DialogContent>
