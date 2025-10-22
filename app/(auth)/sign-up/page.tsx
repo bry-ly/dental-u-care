@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { SignupForm } from "@/app/(auth)/sign-up/signup-form";
+import { SignupForm } from "@/app/(auth)/sign-up/sign-up-form";
 import Image from "next/image";
 import Link from "next/link";
 export const metadata: Metadata = {
