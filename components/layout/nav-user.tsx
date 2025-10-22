@@ -39,7 +39,7 @@ export function NavUser({
     name: string;
     email: string;
     image?: string | null;
-    roles?: string[];
+    role?: string | null;
   },
   isAdmin?: boolean
 }) {
@@ -106,7 +106,7 @@ export function NavUser({
                 <DropdownMenuSeparator />
               </>
             )}
-            {!user?.roles?.includes("admin") && (
+            {user?.role !== "admin" && (
               <>
                 <DropdownMenuItem asChild>
                   <Link href="/profile" className="cursor-pointer">
