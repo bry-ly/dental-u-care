@@ -15,6 +15,18 @@ export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "mongodb",
   }),
+  account: {
+    accountLinking: {
+      enabled: true,
+    },
+    onCreateAccount: async ({ user }: { user: { id: string } }) => {
+      // Set default role to "patient" for new accounts
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { role: "patient" },
+      });
+    },
+  },
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
