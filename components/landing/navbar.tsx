@@ -183,7 +183,7 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
   ];
 
   return (
-    <section className="sticky top-0 z-50 py-4">
+    <section className="sticky top-0 z-50 py-2">
       <div
         className={cn(
           "container transition-all duration-300",
@@ -192,7 +192,7 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
       >
         <nav
           className={cn(
-            "flex items-center justify-between rounded-full px-6 py-4 transition-all duration-300",
+            "flex items-center justify-between rounded-full px-6 py-4 transition-all duration-300 h-25",
             isScrolled
               ? "border-2 border-accent dark:border-gray-900 bg-background shadow-lg"
               : "border-2 border-accent dark:border-gray-800 bg-background shadow-lg"
