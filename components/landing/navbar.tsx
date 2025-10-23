@@ -198,7 +198,7 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
               : "border-2 border-accent dark:border-gray-800 bg-background shadow-lg"
           )}
         >
-          <Link href="/#home" className="flex items-center gap-2">
+          <Link href="/" className="flex items-center gap-2">
             <Image
               src="/tooth.svg"
               alt="Dental U Care"

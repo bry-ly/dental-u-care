@@ -13,6 +13,7 @@ enum role {
   dentist
   admin
 }
+
 enum AppointmentStatus {
   pending
   confirmed
@@ -62,9 +63,6 @@ model User {
   payments              Payment[]
   notifications         Notification[]
   chatMessages          ChatMessage[]
-
-
-
 
   @@unique([email])
   @@map("user")
@@ -199,8 +197,5 @@ model Verification {
 
   @@map("verification")
 }
-
-
-
 
 

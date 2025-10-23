@@ -2,23 +2,7 @@
 
 import { useState } from "react"
 import BookingForm from "./booking-form"
-
-type Service = {
-  id: string
-  name: string
-  description: string
-  duration: number
-  price: number
-  category: string
-  isActive: boolean
-}
-
-type Dentist = {
-  id: string
-  name: string
-  specialization: string | null
-  image: string | null
-}
+import { Service, Dentist } from "@/components/services/types"
 
 type BookingPageContentProps = {
   services: Service[]
@@ -32,7 +16,7 @@ export function BookingPageContent({ services, dentists, patientId }: BookingPag
   return (
     <div className="flex flex-col gap-8 py-4 md:gap-10 md:py-6 px-4 lg:px-6">
       <div id="booking-form-section" className="border-t pt-8 scroll-mt-20">
-        <BookingForm />
+        <BookingForm services={services} />
       </div>
     </div>
   )

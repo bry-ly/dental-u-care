@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export async function middleware(request: NextRequest) {
-  const pathname = request.nextUrl.pathname;
+  // const pathname = request.nextUrl.pathname;
 
   // Get the session token from cookies
   const sessionToken = request.cookies.get("better-auth.session_token")?.value;
@@ -29,6 +29,6 @@ export const config = {
     "/admin/:path*",
     "/dentist/:path*",
     "/patient/:path*",
-    "/profile/:path*",
+    "/"
   ],
 };
