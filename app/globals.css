@@ -164,6 +164,15 @@
   --shadow-2xl: var(--shadow-2xl);
   --animate-marquee: marquee var(--duration) infinite linear;
   --animate-marquee-vertical: marquee-vertical var(--duration) linear infinite;
+  --animate-aurora: aurora 60s linear infinite;
+  @keyframes aurora {
+  from {
+    backgroundPosition: 50% 50%, 50% 50%;
+    }
+  to {
+    backgroundPosition: 350% 50%, 350% 50%;
+    }
+  }
 }
 
 @layer base {
@@ -175,8 +184,6 @@
   }
 }
 
-
-
   @keyframes marquee {
     from {
       transform: translateX(0);
@@ -185,7 +192,7 @@
       transform: translateX(calc(-100% - var(--gap)));
     }
   }
- 
+
   @keyframes marquee-vertical {
     from {
       transform: translateY(0);
@@ -221,7 +228,7 @@
     max-width: 1440px;
   }
 }
- 
+
 /** Smooth scroll **/
 html {
   scroll-behavior: smooth;
