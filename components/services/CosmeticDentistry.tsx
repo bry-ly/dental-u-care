@@ -1,8 +1,11 @@
 "use client"
 import { Sparkles } from "lucide-react";
 import Image from "next/image";
+import { serviceCategories } from "@/lib/types/services-data";
 
 export function CosmeticDentistry() {
+  const cosmeticServices = serviceCategories.find(cat => cat.id === "cosmetic")?.services || [];
+
   return (
     <section className="w-full max-w-2xl mt-10 mb-8 mx-auto">
       <div className="space-y-4 text-center">
@@ -31,7 +34,7 @@ export function CosmeticDentistry() {
               priority
             />
             <span className="font-semibold">Clyrelle Jade Cervantes</span>
-            <span className="text-primary text-sm">Emergency Care</span>
+            <span className="text-primary text-sm">Cosmetic Dentistry Specialist</span>
           </div>
         </div>
         <p className="text-muted-foreground leading-relaxed mb-4">
@@ -40,18 +43,12 @@ export function CosmeticDentistry() {
           smile.
         </p>
         <ul className="space-y-2 text-left mb-6">
-          <li className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 inline-block" />
-            Teeth Whitening
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 inline-block" />
-            Veneers
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 inline-block" />
-            Smile Makeover
-          </li>
+          {cosmeticServices.map((service) => (
+            <li key={service.id} className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 inline-block" />
+              {service.name}
+            </li>
+          ))}
         </ul>
         {/* Team Member */}
 
@@ -59,18 +56,12 @@ export function CosmeticDentistry() {
         <div className="mt-4">
           <div className="font-bold mb-2">Pricing</div>
           <ul className="text-sm space-y-1">
-            <li className="flex justify-between">
-              <span>Teeth Whitening</span>
-              <span className="font-semibold text-primary">
-                ₱9,000 – ₱30,000+
-              </span>
-            </li>
-            <li className="flex justify-between">
-              <span>Dental Veneers</span>
-              <span className="font-semibold text-primary">
-                ₱12,000 – ₱35,000+ per tooth
-              </span>
-            </li>
+            {cosmeticServices.map((service) => (
+              <li key={service.id} className="flex justify-between">
+                <span>{service.name}</span>
+                <span className="font-semibold text-primary">{service.price}</span>
+              </li>
+            ))}
           </ul>
         </div>
       </div>

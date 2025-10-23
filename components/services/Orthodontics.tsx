@@ -1,8 +1,13 @@
 "use client"
 import { Brackets } from "lucide-react";
 import Image from "next/image";
+import { serviceCategories } from "@/lib/types/services-data";
 
 export function Orthodontics() {
+  const orthodonticServices = serviceCategories.find(cat => cat.id === "cosmetic")?.services.filter(service =>
+    service.name.toLowerCase().includes('braces') || service.name.toLowerCase().includes('veneers')
+  ) || [];
+
   return (
     <section className="w-full max-w-2xl mt-5 mb-8 mx-auto">
       <div className="space-y-4 text-center">
@@ -41,18 +46,12 @@ export function Orthodontics() {
           or modern clear aligners for both children and adults.
         </p>
         <ul className="space-y-2 text-left mb-6">
-          <li className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 inline-block" />
-            Traditional Braces
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 inline-block" />
-            Clear Aligners
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 inline-block" />
-            Retainers
-          </li>
+          {orthodonticServices.map((service) => (
+            <li key={service.id} className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 inline-block" />
+              {service.name}
+            </li>
+          ))}
         </ul>
         {/* Team Member */}
 
@@ -60,24 +59,12 @@ export function Orthodontics() {
         <div className="mt-4">
           <div className="font-bold mb-2">Pricing</div>
           <ul className="text-sm space-y-1">
-            <li className="flex justify-between">
-              <span>Traditional Metal Braces</span>
-              <span className="font-semibold text-primary">
-                ₱35,000 – ₱80,000+
-              </span>
-            </li>
-            <li className="flex justify-between">
-              <span>Ceramic / Clear Braces</span>
-              <span className="font-semibold text-primary">
-                ₱100,000 – ₱200,000+
-              </span>
-            </li>
-            <li className="flex justify-between">
-              <span>Retainers</span>
-              <span className="font-semibold text-primary">
-                ₱5,000 – ₱15,000+
-              </span>
-            </li>
+            {orthodonticServices.map((service) => (
+              <li key={service.id} className="flex justify-between">
+                <span>{service.name}</span>
+                <span className="font-semibold text-primary">{service.price}</span>
+              </li>
+            ))}
           </ul>
         </div>
       </div>

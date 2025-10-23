@@ -1,8 +1,11 @@
 "use client"
 import { Stethoscope } from "lucide-react";
 import Image from "next/image";
+import { serviceCategories } from "@/lib/types/services-data";
 
 export function PreventiveCare() {
+  const preventiveServices = serviceCategories.find(cat => cat.id === "basic")?.services || [];
+
   return (
     <section className="w-full max-w-2xl mt-5 mb-8 mx-auto">
       <div className="space-y-4 text-center">
@@ -40,38 +43,24 @@ export function PreventiveCare() {
           dental health.
         </p>
         <ul className="space-y-2 text-left mb-6">
-          <li className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 inline-block" />
-            Routine Checkups
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 inline-block" />
-            Professional Cleaning
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 inline-block" />
-            Cavity Fillings
-          </li>
+          {preventiveServices.slice(0, 3).map((service) => (
+            <li key={service.id} className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 inline-block" />
+              {service.name}
+            </li>
+          ))}
         </ul>
         {/* Team Member */}
         {/* Pricing */}
         <div className="mt-4">
           <div className="font-bold mb-2">Pricing</div>
           <ul className="text-sm space-y-1">
-            <li className="flex justify-between">
-              <span>Routine Checkups</span>
-              <span className="font-semibold text-primary">₱500 – ₱1,500</span>
-            </li>
-            <li className="flex justify-between">
-              <span>Professional Cleaning</span>
-              <span className="font-semibold text-primary">
-                ₱1,200 – ₱3,000
-              </span>
-            </li>
-            <li className="flex justify-between">
-              <span>Cavity Fillings</span>
-              <span className="font-semibold text-primary">₱800 – ₱4,500+</span>
-            </li>
+            {preventiveServices.slice(0, 3).map((service) => (
+              <li key={service.id} className="flex justify-between">
+                <span>{service.name}</span>
+                <span className="font-semibold text-primary">{service.price}</span>
+              </li>
+            ))}
           </ul>
         </div>
       </div>

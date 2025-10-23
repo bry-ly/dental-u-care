@@ -92,7 +92,7 @@ export async function requireAdmin() {
   const session = await requireAuth();
 
   if (session.user?.role !== "admin") {
-    redirect("/");
+    redirect("/admin");
   }
 
   return session;
@@ -107,7 +107,7 @@ export async function requireDentist() {
   const session = await requireAuth();
 
   if (session.user?.role !== "dentist") {
-    redirect("/");
+    redirect("/dentist");
   }
 
   return session;
@@ -123,7 +123,7 @@ export async function requireStaff() {
 
   const role = session.user?.role;
   if (role !== "admin" && role !== "dentist") {
-    redirect("/");
+    redirect("/patient");
   }
 
   return session;

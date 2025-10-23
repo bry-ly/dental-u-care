@@ -1,10 +1,11 @@
 export interface Service {
   id: string;
   name: string;
-  description: string;
+  description?: string;
   duration: number;
-  price: number;
+  price: string;
   category: string;
+  isActive: boolean;
 }
 
 export interface Dentist {
