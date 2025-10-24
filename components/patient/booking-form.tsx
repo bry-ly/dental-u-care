@@ -119,7 +119,7 @@ export default function BookingForm({ services: propServices }: BookingFormProps
     // Clinic info (static, can be replaced with config)
     const clinicPhone = "(043) 756-1234";
     const clinicEmail = "info@dentalucare.com";
-    const clinicAddress = "123 Smile Street, Lipa City, Batangas 4217";
+    const clinicAddress = "San Miguel, Puerto Princesa City, Baltan Street";
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({

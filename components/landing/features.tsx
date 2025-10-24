@@ -30,7 +30,7 @@ const Features = () => {
       icon: <UserCheck className="h-6 w-6" />,
       title: "Secure Patient Portal",
       description:
-        "Create your secure account with captcha verification. Manage your profile, medical history, and view all your appointments in one dashboard.",
+        "Create your secure account with email verification. Manage your profile, medical history, and view all your appointments in one dashboard.",
       items: ["Profile Management", "Medical History", "Appointment Overview"],
       gradient: "from-teal-500 to-cyan-500",
       bgColor: "bg-gradient-to-br from-teal-50 to-cyan-50 dark:from-teal-950/30 dark:to-cyan-950/30",
