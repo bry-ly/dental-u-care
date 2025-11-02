@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
-import { doctors } from "../lib/types/doctor";
-import { allServices } from "../lib/types/services-data";
+import { doctors } from"lib/types/doctor";
+import { allServices } from "lib/types/services-data";
 
 const prisma = new PrismaClient();
 
