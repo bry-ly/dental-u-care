@@ -78,7 +78,7 @@ const Hero = () => {
               </div>
             </div>
           </div>
-          <div className="relative h-full w-full overflow-hidden rounded-r-lg">
+          <div className="relative h-full w-full overflow-hidden rounded-r-lg sm:rounded-lg md:rounded-lg">
             <Image
               src="/smile.jpg"
               alt="Professional dental care at Dental U Care"

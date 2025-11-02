@@ -194,7 +194,7 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
       >
         <nav
           className={cn(
-            "flex items-center justify-between rounded-full px-8 py-8  transition-all duration-300 ",
+            "flex items-center justify-between rounded-full px-6 py-6  transition-all duration-300 ",
             isScrolled
               ? "border-2 border-accent dark:border-gray-900 bg-background/80 shadow-lg"
               : "border-2 border-accent dark:border-gray-800 bg-background/80 shadow-lg"
