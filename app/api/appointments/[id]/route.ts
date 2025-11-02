@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth"
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth.api.getSession({
@@ -17,9 +17,10 @@ export async function PATCH(
 
     const body = await request.json()
     const { status, cancelReason, date, timeSlot } = body
+    const { id } = await params
 
     const appointment = await prisma.appointment.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         patient: true,
         dentist: true,
@@ -36,7 +37,7 @@ export async function PATCH(
 
     // Update appointment
     const updatedAppointment = await prisma.appointment.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...(status && { status }),
         ...(cancelReason && { cancelReason }),
@@ -110,7 +111,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth.api.getSession({
@@ -121,8 +122,10 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const { id } = await params
+
     await prisma.appointment.delete({
-      where: { id: params.id },
+      where: { id },
     })
 
     return NextResponse.json({ message: "Appointment deleted successfully" })
