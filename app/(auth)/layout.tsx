@@ -1,4 +1,4 @@
-import { getServerSession } from "@/lib/get-session";
+import { getServerSession } from "@/lib/auth-session/get-session";
 import { redirect } from "next/navigation";
 import { ReactNode } from "react";
 
