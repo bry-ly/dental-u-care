@@ -10,30 +10,26 @@ import { Services } from "@/components/landing/services";
 // import { AuroraBackground } from "@/components/ui/shadcn-io/aurora-background";
 export default function Home() {
   return (
-    <main className=" py-4 max-w-7xl mx-auto relative z-10">
+    <main className=" py-4 max-w-7xl mx-auto relative z-10 justify-center px-4 sm:px-6 lg:px-8">
       <NavbarWrapper />
-      <section id="home" className="p-6 my-6">
+      <section id="home" className="py-4 my-4">
           <Hero />
       </section>
-
       <section id="about">
         <About />
       </section>
-
       <section
         id="team"
         className="rounded-2xl shadow-[0_20px_60px_-15px_rgba(251,191,36,0.5)] dark:shadow-[0_20px_60px_-15px_rgba(251,191,36,0.3)] p-8 my-8"
       >
         <Team />
       </section>
-
       <section
         id="features"
         className="rounded-2xl shadow-[0_20px_60px_-15px_rgba(249,115,22,0.5)] dark:shadow-[0_20px_60px_-15px_rgba(249,115,22,0.3)] p-8 my-8"
       >
         <Features />
       </section>
-
       <section
         id="services"
         className="rounded-2xl shadow-[0_20px_60px_-15px_rgba(59,130,246,0.5)] dark:shadow-[0_20px_60px_-15px_rgba(59,130,246,0.3)] p-8 my-8"
