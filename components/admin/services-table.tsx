@@ -67,7 +67,7 @@ type Service = {
   name: string;
   description: string;
   duration: number;
-  price: number;
+  price: string;
   category: string;
   isActive: boolean;
   createdAt: Date;
@@ -134,7 +134,9 @@ const columns: ColumnDef<Service>[] = [
     accessorKey: "price",
     header: () => <div className="text-right">Price</div>,
     cell: ({ row }) => (
-      <div className="text-right font-medium">{row.original.price}</div>
+      <div className="text-right font-medium">
+        {row.original.price || "N/A"}
+      </div>
     ),
   },
   {

@@ -26,10 +26,6 @@ export default async function ServiceManagementPage() {
   const services = servicesData.map((service) => ({
     ...service,
     description: service.description ?? "",
-    price:
-      typeof service.price === "string"
-        ? parseFloat(service.price)
-        : service.price,
   }));
 
   return (
