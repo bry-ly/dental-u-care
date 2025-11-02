@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 export default async function AppointmentManagementPage() {
   const { user } = await requireAdmin();
 
-  const rawAppointments = await prisma.appointment.findMany({
+  const appointments = await prisma.appointment.findMany({
     include: {
       patient: true,
       dentist: true,
@@ -24,14 +24,6 @@ export default async function AppointmentManagementPage() {
       date: "desc",
     },
   });
-
-  const appointments = rawAppointments.map((appointment) => ({
-    ...appointment,
-    service: {
-      ...appointment.service,
-      price: Number(appointment.service.price),
-    },
-  }));
 
   return (
     <SidebarProvider
