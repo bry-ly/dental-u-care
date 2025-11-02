@@ -1,75 +1,76 @@
-"use client"
+"use client";
 
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
   Field,
   FieldDescription,
   FieldGroup,
   FieldLabel,
   FieldSeparator,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
-import Link from "next/link"
-import { useState } from "react"
-import { authClient } from "@/lib/auth-client"
-import { toast } from "sonner"
-import { useRouter } from "next/navigation"
-import { Loader2 } from "lucide-react"
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import Link from "next/link";
+import { useState } from "react";
+import { authClient } from "@/lib/auth-session/auth-client";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 
 export function SignupForm({
   className,
   ...props
 }: React.ComponentProps<"form">) {
-  const router = useRouter()
-  const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirm, setShowConfirm] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false)
-  const [showVerifyNotice, setShowVerifyNotice] = useState(false)
-  const [resendLoading, setResendLoading] = useState(false)
-  const [resendSuccess, setResendSuccess] = useState(false)
+  const router = useRouter();
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [showVerifyNotice, setShowVerifyNotice] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
 
   function togglePassword(e: React.MouseEvent<HTMLButtonElement>) {
-    e.preventDefault()
-    setShowPassword((s) => !s)
+    e.preventDefault();
+    setShowPassword((s) => !s);
   }
 
   function toggleConfirm(e: React.MouseEvent<HTMLButtonElement>) {
-    e.preventDefault()
-    setShowConfirm((s) => !s)
+    e.preventDefault();
+    setShowConfirm((s) => !s);
   }
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setIsLoading(true)
+    e.preventDefault();
+    setIsLoading(true);
 
     // Validate passwords match
     if (password !== confirmPassword) {
       toast.error("Passwords don't match", {
         description: "Please make sure both passwords are the same.",
-      })
-      setIsLoading(false)
-      return
+      });
+      setIsLoading(false);
+      return;
     }
     if (!/[^A-Za-z0-9]/.test(password)) {
       toast.error("Password must contain at least one special character", {
-        description: "Please include at least one special character in your password.",
-      })
-      setIsLoading(false)
-      return
+        description:
+          "Please include at least one special character in your password.",
+      });
+      setIsLoading(false);
+      return;
     }
     // Validate password length
     if (password.length < 8) {
       toast.error("Password too short", {
         description: "Password must be at least 8 characters long.",
-      })
-      setIsLoading(false)
-      return
+      });
+      setIsLoading(false);
+      return;
     }
 
     try {
@@ -77,116 +78,106 @@ export function SignupForm({
         email,
         password,
         name,
-      })
+      });
 
       if (error) {
         if (error.status === 403) {
-          setShowVerifyNotice(true)
+          setShowVerifyNotice(true);
           toast.error("Please verify your email address", {
             description: "Check your inbox for the verification link.",
-          })
+          });
         } else {
-          setShowVerifyNotice(false)
+          setShowVerifyNotice(false);
           toast.error("Sign up failed", {
-            description: error.message || "Unable to create account. Please try again.",
-          })
+            description:
+              error.message || "Unable to create account. Please try again.",
+          });
         }
       } else {
-        setShowVerifyNotice(false)
+        setShowVerifyNotice(false);
         toast.success("Account created successfully!", {
           description: "Please check your email to verify your account.",
-        })
+        });
         // Redirect to login page after successful signup
         setTimeout(() => {
-          router.push("/sign-in")
-        }, 2000)
+          router.push("/sign-in");
+        }, 2000);
       }
     } catch {
       toast.error("An unexpected error occurred", {
         description: "Please try again later.",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  async function handleResendVerification(e: React.MouseEvent<HTMLButtonElement>) {
-    e.preventDefault()
-    setResendLoading(true)
-    setResendSuccess(false)
-    try {
-      const res = await fetch("/api/auth/resend-verification", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      })
-      if (res.ok) {
-        setResendSuccess(true)
-        toast.success("Verification email sent!", {
-          description: "Check your inbox for the verification link.",
-        })
-      } else {
-        toast.error("Failed to resend verification email.")
-      }
-    } catch {
-      toast.error("Failed to resend verification email.")
-    } finally {
-      setResendLoading(false)
-    }
-  }
   }
 
-  async function handleResendVerification(e: React.MouseEvent<HTMLButtonElement>) {
-    e.preventDefault()
-    setResendLoading(true)
-    setResendSuccess(false)
+  async function handleResendVerification(
+    e: React.MouseEvent<HTMLButtonElement>
+  ) {
+    e.preventDefault();
+    setResendLoading(true);
+    setResendSuccess(false);
     try {
       const res = await fetch("/api/auth/resend-verification", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
-      })
+      });
       if (res.ok) {
-        setResendSuccess(true)
+        setResendSuccess(true);
         toast.success("Verification email sent!", {
           description: "Check your inbox for the verification link.",
-        })
+        });
       } else {
-        toast.error("Failed to resend verification email.")
+        toast.error("Failed to resend verification email.");
       }
     } catch {
-      toast.error("Failed to resend verification email.")
+      toast.error("Failed to resend verification email.");
     } finally {
-      setResendLoading(false)
+      setResendLoading(false);
     }
   }
 
   async function handleGoogleSignUp() {
     try {
-      setIsGoogleLoading(true)
+      setIsGoogleLoading(true);
       await authClient.signIn.social({
         provider: "google",
         callbackURL: "/",
-      })
+      });
     } catch (error) {
-      console.error("Google sign-up failed:", error)
+      console.error("Google sign-up failed:", error);
       toast.error("Google sign-up failed", {
         description: "Please try again.",
-      })
-      setIsGoogleLoading(false)
+      });
+      setIsGoogleLoading(false);
     }
   }
 
   return (
-    <form className={cn("flex flex-col gap-3", className)} {...props} onSubmit={handleSubmit}>
+    <form
+      className={cn("flex flex-col gap-3", className)}
+      {...props}
+      onSubmit={handleSubmit}
+    >
       {showVerifyNotice && (
         <div className="bg-yellow-100 border border-yellow-300 text-yellow-800 rounded p-3 text-center mb-2">
-          <div className="mb-2">Your email is not verified. Please check your inbox for the verification link.</div>
+          <div className="mb-2">
+            Your email is not verified. Please check your inbox for the
+            verification link.
+          </div>
           <button
             type="button"
             className="underline text-sm text-blue-700 disabled:opacity-60"
             onClick={handleResendVerification}
             disabled={resendLoading || resendSuccess}
           >
-            {resendLoading ? "Resending..." : resendSuccess ? "Verification Sent!" : "Resend Verification Email"}
+            {resendLoading
+              ? "Resending..."
+              : resendSuccess
+                ? "Verification Sent!"
+                : "Resend Verification Email"}
           </button>
         </div>
       )}
@@ -198,23 +189,27 @@ export function SignupForm({
           </p>
         </div>
         <Field className="gap-1">
-          <FieldLabel htmlFor="name" className="text-xs">Full Name</FieldLabel>
-          <Input 
-            id="name" 
-            type="text" 
-            placeholder="Name" 
+          <FieldLabel htmlFor="name" className="text-xs">
+            Full Name
+          </FieldLabel>
+          <Input
+            id="name"
+            type="text"
+            placeholder="Name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             disabled={isLoading}
-            required 
+            required
           />
         </Field>
         <Field className="gap-1">
-          <FieldLabel htmlFor="email" className="text-xs">Email</FieldLabel>
-          <Input 
-            id="email" 
-            type="email" 
-            placeholder="e.g m@gmail.com" 
+          <FieldLabel htmlFor="email" className="text-xs">
+            Email
+          </FieldLabel>
+          <Input
+            id="email"
+            type="email"
+            placeholder="e.g m@gmail.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             disabled={isLoading}
@@ -226,7 +221,9 @@ export function SignupForm({
           </FieldDescription>
         </Field>
         <Field className="gap-1">
-          <FieldLabel htmlFor="password" className="text-xs">Password</FieldLabel>
+          <FieldLabel htmlFor="password" className="text-xs">
+            Password
+          </FieldLabel>
           <div className="relative">
             <Input
               id="password"
@@ -245,13 +242,42 @@ export function SignupForm({
               className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center p-1 text-sm opacity-70 hover:opacity-100"
             >
               {showPassword ? (
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-5.523 0-10-4.477-10-10a9.97 9.97 0 012.175-5.875M6.343 6.343A9.97 9.97 0 0112 5c5.523 0 10 4.477 10 10 0 1.042-.161 2.045-.463 2.998M3 3l18 18" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M13.875 18.825A10.05 10.05 0 0112 19c-5.523 0-10-4.477-10-10a9.97 9.97 0 012.175-5.875M6.343 6.343A9.97 9.97 0 0112 5c5.523 0 10 4.477 10 10 0 1.042-.161 2.045-.463 2.998M3 3l18 18"
+                  />
                 </svg>
               ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                  />
                 </svg>
               )}
             </button>
@@ -261,7 +287,9 @@ export function SignupForm({
           </FieldDescription>
         </Field>
         <Field className="gap-1">
-          <FieldLabel htmlFor="confirm-password" className="text-xs">Confirm Password</FieldLabel>
+          <FieldLabel htmlFor="confirm-password" className="text-xs">
+            Confirm Password
+          </FieldLabel>
           <div className="relative">
             <Input
               id="confirm-password"
@@ -274,27 +302,64 @@ export function SignupForm({
               className="h-9"
             />
             <button
-              aria-label={showConfirm ? "Hide confirm password" : "Show confirm password"}
+              aria-label={
+                showConfirm ? "Hide confirm password" : "Show confirm password"
+              }
               onClick={toggleConfirm}
               type="button"
               className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center p-1 text-sm opacity-70 hover:opacity-100"
             >
               {showConfirm ? (
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-5.523 0-10-4.477-10-10a9.97 9.97 0 012.175-5.875M6.343 6.343A9.97 9.97 0 0112 5c5.523 0 10 4.477 10 10 0 1.042-.161 2.045-.463 2.998M3 3l18 18" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M13.875 18.825A10.05 10.05 0 0112 19c-5.523 0-10-4.477-10-10a9.97 9.97 0 012.175-5.875M6.343 6.343A9.97 9.97 0 0112 5c5.523 0 10 4.477 10 10 0 1.042-.161 2.045-.463 2.998M3 3l18 18"
+                  />
                 </svg>
               ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                  />
                 </svg>
               )}
             </button>
           </div>
-          <FieldDescription className="text-xs leading-tight">Please confirm your password.</FieldDescription>
+          <FieldDescription className="text-xs leading-tight">
+            Please confirm your password.
+          </FieldDescription>
         </Field>
         <Field className="gap-1">
-          <Button type="submit" disabled={isLoading || isGoogleLoading} className="h-9">
+          <Button
+            type="submit"
+            disabled={isLoading || isGoogleLoading}
+            className="h-9"
+          >
             {isLoading ? (
               <>
                 <Loader2 className="size-4 animate-spin mr-2" />
@@ -307,8 +372,8 @@ export function SignupForm({
         </Field>
         <FieldSeparator>Or continue with</FieldSeparator>
         <Field>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             type="button"
             onClick={handleGoogleSignUp}
             disabled={isLoading || isGoogleLoading}
