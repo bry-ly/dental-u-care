@@ -47,10 +47,11 @@ model User {
   address               String?
   dateOfBirth           DateTime?
   medicalHistory        String?
+  stripeCustomerId      String? // Stripe customer ID
   // Dentist-specific fields
   specialization        String?
   qualifications        String?
-  experience            String?
+  experience            Int? // Years of experience
   workingHours          Json? // {monday: {start: "9:00", end: "17:00"}, ...}
   isAvailable           Boolean        @default(true)
   createdAt             DateTime       @default(now())
@@ -69,11 +70,11 @@ model User {
 }
 
 model Service {
-  id           String        @id @default(auto()) @map("_id") @db.ObjectId
+  id           String        @id @map("_id") // Use custom ID from seed data
   name         String
-  description  String
+  description  String?
   duration     Int // in minutes
-  price        Float
+  price        String // Price range or single price (e.g., "₱500 – ₱1,500" or "₱1,500")
   category     String
   isActive     Boolean       @default(true)
   createdAt    DateTime      @default(now())
@@ -87,7 +88,7 @@ model Appointment {
   id           String            @id @default(auto()) @map("_id") @db.ObjectId
   patientId    String
   dentistId    String
-  serviceId    String            @db.ObjectId
+  serviceId    String // Changed to String to match Service.id
   date         DateTime
   timeSlot     String // e.g., "09:00-10:00"
   status       AppointmentStatus @default(pending)
@@ -105,19 +106,26 @@ model Appointment {
 }
 
 model Payment {
-  id            String        @id @default(auto()) @map("_id") @db.ObjectId
-  appointmentId String        @unique @db.ObjectId
-  userId        String
-  amount        Float
-  method        PaymentMethod
-  status        PaymentStatus @default(pending)
-  transactionId String?
-  paidAt        DateTime?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  id                    String        @id @default(auto()) @map("_id") @db.ObjectId
+  appointmentId         String        @unique @db.ObjectId
+  userId                String
+  amount                Float
+  method                PaymentMethod
+  status                PaymentStatus @default(pending)
+  transactionId         String?
+  paidAt                DateTime?
+  stripeCustomerId      String?
+  stripeServicesId      String?
+  stripePaymentIntentId String?
+  stripePriceId         String?
+  stripeSubscriptionId  String?
+  stripeInvoiceId       String?
+  stripeRefundId        String?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
   // Relations
-  appointment   Appointment   @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
-  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  appointment           Appointment   @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  user                  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("payment")
 }
@@ -196,6 +204,25 @@ model Verification {
   updatedAt  DateTime @default(now()) @updatedAt
 
   @@map("verification")
+}
+
+model Subscription {
+  id                   String    @id @default(auto()) @map("_id") @db.ObjectId
+  plan                 String
+  referenceId          String    @unique
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  status               String    @default("incomplete")
+  periodStart          DateTime?
+  periodEnd            DateTime?
+  cancelAtPeriodEnd    Boolean   @default(false)
+  seats                Int?
+  trialStart           DateTime?
+  trialEnd             DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@map("subscription")
 }
 
 
