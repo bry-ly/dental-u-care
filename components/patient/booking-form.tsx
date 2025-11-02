@@ -1,5 +1,7 @@
 "use client";
 
+import type React from "react";
+
 import { useState, useMemo, useEffect } from "react";
 import { toast } from "sonner";
 import {
@@ -47,7 +49,7 @@ import {
 } from "@/components/ui/input-group";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface BookingFormProps {
   services?: Array<{
@@ -104,7 +106,6 @@ const DENTAL_HISTORY = [
   "Teeth Whitening",
 ];
 
-// Optimized Step Configuration
 const STEP_CONFIG = [
   {
     id: 0,
@@ -145,7 +146,7 @@ const STEP_CONFIG = [
 
 type ServiceSelection = { id: string; name: string; qty: number };
 
-export default function BookingFormOptimized({
+export default function BookingForm({
   services: propServices = [],
   dentists: propDentists = [],
   patientId,
@@ -163,7 +164,6 @@ export default function BookingFormOptimized({
       propServices && propServices.length > 0
         ? propServices.map((service) => ({
             ...service,
-            // Keep price as-is (string or number) - will be parsed later
             price: service.price,
             duration:
               typeof service.duration === "string"
@@ -177,13 +177,10 @@ export default function BookingFormOptimized({
   const dentists = propDentists && propDentists.length > 0 ? propDentists : [];
 
   const [formData, setFormData] = useState<{
-    // Services & Appointment
     services: ServiceSelection[];
     preferredDate: string;
     preferredTime: string;
     dentistId: string;
-
-    // Personal Info
     firstName: string;
     lastName: string;
     dateOfBirth: string;
@@ -194,8 +191,6 @@ export default function BookingFormOptimized({
     address: string;
     city: string;
     postalCode: string;
-
-    // Medical History (Conditional)
     medicalConditions: string[];
     otherConditions: string;
     currentMedications: string[];
@@ -204,8 +199,6 @@ export default function BookingFormOptimized({
     lastDentalVisit: string;
     dentalHistory: string[];
     hasMedicalUpdates: string;
-
-    // Additional
     specialRequests: string;
     insuranceProvider: string;
     insurancePolicyNumber: string;
@@ -244,27 +237,6 @@ export default function BookingFormOptimized({
     smsReminders: true,
     consentToTreatment: false,
   });
-
-  // Load saved form data on mount
-  useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setFormData((prev) => ({ ...prev, ...parsed }));
-      } catch (e) {
-        console.error("Failed to load saved form data", e);
-      }
-    }
-  }, [STORAGE_KEY]);
-
-  // Auto-save form data
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [formData, STORAGE_KEY]);
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({
@@ -314,22 +286,14 @@ export default function BookingFormOptimized({
     });
   };
 
-  // Helper function to parse price from string or number (e.g., "₱35,000 – ₱80,000+" -> 35000)
   const parsePrice = (price: string | number): number => {
     if (!price) return 0;
-
-    // If it's already a number, return it
     if (typeof price === "number") return price;
-
-    // Handle "Contact for pricing" or similar
     if (price.toLowerCase().includes("contact")) return 0;
-
-    // Extract first number from price string (e.g., "₱1,500 – ₱3,000" -> 1500)
     const match = price.match(/₱?([\d,]+)/);
     if (match) {
-      return parseFloat(match[1].replace(/,/g, ""));
+      return Number.parseFloat(match[1].replace(/,/g, ""));
     }
-
     return 0;
   };
 
@@ -360,18 +324,17 @@ export default function BookingFormOptimized({
 
   const selectedDentist = dentists.find((d) => d.id === formData.dentistId);
 
-  // Validation for each step
   const validateStep = (step: number): boolean => {
     switch (step) {
-      case 0: // Services
+      case 0:
         return formData.services.filter((s) => s.qty > 0).length > 0;
-      case 1: // Date & Time
+      case 1:
         return !!(
           formData.preferredDate &&
           formData.preferredTime &&
           formData.dentistId
         );
-      case 2: // Personal Info
+      case 2:
         return !!(
           formData.firstName &&
           formData.lastName &&
@@ -380,9 +343,9 @@ export default function BookingFormOptimized({
           formData.dateOfBirth &&
           formData.gender
         );
-      case 3: // Medical History (optional, always valid)
+      case 3:
         return true;
-      case 4: // Review
+      case 4:
         return formData.consentToTreatment;
       default:
         return false;
@@ -393,7 +356,6 @@ export default function BookingFormOptimized({
 
   const handleNext = () => {
     if (canProceed && currentStep < STEP_CONFIG.length - 1) {
-      // Skip medical history if not needed
       if (
         currentStep === 2 &&
         !showMedicalHistory &&
@@ -408,7 +370,6 @@ export default function BookingFormOptimized({
 
   const handleBack = () => {
     if (currentStep > 0) {
-      // Skip medical history when going back
       if (
         currentStep === 4 &&
         !showMedicalHistory &&
@@ -511,10 +472,8 @@ export default function BookingFormOptimized({
         throw new Error(data.error || "Failed to book appointment");
       }
 
-      // Clear saved form data on successful submission
       localStorage.removeItem(STORAGE_KEY);
 
-      // Show success message with toast
       toast.success(
         data.message ||
           "Appointment booked successfully! Check your email for confirmation.",
@@ -524,7 +483,6 @@ export default function BookingFormOptimized({
         }
       );
 
-      // Redirect to appointments page after a short delay
       setTimeout(() => {
         window.location.href = "/patient/appointments";
       }, 2000);
@@ -540,37 +498,74 @@ export default function BookingFormOptimized({
     }
   };
 
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setFormData((prev) => ({ ...prev, ...parsed }));
+      } catch (e) {
+        console.error("Failed to load saved form data", e);
+      }
+    }
+  }, [STORAGE_KEY]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [formData, STORAGE_KEY]);
+
   const progressPercent = ((currentStep + 1) / STEP_CONFIG.length) * 100;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-slate-950 dark:to-slate-900">
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <Card className="border-blue-200 dark:border-slate-800 shadow-2xl overflow-hidden">
-          {/* Header */}
-          <CardHeader className="space-y-4 pb-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
-            <div className="flex items-center justify-center mb-2">
-              <div className="h-16 w-16 rounded-full bg-white/20 flex items-center justify-center backdrop-blur-sm">
-                <Stethoscope className="h-8 w-8" />
+    <div className="min-h-screen bg-background py-8 px-4">
+      <div className="max-w-4xl mx-auto">
+        <Card
+          className="border-2 border-border shadow-xl"
+          style={{
+            borderRadius: "var(--radius-xl)",
+          }}
+        >
+          <CardHeader className="space-y-5 pb-8 border-b-2 border-border bg-accent/30">
+            <div className="flex items-center justify-center mb-3">
+              <div
+                className="h-16 w-16 bg-primary flex items-center justify-center shadow-lg ring-4 ring-primary/20"
+                style={{
+                  borderRadius: "var(--radius-lg)",
+                }}
+              >
+                <Stethoscope className="h-8 w-8 text-primary-foreground" />
               </div>
             </div>
-            <CardTitle className="text-3xl md:text-4xl font-bold text-center">
-              Book Your Appointment
-            </CardTitle>
-            <CardDescription className="text-center text-lg text-blue-100">
-              Complete in just a few minutes
-            </CardDescription>
+            <div className="space-y-3 text-center">
+              <CardTitle className="text-3xl md:text-4xl font-bold text-foreground tracking-tight">
+                Book Your Appointment
+              </CardTitle>
+              <CardDescription className="text-base md:text-lg text-muted-foreground font-medium">
+                Complete in just a few minutes
+              </CardDescription>
+            </div>
 
-            {/* Progress Bar */}
-            <div className="w-full mt-6">
-              <div className="h-3 rounded-full bg-white/20 overflow-hidden backdrop-blur-sm">
+            <div className="w-full pt-3">
+              <div
+                className="h-3 bg-muted overflow-hidden shadow-inner"
+                style={{
+                  borderRadius: "var(--radius-lg)",
+                }}
+              >
                 <div
-                  className="h-3 rounded-full bg-white transition-all duration-500 ease-out"
-                  style={{ width: `${progressPercent}%` }}
+                  className="h-3 bg-gradient-to-r from-primary to-primary/80 transition-all duration-500 ease-out shadow-sm"
+                  style={{
+                    width: `${progressPercent}%`,
+                    borderRadius: "var(--radius-lg)",
+                  }}
                 />
               </div>
 
               {/* Step Indicators - Desktop */}
-              <div className="hidden md:flex justify-between mt-4 gap-2">
+              <div className="hidden md:flex justify-between mt-8 gap-3">
                 {STEP_CONFIG.map((step, idx) => {
                   const isActive = idx === currentStep;
                   const isCompleted = idx < currentStep;
@@ -579,18 +574,22 @@ export default function BookingFormOptimized({
                   return (
                     <div
                       key={step.id}
-                      className="flex-1 flex flex-col items-center"
+                      className="flex-1 flex flex-col items-center gap-2"
                     >
                       <div
                         className={cn(
-                          "h-10 w-10 rounded-full flex items-center justify-center transition-all duration-300 mb-2",
+                          "h-12 w-12 flex items-center justify-center transition-all duration-300 border-2 shadow-md",
                           isActive &&
-                            "bg-white text-blue-600 scale-110 shadow-lg",
-                          isCompleted && "bg-white/80 text-blue-600",
+                            "bg-primary text-primary-foreground border-primary scale-110 shadow-lg ring-4 ring-primary/20",
+                          isCompleted &&
+                            "bg-accent text-primary border-primary/50",
                           !isActive &&
                             !isCompleted &&
-                            "bg-white/20 text-white/60"
+                            "bg-muted text-muted-foreground border-border hover:border-primary/30"
                         )}
+                        style={{
+                          borderRadius: "var(--radius-md)",
+                        }}
                       >
                         {isCompleted ? (
                           <Check className="h-5 w-5" />
@@ -600,10 +599,10 @@ export default function BookingFormOptimized({
                       </div>
                       <span
                         className={cn(
-                          "text-xs font-medium text-center transition-all duration-300",
-                          isActive && "text-white font-bold",
-                          isCompleted && "text-blue-100",
-                          !isActive && !isCompleted && "text-blue-200/60"
+                          "text-xs font-semibold text-center transition-colors",
+                          isActive && "text-primary",
+                          isCompleted && "text-primary/70",
+                          !isActive && !isCompleted && "text-muted-foreground"
                         )}
                       >
                         {step.title}
@@ -614,19 +613,14 @@ export default function BookingFormOptimized({
               </div>
 
               {/* Step Indicators - Mobile */}
-              <div className="flex md:hidden justify-center mt-4">
-                <div className="flex items-center gap-2">
-                  {STEP_CONFIG.map((step, idx) => (
-                    <div
-                      key={step.id}
-                      className={cn(
-                        "h-2 rounded-full transition-all duration-300",
-                        idx === currentStep && "w-8 bg-white",
-                        idx < currentStep && "w-2 bg-white/80",
-                        idx > currentStep && "w-2 bg-white/20"
-                      )}
-                    />
-                  ))}
+              <div className="flex md:hidden justify-center mt-5">
+                <div
+                  className="px-5 py-2 bg-primary/10 text-primary font-bold text-sm shadow-sm border border-primary/30"
+                  style={{
+                    borderRadius: "var(--radius-lg)",
+                  }}
+                >
+                  Step {currentStep + 1} of {STEP_CONFIG.length}
                 </div>
               </div>
             </div>
@@ -637,104 +631,134 @@ export default function BookingFormOptimized({
               {/* Step 0: Service Selection */}
               {currentStep === 0 && (
                 <div className="space-y-6 animate-in fade-in duration-500">
-                  <div className="text-center mb-6">
-                    <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                  <div className="space-y-3 mb-8">
+                    <h3 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">
                       Select Your Service
                     </h3>
-                    <p className="text-slate-600 dark:text-slate-400 mt-2">
+                    <p className="text-base text-muted-foreground font-medium">
                       Choose the dental service you need
                     </p>
+                    <div
+                      className="h-1 w-20 bg-gradient-to-r from-primary to-primary/50"
+                      style={{
+                        borderRadius: "var(--radius-lg)",
+                      }}
+                    />
                   </div>
 
                   {services.length > 0 ? (
-                    <div className="grid grid-cols-1 gap-4">
-                      {services.map((service) => {
-                        const isSelected = formData.services.some(
-                          (s) => s.id === service.id && s.qty > 0
-                        );
-
-                        return (
-                          <div
-                            key={service.id}
-                            onClick={() =>
-                              handleServiceChange(
-                                service.id,
-                                isSelected ? 0 : 1
-                              )
-                            }
-                            className={cn(
-                              "relative p-5 border-2 rounded-xl cursor-pointer transition-all duration-200",
-                              "hover:shadow-lg hover:-translate-y-0.5",
-                              isSelected
-                                ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30 shadow-md"
-                                : "border-slate-200 dark:border-slate-700 hover:border-blue-300"
-                            )}
+                    <Tabs
+                      defaultValue={services[0]?.category || "all"}
+                      className="w-full"
+                    >
+                      <TabsList className="w-full flex-wrap h-auto">
+                        {Array.from(
+                          new Set(services.map((s) => s.category))
+                        ).map((category) => (
+                          <TabsTrigger
+                            key={category}
+                            value={category}
+                            className="flex-1 min-w-[120px]"
                           >
-                            {isSelected && (
-                              <div className="absolute top-3 right-3">
-                                <div className="h-6 w-6 rounded-full bg-blue-600 flex items-center justify-center">
-                                  <Check className="h-4 w-4 text-white" />
-                                </div>
-                              </div>
-                            )}
+                            {category}
+                          </TabsTrigger>
+                        ))}
+                      </TabsList>
 
-                            <div className="flex items-start gap-4">
-                              <div
-                                className={cn(
-                                  "h-12 w-12 rounded-lg flex items-center justify-center flex-shrink-0",
-                                  isSelected
-                                    ? "bg-blue-600"
-                                    : "bg-slate-100 dark:bg-slate-800"
-                                )}
-                              >
-                                <Stethoscope
-                                  className={cn(
-                                    "h-6 w-6",
-                                    isSelected
-                                      ? "text-white"
-                                      : "text-slate-600 dark:text-slate-400"
-                                  )}
-                                />
-                              </div>
+                      {Array.from(new Set(services.map((s) => s.category))).map(
+                        (category) => (
+                          <TabsContent
+                            key={category}
+                            value={category}
+                            className="mt-4"
+                          >
+                            <div className="space-y-3">
+                              {services
+                                .filter(
+                                  (service) => service.category === category
+                                )
+                                .map((service) => {
+                                  const isSelected = formData.services.some(
+                                    (s) => s.id === service.id && s.qty > 0
+                                  );
 
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-start justify-between gap-2 mb-2">
-                                  <h4 className="font-semibold text-lg text-slate-900 dark:text-slate-100">
-                                    {service.name}
-                                  </h4>
-                                  <Badge
-                                    variant="secondary"
-                                    className="flex-shrink-0"
-                                  >
-                                    {service.category}
-                                  </Badge>
-                                </div>
+                                  return (
+                                    <div
+                                      key={service.id}
+                                      onClick={() =>
+                                        handleServiceChange(
+                                          service.id,
+                                          isSelected ? 0 : 1
+                                        )
+                                      }
+                                      className={cn(
+                                        "relative p-5 border-2 cursor-pointer transition-all duration-200",
+                                        isSelected
+                                          ? "border-primary bg-accent shadow-lg ring-2 ring-primary/20"
+                                          : "border-border hover:border-primary/60 hover:bg-accent/30"
+                                      )}
+                                      style={{
+                                        borderRadius: "var(--radius-md)",
+                                      }}
+                                    >
+                                      {isSelected && (
+                                        <div className="absolute top-4 right-4">
+                                          <div className="h-7 w-7 rounded-full bg-primary flex items-center justify-center shadow-md ring-2 ring-primary/30">
+                                            <Check className="h-4 w-4 text-primary-foreground" />
+                                          </div>
+                                        </div>
+                                      )}
 
-                                {service.description && (
-                                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
-                                    {service.description}
-                                  </p>
-                                )}
+                                      <div className="flex items-start gap-4 pr-10">
+                                        <div
+                                          className={cn(
+                                            "h-14 w-14 flex items-center justify-center flex-shrink-0 transition-colors duration-200",
+                                            isSelected
+                                              ? "bg-primary text-primary-foreground shadow-lg"
+                                              : "bg-muted text-muted-foreground"
+                                          )}
+                                          style={{
+                                            borderRadius: "var(--radius-md)",
+                                          }}
+                                        >
+                                          <Stethoscope className="h-7 w-7" />
+                                        </div>
 
-                                <div className="flex items-center justify-between text-sm">
-                                  <div className="flex items-center gap-4">
-                                    <span className="flex items-center gap-1 text-slate-600 dark:text-slate-400">
-                                      <Clock className="h-4 w-4" />
-                                      {service.duration} min
-                                    </span>
-                                  </div>
-                                  <span className="text-xl font-bold text-blue-600 dark:text-blue-400">
-                                    {typeof service.price === "number"
-                                      ? `₱${service.price.toLocaleString()}`
-                                      : service.price}
-                                  </span>
-                                </div>
-                              </div>
+                                        <div className="flex-1 min-w-0">
+                                          <h4 className="font-semibold text-lg mb-1.5 text-foreground">
+                                            {service.name}
+                                          </h4>
+
+                                          {service.description && (
+                                            <p className="text-sm text-muted-foreground mb-3 line-clamp-2 leading-relaxed">
+                                              {service.description}
+                                            </p>
+                                          )}
+
+                                          <div className="flex items-center gap-5 text-sm">
+                                            <span className="flex items-center gap-2 text-muted-foreground font-medium">
+                                              <Clock className="h-4 w-4 text-primary/70" />
+                                              <span className="tracking-wide">
+                                                {service.duration} min
+                                              </span>
+                                            </span>
+                                            <div className="h-4 w-px bg-border" />
+                                            <span className="font-bold text-primary text-base">
+                                              {typeof service.price === "number"
+                                                ? `₱${service.price.toLocaleString()}`
+                                                : service.price}
+                                            </span>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
                             </div>
-                          </div>
-                        );
-                      })}
-                    </div>
+                          </TabsContent>
+                        )
+                      )}
+                    </Tabs>
                   ) : (
                     <Alert>
                       <AlertCircle className="h-4 w-4" />
@@ -745,33 +769,42 @@ export default function BookingFormOptimized({
                   )}
 
                   {formData.services.filter((s) => s.qty > 0).length > 0 && (
-                    <div className="mt-6 p-5 bg-blue-50 dark:bg-blue-950/30 rounded-xl border-2 border-blue-200 dark:border-blue-900">
-                      <div className="flex items-center gap-2 mb-3">
-                        <CheckCircle className="h-5 w-5 text-blue-600" />
-                        <h4 className="font-semibold text-blue-900 dark:text-blue-100">
-                          Selected Service
+                    <div
+                      className="mt-6 p-5 bg-accent/80 border-2 border-primary/30 shadow-lg animate-in slide-in-from-bottom duration-300"
+                      style={{
+                        borderRadius: "var(--radius-lg)",
+                      }}
+                    >
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
+                          <CheckCircle className="h-5 w-5 text-primary-foreground" />
+                        </div>
+                        <h4 className="font-bold text-base text-foreground">
+                          Selected Services
                         </h4>
                       </div>
-                      {formData.services
-                        .filter((s) => s.qty > 0)
-                        .map((s) => {
-                          const service = services.find(
-                            (svc) => svc.id === s.id
-                          );
-                          return (
-                            <div
-                              key={s.id}
-                              className="flex justify-between items-center text-blue-900 dark:text-blue-100"
-                            >
-                              <span className="font-medium">
-                                {service?.name}
-                              </span>
-                              <span className="font-bold">
-                                ₱{service?.price.toLocaleString()}
-                              </span>
-                            </div>
-                          );
-                        })}
+                      <div className="space-y-2">
+                        {formData.services
+                          .filter((s) => s.qty > 0)
+                          .map((s) => {
+                            const service = services.find(
+                              (svc) => svc.id === s.id
+                            );
+                            return (
+                              <div
+                                key={s.id}
+                                className="flex justify-between items-center p-3 bg-background/50 rounded-lg"
+                              >
+                                <span className="font-medium text-foreground">
+                                  {service?.name}
+                                </span>
+                                <span className="font-bold text-primary">
+                                  ₱{service?.price.toLocaleString()}
+                                </span>
+                              </div>
+                            );
+                          })}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -780,18 +813,19 @@ export default function BookingFormOptimized({
               {/* Step 1: Date & Time Selection */}
               {currentStep === 1 && (
                 <div className="space-y-6 animate-in fade-in duration-500">
-                  <div className="text-center mb-6">
-                    <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                  <div className="space-y-2 mb-6">
+                    <h3 className="text-xl font-semibold">
                       Choose Date & Time
                     </h3>
-                    <p className="text-slate-600 dark:text-slate-400 mt-2">
+                    <p className="text-muted-foreground">
                       Select your preferred appointment schedule
                     </p>
                   </div>
 
                   <Field>
                     <FieldLabel>
-                      Preferred Dentist <span className="text-red-500">*</span>
+                      Preferred Dentist{" "}
+                      <span className="text-destructive">*</span>
                     </FieldLabel>
                     <FieldContent>
                       <RadioGroup
@@ -799,17 +833,17 @@ export default function BookingFormOptimized({
                         onValueChange={(value) =>
                           handleInputChange("dentistId", value)
                         }
-                        className="space-y-3"
+                        className="space-y-2"
                       >
                         {dentists.map((dentist) => (
                           <label
                             key={dentist.id}
                             className={cn(
-                              "flex items-center gap-4 p-4 border-2 rounded-xl cursor-pointer transition-all",
-                              "hover:shadow-md hover:border-blue-300",
+                              "flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-colors",
+                              "hover:bg-accent/30 ",
                               formData.dentistId === dentist.id
-                                ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30"
-                                : "border-slate-200 dark:border-slate-700"
+                                ? "border-foreground bg-secondary/20"
+                                : "border-border"
                             )}
                           >
                             <RadioGroupItem
@@ -817,11 +851,11 @@ export default function BookingFormOptimized({
                               className="flex-shrink-0"
                             />
                             <div className="flex-1">
-                              <p className="font-semibold text-slate-900 dark:text-slate-100">
+                              <p className="font-medium text-sm">
                                 {dentist.name}
                               </p>
                               {dentist.specialization && (
-                                <p className="text-sm text-slate-600 dark:text-slate-400">
+                                <p className="text-xs text-muted-foreground">
                                   {dentist.specialization}
                                 </p>
                               )}
@@ -835,7 +869,8 @@ export default function BookingFormOptimized({
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <Field>
                       <FieldLabel>
-                        Preferred Date <span className="text-red-500">*</span>
+                        Preferred Date{" "}
+                        <span className="text-destructive">*</span>
                       </FieldLabel>
                       <FieldContent>
                         <InputGroup>
@@ -850,7 +885,6 @@ export default function BookingFormOptimized({
                             }
                             min={new Date().toISOString().split("T")[0]}
                             required
-                            className="text-base"
                           />
                         </InputGroup>
                       </FieldContent>
@@ -858,7 +892,8 @@ export default function BookingFormOptimized({
 
                     <Field>
                       <FieldLabel>
-                        Preferred Time <span className="text-red-500">*</span>
+                        Preferred Time{" "}
+                        <span className="text-destructive">*</span>
                       </FieldLabel>
                       <FieldContent>
                         <InputGroup>
@@ -872,16 +907,15 @@ export default function BookingFormOptimized({
                               handleInputChange("preferredTime", e.target.value)
                             }
                             required
-                            className="text-base"
                           />
                         </InputGroup>
                       </FieldContent>
                     </Field>
                   </div>
 
-                  <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-950/30">
-                    <AlertCircle className="h-4 w-4 text-blue-600" />
-                    <AlertDescription className="text-blue-800 dark:text-blue-200">
+                  <Alert>
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
                       We&apos;ll confirm your appointment time based on
                       availability
                     </AlertDescription>
@@ -892,16 +926,13 @@ export default function BookingFormOptimized({
               {/* Step 2: Personal Information */}
               {currentStep === 2 && (
                 <div className="space-y-6 animate-in fade-in duration-500">
-                  <div className="text-center mb-6">
-                    <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-                      Your Information
-                    </h3>
-                    <p className="text-slate-600 dark:text-slate-400 mt-2">
+                  <div className="space-y-2 mb-6">
+                    <h3 className="text-xl font-semibold">Your Information</h3>
+                    <p className="text-muted-foreground">
                       Help us serve you better
                     </p>
                   </div>
 
-                  {/* New vs Returning Patient */}
                   <Field>
                     <FieldLabel>Are you a new patient?</FieldLabel>
                     <FieldContent>
@@ -918,11 +949,11 @@ export default function BookingFormOptimized({
                       >
                         <label className="flex items-center gap-2 cursor-pointer">
                           <RadioGroupItem value="yes" />
-                          <span>Yes, first visit</span>
+                          <span className="text-sm">Yes, first visit</span>
                         </label>
                         <label className="flex items-center gap-2 cursor-pointer">
                           <RadioGroupItem value="no" />
-                          <span>No, returning patient</span>
+                          <span className="text-sm">No, returning patient</span>
                         </label>
                       </RadioGroup>
                     </FieldContent>
@@ -944,11 +975,11 @@ export default function BookingFormOptimized({
                         >
                           <label className="flex items-center gap-2 cursor-pointer">
                             <RadioGroupItem value="yes" />
-                            <span>Yes</span>
+                            <span className="text-sm">Yes</span>
                           </label>
                           <label className="flex items-center gap-2 cursor-pointer">
                             <RadioGroupItem value="no" />
-                            <span>No changes</span>
+                            <span className="text-sm">No changes</span>
                           </label>
                         </RadioGroup>
                       </FieldContent>
@@ -958,7 +989,7 @@ export default function BookingFormOptimized({
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <Field>
                       <FieldLabel>
-                        First Name <span className="text-red-500">*</span>
+                        First Name <span className="text-destructive">*</span>
                       </FieldLabel>
                       <FieldContent>
                         <InputGroup>
@@ -970,7 +1001,7 @@ export default function BookingFormOptimized({
                             onChange={(e) =>
                               handleInputChange("firstName", e.target.value)
                             }
-                            placeholder="John"
+                            placeholder="Dental"
                             required
                             autoComplete="given-name"
                           />
@@ -980,7 +1011,7 @@ export default function BookingFormOptimized({
 
                     <Field>
                       <FieldLabel>
-                        Last Name <span className="text-red-500">*</span>
+                        Last Name <span className="text-destructive">*</span>
                       </FieldLabel>
                       <FieldContent>
                         <InputGroup>
@@ -992,7 +1023,7 @@ export default function BookingFormOptimized({
                             onChange={(e) =>
                               handleInputChange("lastName", e.target.value)
                             }
-                            placeholder="Doe"
+                            placeholder="Care"
                             required
                             autoComplete="family-name"
                           />
@@ -1002,7 +1033,8 @@ export default function BookingFormOptimized({
 
                     <Field>
                       <FieldLabel>
-                        Date of Birth <span className="text-red-500">*</span>
+                        Date of Birth{" "}
+                        <span className="text-destructive">*</span>
                       </FieldLabel>
                       <FieldContent>
                         <InputGroup>
@@ -1024,7 +1056,7 @@ export default function BookingFormOptimized({
 
                     <Field>
                       <FieldLabel>
-                        Gender <span className="text-red-500">*</span>
+                        Gender <span className="text-destructive">*</span>
                       </FieldLabel>
                       <FieldContent>
                         <Select
@@ -1047,7 +1079,8 @@ export default function BookingFormOptimized({
 
                     <Field>
                       <FieldLabel>
-                        Email Address <span className="text-red-500">*</span>
+                        Email Address{" "}
+                        <span className="text-destructive">*</span>
                       </FieldLabel>
                       <FieldContent>
                         <InputGroup>
@@ -1060,7 +1093,7 @@ export default function BookingFormOptimized({
                             onChange={(e) =>
                               handleInputChange("email", e.target.value)
                             }
-                            placeholder="john@example.com"
+                            placeholder="@example.com"
                             required
                             autoComplete="email"
                           />
@@ -1070,7 +1103,7 @@ export default function BookingFormOptimized({
 
                     <Field>
                       <FieldLabel>
-                        Phone Number <span className="text-red-500">*</span>
+                        Phone Number <span className="text-destructive">*</span>
                       </FieldLabel>
                       <FieldContent>
                         <InputGroup>
@@ -1104,23 +1137,23 @@ export default function BookingFormOptimized({
                       >
                         <label className="flex items-center gap-2 cursor-pointer">
                           <RadioGroupItem value="email" />
-                          <span>Email</span>
+                          <span className="text-sm">Email</span>
                         </label>
                         <label className="flex items-center gap-2 cursor-pointer">
                           <RadioGroupItem value="sms" />
-                          <span>SMS</span>
+                          <span className="text-sm">SMS</span>
                         </label>
                         <label className="flex items-center gap-2 cursor-pointer">
                           <RadioGroupItem value="call" />
-                          <span>Phone Call</span>
+                          <span className="text-sm">Phone Call</span>
                         </label>
                       </RadioGroup>
                     </FieldContent>
                   </Field>
 
                   <div className="border-t pt-6">
-                    <h4 className="font-semibold mb-4 flex items-center gap-2">
-                      <MapPin className="h-5 w-5 text-slate-600" />
+                    <h4 className="font-semibold text-sm mb-4 flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
                       Address (Optional)
                     </h4>
 
@@ -1134,7 +1167,7 @@ export default function BookingFormOptimized({
                               onChange={(e) =>
                                 handleInputChange("address", e.target.value)
                               }
-                              placeholder="123 Main Street"
+                              placeholder="Baltan Street"
                               autoComplete="street-address"
                             />
                           </InputGroup>
@@ -1151,7 +1184,7 @@ export default function BookingFormOptimized({
                                 onChange={(e) =>
                                   handleInputChange("city", e.target.value)
                                 }
-                                placeholder="Manila"
+                                placeholder="Palawan"
                                 autoComplete="address-level2"
                               />
                             </InputGroup>
@@ -1170,7 +1203,7 @@ export default function BookingFormOptimized({
                                     e.target.value
                                   )
                                 }
-                                placeholder="1000"
+                                placeholder="5300"
                                 autoComplete="postal-code"
                               />
                             </InputGroup>
@@ -1182,21 +1215,19 @@ export default function BookingFormOptimized({
                 </div>
               )}
 
-              {/* Step 3: Medical History (Conditional) */}
+              {/* Step 3: Medical History */}
               {currentStep === 3 && (
                 <div className="space-y-6 animate-in fade-in duration-500">
-                  <div className="text-center mb-6">
-                    <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-                      Medical History
-                    </h3>
-                    <p className="text-slate-600 dark:text-slate-400 mt-2">
+                  <div className="space-y-2 mb-6">
+                    <h3 className="text-xl font-semibold">Medical History</h3>
+                    <p className="text-muted-foreground">
                       Help us provide safe and effective treatment
                     </p>
                   </div>
 
-                  <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-950/30">
-                    <Shield className="h-4 w-4 text-blue-600" />
-                    <AlertDescription className="text-blue-800 dark:text-blue-200">
+                  <Alert>
+                    <Shield className="h-4 w-4" />
+                    <AlertDescription>
                       <strong>Privacy Protected:</strong> All medical
                       information is confidential and HIPAA compliant
                     </AlertDescription>
@@ -1209,7 +1240,7 @@ export default function BookingFormOptimized({
                         {MEDICAL_CONDITIONS.map((condition) => (
                           <label
                             key={condition}
-                            className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                            className="flex items-center gap-2 cursor-pointer p-2 rounded hover:bg-secondary transition-colors"
                           >
                             <Checkbox
                               checked={formData.medicalConditions.includes(
@@ -1222,9 +1253,7 @@ export default function BookingFormOptimized({
                                 )
                               }
                             />
-                            <span className="text-sm font-medium">
-                              {condition}
-                            </span>
+                            <span className="text-sm">{condition}</span>
                           </label>
                         ))}
                       </div>
@@ -1252,7 +1281,7 @@ export default function BookingFormOptimized({
                         {MEDICATIONS_COMMON.map((med) => (
                           <label
                             key={med}
-                            className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                            className="flex items-center gap-2 cursor-pointer p-2 rounded hover:bg-secondary transition-colors"
                           >
                             <Checkbox
                               checked={formData.currentMedications.includes(
@@ -1262,7 +1291,7 @@ export default function BookingFormOptimized({
                                 handleArrayToggle("currentMedications", med)
                               }
                             />
-                            <span className="text-sm font-medium">{med}</span>
+                            <span className="text-sm">{med}</span>
                           </label>
                         ))}
                       </div>
@@ -1304,7 +1333,7 @@ export default function BookingFormOptimized({
                         {DENTAL_HISTORY.map((history) => (
                           <label
                             key={history}
-                            className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                            className="flex items-center gap-2 cursor-pointer p-2 rounded hover:bg-secondary transition-colors"
                           >
                             <Checkbox
                               checked={formData.dentalHistory.includes(history)}
@@ -1312,9 +1341,7 @@ export default function BookingFormOptimized({
                                 handleArrayToggle("dentalHistory", history)
                               }
                             />
-                            <span className="text-sm font-medium">
-                              {history}
-                            </span>
+                            <span className="text-sm">{history}</span>
                           </label>
                         ))}
                       </div>
@@ -1344,36 +1371,33 @@ export default function BookingFormOptimized({
               {/* Step 4: Review & Confirmation */}
               {currentStep === 4 && (
                 <div className="space-y-6 animate-in fade-in duration-500">
-                  <div className="text-center mb-6">
-                    <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-                      Review & Confirm
-                    </h3>
-                    <p className="text-slate-600 dark:text-slate-400 mt-2">
+                  <div className="space-y-2 mb-6">
+                    <h3 className="text-xl font-semibold">Review & Confirm</h3>
+                    <p className="text-muted-foreground">
                       Please review your appointment details
                     </p>
                   </div>
 
-                  {/* Appointment Summary */}
                   <div className="space-y-4">
                     {/* Services */}
-                    <div className="p-5 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
-                      <h4 className="font-semibold text-lg mb-4 flex items-center gap-2">
-                        <Stethoscope className="h-5 w-5 text-blue-600" />
+                    <div className="p-4 bg-primary-foreground dark:bg-secondary-foreground rounded-lg border">
+                      <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                        <Stethoscope className="h-4 w-4" />
                         Selected Services
                       </h4>
-                      <div className="space-y-3">
+                      <div className="space-y-2">
                         {itemizedServices.map((item, idx) => (
                           <div
                             key={idx}
-                            className="flex justify-between items-center pb-3 border-b border-slate-200 dark:border-slate-700 last:border-0 last:pb-0"
+                            className="flex justify-between items-center pb-2 border-b last:border-0 last:pb-0 text-sm"
                           >
                             <div>
                               <p className="font-medium">{item.description}</p>
-                              <p className="text-sm text-slate-600 dark:text-slate-400">
+                              <p className="text-xs text-muted-foreground">
                                 ₱{item.unitPrice.toLocaleString()} × {item.qty}
                               </p>
                             </div>
-                            <p className="font-bold">
+                            <p className="font-semibold">
                               ₱{item.total.toLocaleString()}
                             </p>
                           </div>
@@ -1382,37 +1406,33 @@ export default function BookingFormOptimized({
                     </div>
 
                     {/* Appointment Details */}
-                    <div className="p-5 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
-                      <h4 className="font-semibold text-lg mb-4 flex items-center gap-2">
-                        <Calendar className="h-5 w-5 text-blue-600" />
+                    <div className="p-4 bg-primary-foreground dark:bg-secondary-foreground rounded-lg border">
+                      <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
                         Appointment Details
                       </h4>
-                      <div className="space-y-2 text-sm">
+                      <div className="space-y-1 text-sm">
                         <div className="flex justify-between">
-                          <span className="text-slate-600 dark:text-slate-400">
-                            Date:
-                          </span>
+                          <span className="text-muted-foreground">Date:</span>
                           <span className="font-medium">
                             {new Date(
                               formData.preferredDate
                             ).toLocaleDateString("en-US", {
-                              weekday: "long",
+                              weekday: "short",
                               year: "numeric",
-                              month: "long",
+                              month: "short",
                               day: "numeric",
                             })}
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-slate-600 dark:text-slate-400">
-                            Time:
-                          </span>
+                          <span className="text-muted-foreground">Time:</span>
                           <span className="font-medium">
                             {formData.preferredTime}
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-slate-600 dark:text-slate-400">
+                          <span className="text-muted-foreground">
                             Dentist:
                           </span>
                           <span className="font-medium">
@@ -1423,30 +1443,24 @@ export default function BookingFormOptimized({
                     </div>
 
                     {/* Patient Info */}
-                    <div className="p-5 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
-                      <h4 className="font-semibold text-lg mb-4 flex items-center gap-2">
-                        <User className="h-5 w-5 text-blue-600" />
+                    <div className="p-4 bg-primary-foreground dark:bg-secondary-foreground rounded-lg border">
+                      <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                        <User className="h-4 w-4" />
                         Patient Information
                       </h4>
-                      <div className="space-y-2 text-sm">
+                      <div className="space-y-1 text-sm">
                         <div className="flex justify-between">
-                          <span className="text-slate-600 dark:text-slate-400">
-                            Name:
-                          </span>
+                          <span className="text-muted-foreground">Name:</span>
                           <span className="font-medium">
                             {formData.firstName} {formData.lastName}
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-slate-600 dark:text-slate-400">
-                            Email:
-                          </span>
+                          <span className="text-muted-foreground">Email:</span>
                           <span className="font-medium">{formData.email}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-slate-600 dark:text-slate-400">
-                            Phone:
-                          </span>
+                          <span className="text-muted-foreground">Phone:</span>
                           <span className="font-medium">
                             {formData.contactNumber}
                           </span>
@@ -1455,25 +1469,23 @@ export default function BookingFormOptimized({
                     </div>
 
                     {/* Payment Summary */}
-                    <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 rounded-xl border-2 border-blue-200 dark:border-blue-900">
-                      <h4 className="font-semibold text-lg mb-4 flex items-center gap-2">
-                        <CreditCard className="h-5 w-5 text-blue-600" />
+                    <div className="p-4 bg-primary-foreground dark:bg-secondary-foreground rounded-lg border">
+                      <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                        <CreditCard className="h-4 w-4" />
                         Payment Summary
                       </h4>
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-slate-700 dark:text-slate-300">
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
                           <span>Subtotal:</span>
                           <span>₱{subtotal.toLocaleString()}</span>
                         </div>
-                        <div className="flex justify-between text-slate-700 dark:text-slate-300">
+                        <div className="flex justify-between">
                           <span>Tax (12%):</span>
                           <span>₱{tax.toLocaleString()}</span>
                         </div>
-                        <div className="flex justify-between font-bold text-xl border-t-2 border-blue-300 dark:border-blue-800 pt-3 mt-3">
+                        <div className="flex justify-between font-semibold border-t pt-2 mt-2">
                           <span>Total:</span>
-                          <span className="text-blue-600 dark:text-blue-400">
-                            ₱{totalDue.toLocaleString()}
-                          </span>
+                          <span>₱{totalDue.toLocaleString()}</span>
                         </div>
                       </div>
                     </div>
@@ -1491,12 +1503,12 @@ export default function BookingFormOptimized({
                           onChange={(e) =>
                             handleInputChange("specialRequests", e.target.value)
                           }
-                          placeholder="Any special requirements or concerns we should know about?"
+                          placeholder="Any special requirements or concerns?"
                           rows={3}
                           maxLength={500}
                         />
-                        <p className="text-xs text-slate-500 mt-1">
-                          {formData.specialRequests.length}/500 characters
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {formData.specialRequests.length}/500
                         </p>
                       </FieldContent>
                     </Field>
@@ -1587,70 +1599,70 @@ export default function BookingFormOptimized({
                       </Field>
                     </div>
 
-                    <label className="flex items-start gap-3 p-4 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                    <label className="flex items-start gap-2 p-3 rounded-lg border cursor-pointer dark:bg-secondary-foreground transition-colors">
                       <Checkbox
                         checked={formData.smsReminders}
                         onCheckedChange={(checked) =>
                           handleInputChange("smsReminders", checked)
                         }
-                        className="mt-1"
+                        className="mt-0.5"
                       />
                       <div>
-                        <p className="font-medium">Send SMS Reminders</p>
-                        <p className="text-sm text-slate-600 dark:text-slate-400">
-                          Receive appointment reminders via SMS 24 hours before
-                          your visit
+                        <p className="font-medium text-sm">
+                          Send SMS Reminders
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Receive appointment reminders 24 hours before your
+                          visit
                         </p>
                       </div>
                     </label>
 
-                    <label className="flex items-start gap-3 p-4 rounded-lg border-2 border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30 cursor-pointer">
+                    <label className="flex items-start gap-2 p-3 rounded-lg border-2 bg-primary-foreground dark:bg-accent cursor-pointer">
                       <Checkbox
                         checked={formData.consentToTreatment}
                         onCheckedChange={(checked) =>
                           handleInputChange("consentToTreatment", checked)
                         }
-                        className="mt-1"
+                        className="mt-0.5"
                         required
                       />
                       <div>
-                        <p className="font-medium">
+                        <p className="font-medium text-sm">
                           Consent to Treatment{" "}
-                          <span className="text-red-500">*</span>
+                          <span className="text-destructive">*</span>
                         </p>
-                        <p className="text-sm text-slate-600 dark:text-slate-400">
+                        <p className="text-xs text-muted-foreground">
                           I consent to receive dental treatment and understand
-                          that payment is required at the time of service. I
-                          have provided accurate medical information to the best
-                          of my knowledge.
+                          payment is required at time of service.
                         </p>
                       </div>
                     </label>
                   </div>
 
-                  <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-950/30">
-                    <Shield className="h-4 w-4 text-blue-600" />
-                    <AlertDescription className="text-blue-800 dark:text-blue-200">
+                  <Alert>
+                    <Shield className="h-4 w-4" />
+                    <AlertDescription>
                       <strong>Secure Payment:</strong> You&apos;ll be redirected
-                      to Stripe&apos;s secure payment page to complete your
-                      booking. Your appointment will be confirmed after
-                      successful payment.
+                      to Stripe for secure payment. Your appointment will be
+                      confirmed after successful payment.
                     </AlertDescription>
                   </Alert>
                 </div>
               )}
 
               {/* Navigation Buttons */}
-              <div className="flex items-center justify-between gap-4 mt-8 pt-6 border-t border-slate-200 dark:border-slate-800">
+              <div className="flex items-center justify-between gap-4 mt-10 pt-8 border-t-2 border-border">
                 {currentStep > 0 ? (
                   <Button
                     type="button"
                     variant="outline"
                     onClick={handleBack}
                     disabled={isSubmitting}
-                    className="flex items-center gap-2"
+                    size="lg"
+                    className="font-semibold shadow-sm hover:shadow-md transition-shadow border-2"
                   >
-                    <ArrowLeft className="h-4 w-4" />
+                    <ArrowLeft className="h-5 w-5 mr-2" />
                     Back
                   </Button>
                 ) : (
@@ -1662,25 +1674,27 @@ export default function BookingFormOptimized({
                     type="button"
                     onClick={handleNext}
                     disabled={!canProceed || isSubmitting}
-                    className="flex items-center gap-2 ml-auto"
+                    className="ml-auto font-bold shadow-md hover:shadow-lg transition-all hover:scale-105"
+                    size="lg"
                   >
                     Continue
-                    <ArrowRight className="h-4 w-4" />
+                    <ArrowRight className="h-5 w-5 ml-2" />
                   </Button>
                 ) : (
                   <Button
                     type="submit"
                     disabled={!canProceed || isSubmitting}
-                    className="flex items-center gap-2 ml-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                    className="ml-auto font-bold shadow-lg hover:shadow-xl transition-all hover:scale-105"
+                    size="lg"
                   >
                     {isSubmitting ? (
                       <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <Loader2 className="h-5 w-5 animate-spin mr-2" />
                         Booking...
                       </>
                     ) : (
                       <>
-                        <Check className="h-4 w-4" />
+                        <Check className="h-5 w-5 mr-2" />
                         Book Appointment
                       </>
                     )}
@@ -1689,27 +1703,54 @@ export default function BookingFormOptimized({
               </div>
 
               {!canProceed && currentStep === 0 && (
-                <p className="text-sm text-center text-red-600 dark:text-red-400 mt-2">
-                  Please select at least one service to continue
-                </p>
+                <div
+                  className="mt-4 p-3 bg-destructive/10 border border-destructive/30 text-center animate-in fade-in duration-300"
+                  style={{
+                    borderRadius: "var(--radius-md)",
+                  }}
+                >
+                  <p className="text-sm font-semibold text-destructive">
+                    Please select at least one service to continue
+                  </p>
+                </div>
               )}
             </form>
           </CardContent>
         </Card>
 
-        {/* Trust Indicators */}
-        <div className="mt-6 flex flex-wrap justify-center items-center gap-6 text-sm text-slate-600 dark:text-slate-400">
-          <div className="flex items-center gap-2">
-            <Shield className="h-4 w-4 text-blue-600" />
-            <span>HIPAA Compliant</span>
+        <div className="mt-8 flex flex-wrap justify-center items-center gap-4">
+          <div
+            className="flex items-center gap-2 px-4 py-2 bg-accent/50 border border-border shadow-sm"
+            style={{
+              borderRadius: "var(--radius-md)",
+            }}
+          >
+            <Shield className="h-4 w-4 text-primary" />
+            <span className="text-sm font-semibold text-foreground">
+              HIPAA Compliant
+            </span>
           </div>
-          <div className="flex items-center gap-2">
-            <CheckCircle className="h-4 w-4 text-green-600" />
-            <span>Secure Payment</span>
+          <div
+            className="flex items-center gap-2 px-4 py-2 bg-accent/50 border border-border shadow-sm"
+            style={{
+              borderRadius: "var(--radius-md)",
+            }}
+          >
+            <CheckCircle className="h-4 w-4 text-primary" />
+            <span className="text-sm font-semibold text-foreground">
+              Secure Payment
+            </span>
           </div>
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-blue-600" />
-            <span>2 min to complete</span>
+          <div
+            className="flex items-center gap-2 px-4 py-2 bg-accent/50 border border-border shadow-sm"
+            style={{
+              borderRadius: "var(--radius-md)",
+            }}
+          >
+            <Clock className="h-4 w-4 text-primary" />
+            <span className="text-sm font-semibold text-foreground">
+              2 min to complete
+            </span>
           </div>
         </div>
       </div>

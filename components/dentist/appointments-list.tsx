@@ -1,50 +1,62 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Calendar, Clock, User, Phone, Mail } from "lucide-react"
-import { toast } from "sonner"
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Calendar, Clock, Phone, Mail } from "lucide-react";
+import { toast } from "sonner";
 
 type Appointment = {
-  id: string
-  date: Date
-  timeSlot: string
-  status: string
-  notes: string | null
+  id: string;
+  date: Date;
+  timeSlot: string;
+  status: string;
+  notes: string | null;
   patient: {
-    name: string
-    email: string
-    phone: string | null
-    medicalHistory: string | null
-  }
+    name: string;
+    email: string;
+    phone: string | null;
+    medicalHistory: string | null;
+  };
   service: {
-    name: string
-    duration: number
-    price: number
-  }
+    name: string;
+    duration: number;
+    price: number;
+  };
   payment: {
-    status: string
-  } | null
-}
+    status: string;
+  } | null;
+};
 
 type DentistAppointmentsListProps = {
-  appointments: Appointment[]
-}
+  appointments: Appointment[];
+};
 
-export function DentistAppointmentsList({ appointments }: DentistAppointmentsListProps) {
-  const [isLoading, setIsLoading] = useState<string | null>(null)
+export function DentistAppointmentsList({
+  appointments,
+}: DentistAppointmentsListProps) {
+  const [isLoading, setIsLoading] = useState<string | null>(null);
 
-  const pendingAppointments = appointments.filter((apt) => apt.status === "pending")
+  const pendingAppointments = appointments.filter(
+    (apt) => apt.status === "pending"
+  );
   const upcomingAppointments = appointments.filter(
     (apt) => new Date(apt.date) >= new Date() && apt.status === "confirmed"
-  )
-  const completedAppointments = appointments.filter((apt) => apt.status === "completed")
+  );
+  const completedAppointments = appointments.filter(
+    (apt) => apt.status === "completed"
+  );
 
   const handleConfirmAppointment = async (appointmentId: string) => {
-    setIsLoading(appointmentId)
+    setIsLoading(appointmentId);
 
     try {
       const response = await fetch(`/api/appointments/${appointmentId}`, {
@@ -55,28 +67,28 @@ export function DentistAppointmentsList({ appointments }: DentistAppointmentsLis
         body: JSON.stringify({
           status: "confirmed",
         }),
-      })
+      });
 
       if (!response.ok) {
-        throw new Error("Failed to confirm appointment")
+        throw new Error("Failed to confirm appointment");
       }
 
-      toast.success("Appointment confirmed successfully")
-      window.location.reload()
+      toast.success("Appointment confirmed successfully");
+      window.location.reload();
     } catch (error) {
-      console.error(error)
-      toast.error("Failed to confirm appointment")
+      console.error(error);
+      toast.error("Failed to confirm appointment");
     } finally {
-      setIsLoading(null)
+      setIsLoading(null);
     }
-  }
+  };
 
   const handleDeclineAppointment = async (appointmentId: string) => {
     if (!confirm("Are you sure you want to decline this appointment?")) {
-      return
+      return;
     }
 
-    setIsLoading(appointmentId)
+    setIsLoading(appointmentId);
 
     try {
       const response = await fetch(`/api/appointments/${appointmentId}`, {
@@ -88,24 +100,24 @@ export function DentistAppointmentsList({ appointments }: DentistAppointmentsLis
           status: "cancelled",
           cancelReason: "Declined by dentist",
         }),
-      })
+      });
 
       if (!response.ok) {
-        throw new Error("Failed to decline appointment")
+        throw new Error("Failed to decline appointment");
       }
 
-      toast.success("Appointment declined")
-      window.location.reload()
+      toast.success("Appointment declined");
+      window.location.reload();
     } catch (error) {
-      console.error(error)
-      toast.error("Failed to decline appointment")
+      console.error(error);
+      toast.error("Failed to decline appointment");
     } finally {
-      setIsLoading(null)
+      setIsLoading(null);
     }
-  }
+  };
 
   const handleCompleteAppointment = async (appointmentId: string) => {
-    setIsLoading(appointmentId)
+    setIsLoading(appointmentId);
 
     try {
       const response = await fetch(`/api/appointments/${appointmentId}`, {
@@ -116,45 +128,55 @@ export function DentistAppointmentsList({ appointments }: DentistAppointmentsLis
         body: JSON.stringify({
           status: "completed",
         }),
-      })
+      });
 
       if (!response.ok) {
-        throw new Error("Failed to complete appointment")
+        throw new Error("Failed to complete appointment");
       }
 
-      toast.success("Appointment marked as completed")
-      window.location.reload()
+      toast.success("Appointment marked as completed");
+      window.location.reload();
     } catch (error) {
-      console.error(error)
-      toast.error("Failed to complete appointment")
+      console.error(error);
+      toast.error("Failed to complete appointment");
     } finally {
-      setIsLoading(null)
+      setIsLoading(null);
     }
-  }
+  };
 
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+    const variants: Record<
+      string,
+      "default" | "secondary" | "destructive" | "outline"
+    > = {
       pending: "secondary",
       confirmed: "default",
       cancelled: "destructive",
       completed: "outline",
       rescheduled: "secondary",
-    }
+    };
 
     return (
       <Badge variant={variants[status] || "default"}>
         {status.toUpperCase()}
       </Badge>
-    )
-  }
+    );
+  };
 
-  const renderAppointmentCard = (appointment: Appointment, showActions: boolean = true) => (
+  const renderAppointmentCard = (
+    appointment: Appointment,
+    showActions: boolean = true
+  ) => (
     <Card key={appointment.id}>
       <CardHeader>
         <div className="flex items-start justify-between">
           <div>
-            <CardTitle className="text-lg">{appointment.patient.name}</CardTitle>
-            <CardDescription className="mt-1">{appointment.service.name}</CardDescription>
+            <CardTitle className="text-lg">
+              {appointment.patient.name}
+            </CardTitle>
+            <CardDescription className="mt-1">
+              {appointment.service.name}
+            </CardDescription>
           </div>
           {getStatusBadge(appointment.status)}
         </div>
@@ -184,7 +206,9 @@ export function DentistAppointmentsList({ appointments }: DentistAppointmentsLis
         {appointment.patient.medicalHistory && (
           <div className="text-sm">
             <p className="font-medium">Medical History:</p>
-            <p className="text-muted-foreground">{appointment.patient.medicalHistory}</p>
+            <p className="text-muted-foreground">
+              {appointment.patient.medicalHistory}
+            </p>
           </div>
         )}
 
@@ -225,14 +249,16 @@ export function DentistAppointmentsList({ appointments }: DentistAppointmentsLis
                 onClick={() => handleCompleteAppointment(appointment.id)}
                 disabled={isLoading === appointment.id}
               >
-                {isLoading === appointment.id ? "Completing..." : "Mark as Completed"}
+                {isLoading === appointment.id
+                  ? "Completing..."
+                  : "Mark as Completed"}
               </Button>
             )}
           </div>
         )}
       </CardContent>
     </Card>
-  )
+  );
 
   return (
     <Tabs defaultValue="pending" className="w-full">
@@ -284,5 +310,5 @@ export function DentistAppointmentsList({ appointments }: DentistAppointmentsLis
         )}
       </TabsContent>
     </Tabs>
-  )
+  );
 }

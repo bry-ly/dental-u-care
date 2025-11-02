@@ -12,7 +12,7 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import Image from "next/image";
-import { authClient } from "@/lib/auth-client";
+import { authClient } from "@/lib/auth-session/auth-client";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -55,7 +55,6 @@ import {
 import { ModeToggle } from "../ui/mode-toggle";
 import { cn } from "@/lib/utils";
 
-
 type User = {
   id: string;
   name: string;
@@ -71,7 +70,7 @@ type NavbarProps = {
 
 const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
   // Debug: log user roles to verify admin detection
-  console.log('Navbar user roles:', user?.roles);
+  console.log("Navbar user roles:", user?.roles);
   const [isScrolled, setIsScrolled] = useState(false);
   const router = useRouter();
 
@@ -120,7 +119,8 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
   const Services = [
     {
       title: "Preventive Care",
-      description: "Cleanings, exams, and routine check-ups to keep smiles healthy",
+      description:
+        "Cleanings, exams, and routine check-ups to keep smiles healthy",
       href: "/services/preventive-care",
     },
     {
@@ -140,7 +140,8 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
     },
     {
       title: "Emergency Care",
-      description: "Same-day treatment for tooth pain, injuries, and urgent issues",
+      description:
+        "Same-day treatment for tooth pain, injuries, and urgent issues",
       href: "/services/emergency-care",
     },
     {
@@ -153,9 +154,10 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
   // Filtered suggestions based on searchValue
   const suggestions =
     searchValue.trim().length > 0
-      ? Services.filter((s) =>
-          s.title.toLowerCase().includes(searchValue.toLowerCase()) ||
-          s.description.toLowerCase().includes(searchValue.toLowerCase())
+      ? Services.filter(
+          (s) =>
+            s.title.toLowerCase().includes(searchValue.toLowerCase()) ||
+            s.description.toLowerCase().includes(searchValue.toLowerCase())
         )
       : [];
 
@@ -192,10 +194,10 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
       >
         <nav
           className={cn(
-            "flex items-center justify-between rounded-full px-6 py-4 transition-all duration-300 h-25",
+            "flex items-center justify-between rounded-full px-8 py-8  transition-all duration-300 ",
             isScrolled
-              ? "border-2 border-accent dark:border-gray-900 bg-background shadow-lg"
-              : "border-2 border-accent dark:border-gray-800 bg-background shadow-lg"
+              ? "border-2 border-accent dark:border-gray-900 bg-background/80 shadow-lg"
+              : "border-2 border-accent dark:border-gray-800 bg-background/80 shadow-lg"
           )}
         >
           <Link href="/" className="flex items-center gap-2">
@@ -597,7 +599,8 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
           <DialogHeader>
             <DialogTitle>Sign in required</DialogTitle>
             <DialogDescription>
-              You need to sign in to book an appointment. Would you like to sign in now?
+              You need to sign in to book an appointment. Would you like to sign
+              in now?
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

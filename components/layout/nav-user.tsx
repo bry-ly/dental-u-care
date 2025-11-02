@@ -1,20 +1,16 @@
-"use client"
+"use client";
 
 import {
   IconCreditCard,
   IconDotsVertical,
   IconLogout,
-} from "@tabler/icons-react"
-import Link from "next/link"
-import { authClient } from "@/lib/auth-client"
-import { useRouter } from "next/navigation"
-import { toast } from "sonner"
+} from "@tabler/icons-react";
+import Link from "next/link";
+import { authClient } from "@/lib/auth-session/auth-client";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,13 +19,13 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 
 export function NavUser({
   user,
@@ -40,17 +36,17 @@ export function NavUser({
     email: string;
     image?: string | null;
     role?: string | null;
-  },
-  isAdmin?: boolean
+  };
+  isAdmin?: boolean;
 }) {
-  const { isMobile } = useSidebar()
-  const router = useRouter()
+  const { isMobile } = useSidebar();
+  const router = useRouter();
 
   const handleSignOut = async () => {
-    await authClient.signOut()
-    toast.success("Signed out successfully")
-    router.push("/sign-in")
-  }
+    await authClient.signOut();
+    toast.success("Signed out successfully");
+    router.push("/sign-in");
+  };
 
   return (
     <SidebarMenu>
@@ -63,7 +59,9 @@ export function NavUser({
             >
               <Avatar className="h-8 w-8 rounded-lg ">
                 <AvatarImage src={user.image ?? undefined} alt={user.name} />
-                <AvatarFallback className="rounded-lg">{user.name?.[0] ?? "U"}</AvatarFallback>
+                <AvatarFallback className="rounded-lg">
+                  {user.name?.[0] ?? "U"}
+                </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{user.name}</span>
@@ -84,7 +82,9 @@ export function NavUser({
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage src={user.image ?? undefined} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">{user.name?.[0] ?? "U"}</AvatarFallback>
+                  <AvatarFallback className="rounded-lg">
+                    {user.name?.[0] ?? "U"}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.name}</span>
@@ -127,5 +127,5 @@ export function NavUser({
         </DropdownMenu>
       </SidebarMenuItem>
     </SidebarMenu>
-  )
+  );
 }

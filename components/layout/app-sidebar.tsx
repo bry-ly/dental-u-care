@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import Image from "next/image"
+import * as React from "react";
+import Image from "next/image";
 import {
   IconChartBar,
   IconDashboard,
@@ -16,13 +16,13 @@ import {
   IconCalendar,
   IconMedicalCross,
   IconUserCog,
-} from "@tabler/icons-react"
+} from "@tabler/icons-react";
 
-import { NavDocuments } from "@/components/layout/nav-documents"
-import { NavMain } from "@/components/layout/nav-main"
-import { NavSecondary } from "@/components/layout/nav-secondary"
-import { NavUser } from "@/components/layout/nav-user"
-import Link from "next/link"
+import { NavDocuments } from "@/components/layout/nav-documents";
+import { NavMain } from "@/components/layout/nav-main";
+import { NavSecondary } from "@/components/layout/nav-secondary";
+import { NavUser } from "@/components/layout/nav-user";
+import Link from "next/link";
 import {
   Sidebar,
   SidebarContent,
@@ -31,7 +31,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 
 const adminData = {
   navMain: [
@@ -69,14 +69,14 @@ const adminData = {
   navSecondary: [
     {
       title: "Settings",
-      url: "#",
+      url: "/admin/settings",
       icon: IconSettings,
     },
     {
       title: "Help & Support",
-      url: "#",
+      url: "/admin/help-support",
       icon: IconHelp,
-    }
+    },
   ],
   documents: [
     {
@@ -90,13 +90,13 @@ const adminData = {
       icon: IconReport,
     },
   ],
-}
+};
 
 const patientData = {
   navMain: [
     {
       title: "Dashboard",
-      url:"/patient",
+      url: "/patient",
       icon: IconDashboard,
     },
     {
@@ -123,17 +123,17 @@ const patientData = {
   navSecondary: [
     {
       title: "Settings",
-      url: "#",
+      url: "/patient/settings",
       icon: IconSettings,
     },
     {
       title: "Help & Support",
       url: "#",
       icon: IconHelp,
-    }
+    },
   ],
   documents: [],
-}
+};
 
 const dentistData = {
   navMain: [
@@ -161,17 +161,17 @@ const dentistData = {
   navSecondary: [
     {
       title: "Settings",
-      url: "#",
+      url: "/dentist/settings",
       icon: IconSettings,
     },
     {
       title: "Help & Support",
       url: "#",
       icon: IconHelp,
-    }
+    },
   ],
   documents: [],
-}
+};
 
 type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
   user?: {
@@ -186,9 +186,15 @@ type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
 
 export function AppSidebar({ user, isAdmin, ...props }: AppSidebarProps) {
   // Determine which data to use based on user role
-  const role = user?.role || 'patient'
-  const data = role === 'admin' ? adminData : role === 'dentist' ? dentistData : patientData
-  const homeUrl = role === 'admin' ? '/admin' : role === 'dentist' ? '/dentist' : '/'
+  const role = user?.role || "patient";
+  const data =
+    role === "admin"
+      ? adminData
+      : role === "dentist"
+        ? dentistData
+        : patientData;
+  const homeUrl =
+    role === "admin" ? "/admin" : role === "dentist" ? "/dentist" : "/";
   return (
     <>
       <Sidebar collapsible="offcanvas" {...props}>
@@ -200,8 +206,16 @@ export function AppSidebar({ user, isAdmin, ...props }: AppSidebarProps) {
                 className="data-[slot=sidebar-menu-button]:!p-1.5"
               >
                 <Link href={homeUrl} className="flex items-center gap-2">
-                  <Image src="/tooth.svg" alt="Dental U Care" width={24} height={24} className="!size-6" />
-                  <span className="text-base font-semibold bg-gradient-to-r from-blue-600 to-pink-800 bg-clip-text text-transparent">Dental U-Care</span>
+                  <Image
+                    src="/tooth.svg"
+                    alt="Dental U Care"
+                    width={24}
+                    height={24}
+                    className="!size-6"
+                  />
+                  <span className="text-base font-semibold bg-gradient-to-r from-blue-600 to-pink-800 bg-clip-text text-transparent">
+                    Dental U-Care
+                  </span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -217,5 +231,5 @@ export function AppSidebar({ user, isAdmin, ...props }: AppSidebarProps) {
         </SidebarFooter>
       </Sidebar>
     </>
-  )
+  );
 }
