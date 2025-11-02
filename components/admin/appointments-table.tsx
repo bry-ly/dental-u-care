@@ -78,7 +78,7 @@ type Appointment = {
   };
   service: {
     name: string;
-    price: number;
+    price: string;
   };
   payment: {
     status: string;
