@@ -1,16 +1,11 @@
-import { AppSidebar } from "@/components/layout/app-sidebar"
-import { SiteHeader } from "@/components/layout/site-header"
-import {
-  SidebarInset,
-  SidebarProvider,
-} from "@/components/ui/sidebar"
-import { PatientSectionCards } from "@/components/patient/section-cards"
-import { PatientAppointmentsTable } from "@/components/patient/appointments-table"
-import { PatientPaymentsTable } from "@/components/patient/payments-table"
-import { requireAuth } from "@/lib/auth-server"
-import { prisma } from "@/lib/prisma"
-import { redirect } from "next/navigation"
-import type { Metadata } from "next"
+import { AppSidebar } from "@/components/layout/app-sidebar";
+import { SiteHeader } from "@/components/layout/site-header";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { PatientSectionCards } from "@/components/patient/section-cards";
+import { requireAuth } from "@/lib/auth-session/auth-server";
+import { prisma } from "@/lib/types/prisma";
+import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Patient Dashboard",
@@ -74,59 +69,6 @@ export default async function PatientDashboard() {
     pendingPayments: pendingPaymentsResult._sum.amount || 0,
   };
 
-  // Fetch appointments for table
-  const appointments = await prisma.appointment.findMany({
-    where: {
-      patientId: user.id,
-    },
-    include: {
-      dentist: {
-        select: {
-          name: true,
-          specialization: true,
-        },
-      },
-      service: {
-        select: {
-          name: true,
-          price: true,
-        },
-      },
-    },
-    orderBy: {
-      date: "desc",
-    },
-    take: 20,
-  });
-
-  // Fetch payments for table
-  const payments = await prisma.payment.findMany({
-    where: {
-      userId: user.id,
-    },
-    include: {
-      appointment: {
-        select: {
-          date: true,
-          service: {
-            select: {
-              name: true,
-            },
-          },
-          dentist: {
-            select: {
-              name: true,
-            },
-          },
-        },
-      },
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-    take: 20,
-  });
-
   return (
     <SidebarProvider
       style={
@@ -143,8 +85,12 @@ export default async function PatientDashboard() {
           <div className="@container/main flex flex-1 flex-col gap-2">
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
               <div className="px-4 lg:px-6">
-                <h1 className="text-3xl font-bold">Welcome back, {user.name}!</h1>
-                <p className="text-muted-foreground">Manage your appointments and health records</p>
+                <h1 className="text-3xl font-bold">
+                  Welcome back, {user.name}!
+                </h1>
+                <p className="text-muted-foreground">
+                  Manage your appointments and health records
+                </p>
               </div>
 
               <PatientSectionCards stats={patientStats} />
@@ -153,5 +99,5 @@ export default async function PatientDashboard() {
         </div>
       </SidebarInset>
     </SidebarProvider>
-  )
+  );
 }
