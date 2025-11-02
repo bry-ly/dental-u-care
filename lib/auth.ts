@@ -1,18 +1,94 @@
 import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { stripe } from "@better-auth/stripe";
+import { createAuthMiddleware, APIError } from "better-auth/api";
 import { Resend } from "resend";
 import ForgotPasswordEmail from "@/components/emails/reset-password";
 import { PrismaClient } from "@prisma/client";
 import VerificationEmail from "@/components/emails/email-verification";
+import Stripe from "stripe";
 
 const resend = new Resend(process.env.RESEND_API_KEY!);
 const prisma = new PrismaClient();
+
+const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2025-09-30.clover", // Latest API version as of Stripe SDK v19
+});
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "mongodb",
   }),
+  hooks: {
+    // Before hooks run before an endpoint is executed
+    before: createAuthMiddleware(async (ctx) => {
+      // Log all authentication attempts for security monitoring
+      if (ctx.path.startsWith("/sign-in")) {
+        console.log(`[AUTH] Sign-in attempt for: ${ctx.body?.email || "unknown"}`);
+      }
+
+      // Validate email format for dental care staff (optional domain restriction)
+      // Uncomment if you want to restrict staff signups to specific domains
+      /*
+      if (ctx.path === "/sign-up/email" && ctx.body?.role === "dentist") {
+        const email = ctx.body?.email;
+        if (!email.endsWith("@dentalucare.com")) {
+          throw new APIError("BAD_REQUEST", {
+            message: "Staff accounts must use an authorized email domain",
+          });
+        }
+      }
+      */
+
+      // Rate limiting check (example - implement your own rate limiting logic)
+      if (ctx.path.startsWith("/sign-in") || ctx.path.startsWith("/sign-up")) {
+        // Add your rate limiting logic here
+        // e.g., check Redis for too many attempts from this IP
+      }
+    }),
+
+    // After hooks run after an endpoint is executed
+    after: createAuthMiddleware(async (ctx) => {
+      // Send welcome notification after successful signup
+      if (ctx.path.startsWith("/sign-up")) {
+        const newSession = ctx.context.newSession;
+        if (newSession) {
+          console.log(`[AUTH] New user registered: ${newSession.user.name} (${newSession.user.email})`);
+          
+          // Here you could:
+          // - Send a welcome email
+          // - Create default patient records
+          // - Notify admin of new registrations
+          // - Track analytics
+        }
+      }
+
+      // Log successful sign-ins for audit trail
+      if (ctx.path.startsWith("/sign-in")) {
+        const newSession = ctx.context.newSession;
+        if (newSession) {
+          console.log(`[AUTH] User signed in: ${newSession.user.email}`);
+          
+          // Update last login timestamp
+          await prisma.user.update({
+            where: { id: newSession.user.id },
+            data: { 
+              // Add a lastLoginAt field to your schema if needed
+              // lastLoginAt: new Date(),
+            },
+          }).catch(err => {
+            console.error("[AUTH] Failed to update last login:", err);
+          });
+        }
+      }
+
+      // Track password reset completions
+      if (ctx.path === "/reset-password") {
+        console.log("[AUTH] Password reset completed");
+      }
+    }),
+  },
   account: {
     accountLinking: {
       enabled: true,
@@ -78,6 +154,33 @@ export const auth = betterAuth({
   },
   plugins: [
     nextCookies(),
+    stripe({
+      stripeClient,
+      stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
+      createCustomerOnSignUp: true,
+      subscription: {
+        enabled: true,
+        plans: [
+          {
+            name: "basic",
+            priceId: "price_basic_monthly", // You'll need to replace with actual Stripe price IDs
+            limits: {
+              appointments: 5,
+            }
+          },
+          {
+            name: "premium",
+            priceId: "price_premium_monthly",
+            limits: {
+              appointments: 20,
+            },
+            freeTrial: {
+              days: 14,
+            }
+          }
+        ]
+      }
+    })
   ],  // This must be the last plugin in the array
 });
 export type Session = typeof auth.$Infer.Session;

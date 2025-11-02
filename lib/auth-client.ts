@@ -1,28 +1,17 @@
-/**
- * Resend verification email
- * @param email - User's email address
- */
-export const resendVerificationEmail = async (email: string) => {
-  const res = await fetch("/api/auth/resend-verification", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email }),
-  });
-  if (!res.ok) {
-    throw new Error("Failed to resend verification email.");
-  }
-  return res.json();
-};
 import { createAuthClient } from "better-auth/react";
 import { toast } from "sonner";
 
 import { organizationClient } from "better-auth/client/plugins";
+import { stripeClient } from "@better-auth/stripe/client";
 
 
 
 export const authClient = createAuthClient({
   plugins: [
     organizationClient(),
+    stripeClient({
+      subscription: true //if you want to enable subscription management
+    })
   ],
   // You can pass client configuration here
   baseURL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
@@ -38,7 +27,21 @@ export const authClient = createAuthClient({
     },
   },
 });
-
+/**
+ * Resend verification email
+ * @param email - User's email address
+ */
+export const resendVerificationEmail = async (email: string) => {
+  const res = await fetch("/api/auth/resend-verification", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  if (!res.ok) {
+    throw new Error("Failed to resend verification email.");
+  }
+  return res.json();
+};
 /**
  * Sign in with email and password
  * @param email - User's email address
