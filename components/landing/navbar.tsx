@@ -206,7 +206,7 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
               height={32}
               className="h-8 w-8"
             />
-            <span className="text-lg font-semibold bg-gradient-to-r from-blue-600 to-blue-800 text-transparent bg-clip-text tracking-tighter">
+            <span className="text-2xl font-semibold bg-gradient-to-r from-blue-600 to-blue-800 text-transparent bg-clip-text tracking-tighter">
               Dental U Care
             </span>
           </Link>
