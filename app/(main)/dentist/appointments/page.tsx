@@ -1,14 +1,11 @@
-import { AppSidebar } from "@/components/layout/app-sidebar"
-import { SiteHeader } from "@/components/layout/site-header"
-import {
-  SidebarInset,
-  SidebarProvider,
-} from "@/components/ui/sidebar"
-import { DentistAppointmentsList } from "@/components/dentist/appointments-list"
-import { requireAuth } from "@/lib/auth-server"
-import { prisma } from "@/lib/prisma"
-import { redirect } from "next/navigation"
-import type { Metadata } from "next"
+import { AppSidebar } from "@/components/layout/app-sidebar";
+import { SiteHeader } from "@/components/layout/site-header";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { DentistAppointmentsList } from "@/components/dentist/appointments-list";
+import { requireAuth } from "@/lib/auth-session/auth-server";
+import { prisma } from "@/lib/types/prisma";
+import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Appointments - Dentist",
@@ -22,7 +19,7 @@ export default async function DentistAppointmentsPage() {
     redirect("/");
   }
 
-  const appointments = await prisma.appointment.findMany({
+  const appointmentsData = await prisma.appointment.findMany({
     where: {
       dentistId: user.id,
     },
@@ -35,6 +32,14 @@ export default async function DentistAppointmentsPage() {
       date: "desc",
     },
   });
+
+  const appointments = appointmentsData.map((appointment) => ({
+    ...appointment,
+    service: {
+      ...appointment.service,
+      price: parseFloat(appointment.service.price),
+    },
+  }));
 
   return (
     <SidebarProvider
@@ -53,7 +58,9 @@ export default async function DentistAppointmentsPage() {
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6 px-4 lg:px-6">
               <div>
                 <h1 className="text-3xl font-bold">Appointments</h1>
-                <p className="text-muted-foreground">Manage your patient appointments</p>
+                <p className="text-muted-foreground">
+                  Manage your patient appointments
+                </p>
               </div>
 
               <DentistAppointmentsList appointments={appointments} />
@@ -62,5 +69,5 @@ export default async function DentistAppointmentsPage() {
         </div>
       </SidebarInset>
     </SidebarProvider>
-  )
+  );
 }

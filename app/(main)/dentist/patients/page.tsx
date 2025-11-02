@@ -1,14 +1,11 @@
-import { AppSidebar } from "@/components/layout/app-sidebar"
-import { SiteHeader } from "@/components/layout/site-header"
-import {
-  SidebarInset,
-  SidebarProvider,
-} from "@/components/ui/sidebar"
-import { DentistPatientsTable } from "@/components/dentist/patients-table"
-import { requireAuth } from "@/lib/auth-server"
-import { prisma } from "@/lib/prisma"
-import { redirect } from "next/navigation"
-import type { Metadata } from "next"
+import { AppSidebar } from "@/components/layout/app-sidebar";
+import { SiteHeader } from "@/components/layout/site-header";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { DentistPatientsTable } from "@/components/dentist/patients-table";
+import { requireAuth } from "@/lib/auth-session/auth-server";
+import { prisma } from "@/lib/types/prisma";
+import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Patient Records",
@@ -67,7 +64,9 @@ export default async function DentistPatientsPage() {
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6 px-4 lg:px-6">
               <div>
                 <h1 className="text-3xl font-bold">Patient Records</h1>
-                <p className="text-muted-foreground">View your patients' information and history</p>
+                <p className="text-muted-foreground">
+                  View your patients&apos; information and history
+                </p>
               </div>
 
               <DentistPatientsTable patients={patients} />
@@ -76,5 +75,5 @@ export default async function DentistPatientsPage() {
         </div>
       </SidebarInset>
     </SidebarProvider>
-  )
+  );
 }
