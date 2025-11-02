@@ -9,8 +9,9 @@ export default function ConsentManager({ children }: { children: ReactNode }) {
     <ConsentManagerProvider
       options={{
         mode: "offline",
-        backendURL: "/api/c15t",
-        ignoreGeoLocation: true, // Useful for development to always view the banner.
+        backendURL: "/api/c15t/path:*",
+        ignoreGeoLocation: true,
+        // Useful for development to always view the banner.
       }}
     >
       <CookieBanner />
