@@ -10,6 +10,13 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // Production performance optimizations
+  compress: true,
+  poweredByHeader: false,
+  generateEtags: true,
+  // Optimize for production builds
+  productionBrowserSourceMaps: false,
+  reactStrictMode: true,
 };
 
 export default nextConfig;
