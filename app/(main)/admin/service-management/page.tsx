@@ -1,13 +1,10 @@
-import { AppSidebar } from "@/components/layout/app-sidebar"
-import { SiteHeader } from "@/components/layout/site-header"
-import {
-  SidebarInset,
-  SidebarProvider,
-} from "@/components/ui/sidebar"
-import { AdminServicesTable } from "@/components/admin/services-table"
-import { requireAdmin } from "@/lib/auth-server"
-import { prisma } from "@/lib/prisma"
-import type { Metadata } from "next"
+import { AppSidebar } from "@/components/layout/app-sidebar";
+import { SiteHeader } from "@/components/layout/site-header";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { AdminServicesTable } from "@/components/admin/services-table";
+import { requireAdmin } from "@/lib/auth-session/auth-server";
+import { prisma } from "@/lib/types/prisma";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Service Management",
@@ -16,7 +13,7 @@ export const metadata: Metadata = {
 export default async function ServiceManagementPage() {
   const { user } = await requireAdmin();
 
-  const services = await prisma.service.findMany({
+  const servicesData = await prisma.service.findMany({
     include: {
       appointments: true,
     },
@@ -24,6 +21,16 @@ export default async function ServiceManagementPage() {
       name: "asc",
     },
   });
+
+  // Transform the data to match the expected Service type
+  const services = servicesData.map((service) => ({
+    ...service,
+    description: service.description ?? "",
+    price:
+      typeof service.price === "string"
+        ? parseFloat(service.price)
+        : service.price,
+  }));
 
   return (
     <SidebarProvider
@@ -34,7 +41,7 @@ export default async function ServiceManagementPage() {
         } as React.CSSProperties
       }
     >
-  <AppSidebar variant="inset" user={user} />
+      <AppSidebar variant="inset" user={user} />
       <SidebarInset>
         <SiteHeader role="admin" />
         <div className="flex flex-1 flex-col">
@@ -42,7 +49,9 @@ export default async function ServiceManagementPage() {
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6 px-4 lg:px-6">
               <div>
                 <h1 className="text-3xl font-bold">Service Management</h1>
-                <p className="text-muted-foreground">Manage all dental services</p>
+                <p className="text-muted-foreground">
+                  Manage all dental services
+                </p>
               </div>
 
               <AdminServicesTable services={services} />
@@ -51,5 +60,5 @@ export default async function ServiceManagementPage() {
         </div>
       </SidebarInset>
     </SidebarProvider>
-  )
+  );
 }

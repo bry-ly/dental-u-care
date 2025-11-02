@@ -5,8 +5,8 @@ import { SectionCards } from "@/components/layout/section-cards";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import type { Metadata } from "next";
-import { requireAdmin } from "@/lib/auth-server";
-import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/auth-session/auth-server";
+import { prisma } from "@/lib/types/prisma";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -142,7 +142,7 @@ export default async function Page() {
   }));
 
   // Fetch recent appointments for table
-  const appointments = await prisma.appointment.findMany({
+  const appointmentsRaw = await prisma.appointment.findMany({
     take: 20,
     orderBy: {
       createdAt: "desc",
@@ -154,6 +154,15 @@ export default async function Page() {
       payment: true,
     },
   });
+
+  // Transform appointments to convert service.price from string to number
+  const appointments = appointmentsRaw.map((appointment) => ({
+    ...appointment,
+    service: {
+      ...appointment.service,
+      price: Number(appointment.service.price),
+    },
+  }));
 
   const dashboardStats = {
     totalAppointments,
@@ -175,7 +184,7 @@ export default async function Page() {
         } as React.CSSProperties
       }
     >
-  <AppSidebar variant="inset" user={user} />
+      <AppSidebar variant="inset" user={user} />
       <SidebarInset>
         <SiteHeader role="admin" />
         <div className="flex flex-1 flex-col">

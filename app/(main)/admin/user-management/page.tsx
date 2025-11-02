@@ -1,13 +1,10 @@
-import { AppSidebar } from "@/components/layout/app-sidebar"
-import { SiteHeader } from "@/components/layout/site-header"
-import {
-  SidebarInset,
-  SidebarProvider,
-} from "@/components/ui/sidebar"
-import { AdminUsersTable } from "@/components/admin/users-table"
-import { requireAdmin } from "@/lib/auth-server"
-import { prisma } from "@/lib/prisma"
-import type { Metadata } from "next"
+import { AppSidebar } from "@/components/layout/app-sidebar";
+import { SiteHeader } from "@/components/layout/site-header";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { AdminUsersTable } from "@/components/admin/users-table";
+import { requireAdmin } from "@/lib/auth-session/auth-server";
+import { prisma } from "@/lib/types/prisma";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "User Management",
@@ -21,7 +18,7 @@ export default async function UserManagementPage() {
       createdAt: "desc",
     },
   });
-  const users = usersRaw.map(u => ({ ...u, role: u.role ?? undefined }));
+  const users = usersRaw.map((u) => ({ ...u, role: u.role ?? undefined }));
 
   return (
     <SidebarProvider
@@ -32,7 +29,7 @@ export default async function UserManagementPage() {
         } as React.CSSProperties
       }
     >
-  <AppSidebar variant="inset" user={user} />
+      <AppSidebar variant="inset" user={user} />
       <SidebarInset>
         <SiteHeader role="admin" />
         <div className="flex flex-1 flex-col">
@@ -40,7 +37,9 @@ export default async function UserManagementPage() {
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6 px-4 lg:px-6">
               <div>
                 <h1 className="text-3xl font-bold">User Management</h1>
-                <p className="text-muted-foreground">Manage all users in the system</p>
+                <p className="text-muted-foreground">
+                  Manage all users in the system
+                </p>
               </div>
 
               <AdminUsersTable users={users} />
@@ -49,5 +48,5 @@ export default async function UserManagementPage() {
         </div>
       </SidebarInset>
     </SidebarProvider>
-  )
+  );
 }

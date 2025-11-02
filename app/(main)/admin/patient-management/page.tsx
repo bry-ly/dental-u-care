@@ -1,13 +1,10 @@
-import { AppSidebar } from "@/components/layout/app-sidebar"
-import { SiteHeader } from "@/components/layout/site-header"
-import {
-  SidebarInset,
-  SidebarProvider,
-} from "@/components/ui/sidebar"
-import { AdminPatientsTable } from "@/components/admin/patients-table"
-import { requireAdmin } from "@/lib/auth-server"
-import { prisma } from "@/lib/prisma"
-import type { Metadata } from "next"
+import { AppSidebar } from "@/components/layout/app-sidebar";
+import { SiteHeader } from "@/components/layout/site-header";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { AdminPatientsTable } from "@/components/admin/patients-table";
+import { requireAdmin } from "@/lib/auth-session/auth-server";
+import { prisma } from "@/lib/types/prisma";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Patient Management",
@@ -43,7 +40,7 @@ export default async function PatientManagementPage() {
         } as React.CSSProperties
       }
     >
-  <AppSidebar variant="inset" user={user} />
+      <AppSidebar variant="inset" user={user} />
       <SidebarInset>
         <SiteHeader role="admin" />
         <div className="flex flex-1 flex-col">
@@ -51,7 +48,9 @@ export default async function PatientManagementPage() {
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6 px-4 lg:px-6">
               <div>
                 <h1 className="text-3xl font-bold">Patient Management</h1>
-                <p className="text-muted-foreground">Manage all patients in the system</p>
+                <p className="text-muted-foreground">
+                  Manage all patients in the system
+                </p>
               </div>
 
               <AdminPatientsTable patients={patients} />
@@ -60,5 +59,5 @@ export default async function PatientManagementPage() {
         </div>
       </SidebarInset>
     </SidebarProvider>
-  )
+  );
 }

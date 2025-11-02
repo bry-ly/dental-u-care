@@ -1,13 +1,10 @@
-import { AppSidebar } from "@/components/layout/app-sidebar"
-import { SiteHeader } from "@/components/layout/site-header"
-import {
-  SidebarInset,
-  SidebarProvider,
-} from "@/components/ui/sidebar"
-import { AdminAppointmentsTable } from "@/components/admin/appointments-table"
-import { requireAdmin } from "@/lib/auth-server"
-import { prisma } from "@/lib/prisma"
-import type { Metadata } from "next"
+import { AppSidebar } from "@/components/layout/app-sidebar";
+import { SiteHeader } from "@/components/layout/site-header";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { AdminAppointmentsTable } from "@/components/admin/appointments-table";
+import { requireAdmin } from "@/lib/auth-session/auth-server";
+import { prisma } from "@/lib/types/prisma";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Appointment Management",
@@ -16,7 +13,7 @@ export const metadata: Metadata = {
 export default async function AppointmentManagementPage() {
   const { user } = await requireAdmin();
 
-  const appointments = await prisma.appointment.findMany({
+  const rawAppointments = await prisma.appointment.findMany({
     include: {
       patient: true,
       dentist: true,
@@ -28,6 +25,14 @@ export default async function AppointmentManagementPage() {
     },
   });
 
+  const appointments = rawAppointments.map((appointment) => ({
+    ...appointment,
+    service: {
+      ...appointment.service,
+      price: Number(appointment.service.price),
+    },
+  }));
+
   return (
     <SidebarProvider
       style={
@@ -37,7 +42,7 @@ export default async function AppointmentManagementPage() {
         } as React.CSSProperties
       }
     >
-  <AppSidebar variant="inset" user={user} />
+      <AppSidebar variant="inset" user={user} />
       <SidebarInset>
         <SiteHeader role="admin" />
         <div className="flex flex-1 flex-col">
@@ -45,7 +50,9 @@ export default async function AppointmentManagementPage() {
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6 px-4 lg:px-6">
               <div>
                 <h1 className="text-3xl font-bold">Appointment Management</h1>
-                <p className="text-muted-foreground">Manage all appointments in the system</p>
+                <p className="text-muted-foreground">
+                  Manage all appointments in the system
+                </p>
               </div>
 
               <AdminAppointmentsTable appointments={appointments} />
@@ -54,5 +61,5 @@ export default async function AppointmentManagementPage() {
         </div>
       </SidebarInset>
     </SidebarProvider>
-  )
+  );
 }

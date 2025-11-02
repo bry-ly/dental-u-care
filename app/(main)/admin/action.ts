@@ -1,6 +1,6 @@
 "use server";
 
-import { getServerSession } from "@/lib/get-session";
+import { getServerSession } from "@/lib/auth-session/get-session";
 import { forbidden, unauthorized } from "next/navigation";
 import { setTimeout } from "node:timers/promises";
 
