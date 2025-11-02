@@ -4,8 +4,8 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/provider/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import ConsentManager from "./cookie-consent/consent-manager";
+import { AuthRedirectHandler } from "@/components/layout/auth-redirect-handler";
 import { ReactNode } from "react";
-
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,6 +35,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           enableSystem
           disableTransitionOnChange
         >
+          <AuthRedirectHandler />
           <ConsentManager>{children}</ConsentManager>
           <Toaster position="top-right" />
         </ThemeProvider>
