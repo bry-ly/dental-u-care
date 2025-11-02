@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
-import { auth } from "@/lib/auth"
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/types/prisma";
+import { auth } from "@/lib/auth-session/auth";
 
 export async function PATCH(
   request: NextRequest,
@@ -9,15 +9,15 @@ export async function PATCH(
   try {
     const session = await auth.api.getSession({
       headers: request.headers,
-    })
+    });
 
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json()
-    const { status, cancelReason, date, timeSlot } = body
-    const { id } = await params
+    const body = await request.json();
+    const { status, cancelReason, date, timeSlot } = body;
+    const { id } = await params;
 
     const appointment = await prisma.appointment.findUnique({
       where: { id },
@@ -26,13 +26,13 @@ export async function PATCH(
         dentist: true,
         service: true,
       },
-    })
+    });
 
     if (!appointment) {
       return NextResponse.json(
         { error: "Appointment not found" },
         { status: 404 }
-      )
+      );
     }
 
     // Update appointment
@@ -49,7 +49,7 @@ export async function PATCH(
         dentist: true,
         service: true,
       },
-    })
+    });
 
     // Create notifications based on action
     if (status === "cancelled") {
@@ -60,7 +60,7 @@ export async function PATCH(
           message: `Your appointment for ${appointment.service.name} on ${new Date(appointment.date).toLocaleDateString()} has been cancelled.`,
           type: "email",
         },
-      })
+      });
 
       await prisma.notification.create({
         data: {
@@ -69,7 +69,7 @@ export async function PATCH(
           message: `Appointment with ${appointment.patient.name} on ${new Date(appointment.date).toLocaleDateString()} has been cancelled.`,
           type: "email",
         },
-      })
+      });
     } else if (status === "confirmed") {
       await prisma.notification.create({
         data: {
@@ -78,7 +78,7 @@ export async function PATCH(
           message: `Your appointment for ${appointment.service.name} on ${new Date(appointment.date).toLocaleDateString()} has been confirmed.`,
           type: "email",
         },
-      })
+      });
     } else if (date || timeSlot) {
       await prisma.notification.create({
         data: {
@@ -87,7 +87,7 @@ export async function PATCH(
           message: `Your appointment has been rescheduled to ${new Date(updatedAppointment.date).toLocaleDateString()} at ${updatedAppointment.timeSlot}.`,
           type: "email",
         },
-      })
+      });
 
       await prisma.notification.create({
         data: {
@@ -96,16 +96,16 @@ export async function PATCH(
           message: `Appointment with ${appointment.patient.name} has been rescheduled to ${new Date(updatedAppointment.date).toLocaleDateString()} at ${updatedAppointment.timeSlot}.`,
           type: "email",
         },
-      })
+      });
     }
 
-    return NextResponse.json(updatedAppointment)
+    return NextResponse.json(updatedAppointment);
   } catch (error) {
-    console.error("Error updating appointment:", error)
+    console.error("Error updating appointment:", error);
     return NextResponse.json(
       { error: "Failed to update appointment" },
       { status: 500 }
-    )
+    );
   }
 }
 
@@ -116,24 +116,24 @@ export async function DELETE(
   try {
     const session = await auth.api.getSession({
       headers: request.headers,
-    })
+    });
 
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = await params
+    const { id } = await params;
 
     await prisma.appointment.delete({
       where: { id },
-    })
+    });
 
-    return NextResponse.json({ message: "Appointment deleted successfully" })
+    return NextResponse.json({ message: "Appointment deleted successfully" });
   } catch (error) {
-    console.error("Error deleting appointment:", error)
+    console.error("Error deleting appointment:", error);
     return NextResponse.json(
       { error: "Failed to delete appointment" },
       { status: 500 }
-    )
+    );
   }
 }

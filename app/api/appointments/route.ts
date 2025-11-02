@@ -1,26 +1,26 @@
-import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
-import { auth } from "@/lib/auth"
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/types/prisma";
+import { auth } from "@/lib/auth-session/auth";
 
 export async function POST(request: NextRequest) {
   try {
     const session = await auth.api.getSession({
       headers: request.headers,
-    })
+    });
 
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json()
-    const { patientId, dentistId, serviceId, date, timeSlot, notes } = body
+    const body = await request.json();
+    const { patientId, dentistId, serviceId, date, timeSlot, notes } = body;
 
     // Validate required fields
     if (!patientId || !dentistId || !serviceId || !date || !timeSlot) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
-      )
+      );
     }
 
     // Check if time slot is already booked
@@ -33,13 +33,13 @@ export async function POST(request: NextRequest) {
           in: ["pending", "confirmed"],
         },
       },
-    })
+    });
 
     if (existingAppointment) {
       return NextResponse.json(
         { error: "This time slot is already booked" },
         { status: 409 }
-      )
+      );
     }
 
     // Create appointment
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
         dentist: true,
         service: true,
       },
-    })
+    });
 
     // Create notification for patient
     await prisma.notification.create({
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
         message: `Your appointment for ${appointment.service.name} has been booked for ${new Date(date).toLocaleDateString()} at ${timeSlot}`,
         type: "email",
       },
-    })
+    });
 
     // Create notification for dentist
     await prisma.notification.create({
@@ -78,15 +78,15 @@ export async function POST(request: NextRequest) {
         message: `New appointment request from ${appointment.patient.name} for ${new Date(date).toLocaleDateString()} at ${timeSlot}`,
         type: "email",
       },
-    })
+    });
 
-    return NextResponse.json(appointment, { status: 201 })
+    return NextResponse.json(appointment, { status: 201 });
   } catch (error) {
-    console.error("Error creating appointment:", error)
+    console.error("Error creating appointment:", error);
     return NextResponse.json(
       { error: "Failed to create appointment" },
       { status: 500 }
-    )
+    );
   }
 }
 
@@ -94,17 +94,17 @@ export async function GET(request: NextRequest) {
   try {
     const session = await auth.api.getSession({
       headers: request.headers,
-    })
+    });
 
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { searchParams } = new URL(request.url)
-    const userId = searchParams.get("userId")
-    const role = searchParams.get("role")
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get("userId");
+    const role = searchParams.get("role");
 
-    let appointments
+    let appointments;
 
     if (role === "patient") {
       appointments = await prisma.appointment.findMany({
@@ -119,7 +119,7 @@ export async function GET(request: NextRequest) {
         orderBy: {
           date: "desc",
         },
-      })
+      });
     } else if (role === "dentist") {
       appointments = await prisma.appointment.findMany({
         where: {
@@ -133,7 +133,7 @@ export async function GET(request: NextRequest) {
         orderBy: {
           date: "desc",
         },
-      })
+      });
     } else {
       // Admin - get all appointments
       appointments = await prisma.appointment.findMany({
@@ -146,15 +146,15 @@ export async function GET(request: NextRequest) {
         orderBy: {
           date: "desc",
         },
-      })
+      });
     }
 
-    return NextResponse.json(appointments)
+    return NextResponse.json(appointments);
   } catch (error) {
-    console.error("Error fetching appointments:", error)
+    console.error("Error fetching appointments:", error);
     return NextResponse.json(
       { error: "Failed to fetch appointments" },
       { status: 500 }
-    )
+    );
   }
 }

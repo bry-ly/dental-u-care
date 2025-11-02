@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/types/prisma";
+import { auth } from "@/lib/auth-session/auth";
 import { Resend } from "resend";
 import { createElement } from "react";
 import DentalInvoice from "@/components/emails/email-bookings";
@@ -168,8 +168,14 @@ export async function POST(request: NextRequest) {
       .reduce((sum, s) => sum + s.qty * 60, 0);
 
     try {
-      await resend.emails.send({
-        from: "Dental U Care <onboarding@resend.dev>",
+      console.log("Attempting to send email to:", personalInfo.email);
+      console.log(
+        "From address:",
+        `${process.env.EMAIL_SENDER_NAME} <${process.env.EMAIL_SENDER_ADDRESS}>`
+      );
+
+      const emailResult = await resend.emails.send({
+        from: `${process.env.EMAIL_SENDER_NAME} <${process.env.EMAIL_SENDER_ADDRESS}>`,
         to: personalInfo.email,
         subject: `Appointment Confirmation - Invoice #${invoiceNumber}`,
         react: createElement(DentalInvoice, {
@@ -200,8 +206,14 @@ export async function POST(request: NextRequest) {
           nextAppointmentPurpose: "Regular Dental Checkup & Cleaning",
         }),
       });
+
+      console.log("Email sent successfully:", emailResult);
     } catch (emailError) {
       console.error("Error sending email:", emailError);
+      console.error(
+        "Email error details:",
+        JSON.stringify(emailError, null, 2)
+      );
       // Don't fail the appointment creation if email fails
     }
 
