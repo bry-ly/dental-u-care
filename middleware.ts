@@ -28,7 +28,6 @@ export const config = {
   matcher: [
     "/admin/:path*",
     "/dentist/:path*",
-    "/patient/:path*",
-    "/"
+    "/patient/:path*"
   ],
 };
