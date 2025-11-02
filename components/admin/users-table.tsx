@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
 import {
   IconChevronDown,
   IconChevronLeft,
@@ -13,7 +13,7 @@ import {
   IconShield,
   IconUser,
   IconUserCheck,
-} from "@tabler/icons-react"
+} from "@tabler/icons-react";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -27,11 +27,11 @@ import {
   SortingState,
   useReactTable,
   VisibilityState,
-} from "@tanstack/react-table"
+} from "@tanstack/react-table";
 
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -39,16 +39,16 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -56,35 +56,43 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
+import Image from "next/image";
 
 type User = {
-  id: string
-  name: string
-  email: string
-  emailVerified: boolean
-  image: string | null
-  createdAt: Date
-  updatedAt: Date
-  role?: string
-}
+  id: string;
+  name: string;
+  email: string;
+  emailVerified: boolean;
+  image: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  role?: string;
+};
 
 const getRoleBadge = (role?: string) => {
-  const roleConfig: Record<string, { variant: "default" | "secondary" | "destructive" | "outline", icon: React.ReactNode }> = {
+  const roleConfig: Record<
+    string,
+    {
+      variant: "default" | "secondary" | "destructive" | "outline";
+      icon: React.ReactNode;
+    }
+  > = {
     admin: { variant: "destructive", icon: <IconShield className="size-3" /> },
     dentist: { variant: "default", icon: <IconUserCheck className="size-3" /> },
     patient: { variant: "secondary", icon: <IconUser className="size-3" /> },
-  }
+  };
 
-  const config = roleConfig[role?.toLowerCase() || "patient"] || roleConfig.patient
+  const config =
+    roleConfig[role?.toLowerCase() || "patient"] || roleConfig.patient;
 
   return (
     <Badge variant={config.variant} className="text-xs gap-1">
       {config.icon}
       {role || "Patient"}
     </Badge>
-  )
-}
+  );
+};
 
 const columns: ColumnDef<User>[] = [
   {
@@ -119,10 +127,12 @@ const columns: ColumnDef<User>[] = [
     cell: ({ row }) => (
       <div className="flex items-center gap-2">
         {row.original.image ? (
-          <img
+          <Image
             src={row.original.image}
             alt={row.original.name}
             className="size-8 rounded-full object-cover"
+            width={32}
+            height={32}
           />
         ) : (
           <div className="flex size-8 items-center justify-center rounded-full bg-muted">
@@ -146,7 +156,10 @@ const columns: ColumnDef<User>[] = [
     accessorKey: "emailVerified",
     header: "Email Status",
     cell: ({ row }) => (
-      <Badge variant={row.original.emailVerified ? "default" : "secondary"} className="text-xs">
+      <Badge
+        variant={row.original.emailVerified ? "default" : "secondary"}
+        className="text-xs"
+      >
         {row.original.emailVerified ? "Verified" : "Unverified"}
       </Badge>
     ),
@@ -183,27 +196,37 @@ const columns: ColumnDef<User>[] = [
             <DropdownMenuItem>Change Role</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem>Reset Password</DropdownMenuItem>
-            {!isAdmin && <><DropdownMenuSeparator /><DropdownMenuItem variant="destructive">Delete User</DropdownMenuItem></>}
+            {!isAdmin && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem variant="destructive">
+                  Delete User
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       );
     },
   },
-]
+];
 
 type AdminUsersTableProps = {
-  users: User[]
-}
+  users: User[];
+};
 
 export function AdminUsersTable({ users }: AdminUsersTableProps) {
-  const [rowSelection, setRowSelection] = React.useState({})
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  const [sorting, setSorting] = React.useState<SortingState>([])
+  const [rowSelection, setRowSelection] = React.useState({});
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({});
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    []
+  );
+  const [sorting, setSorting] = React.useState<SortingState>([]);
   const [pagination, setPagination] = React.useState({
     pageIndex: 0,
     pageSize: 10,
-  })
+  });
 
   const table = useReactTable({
     data: users,
@@ -227,7 +250,7 @@ export function AdminUsersTable({ users }: AdminUsersTableProps) {
     getSortedRowModel: getSortedRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
-  })
+  });
 
   return (
     <div className="flex flex-col gap-4">
@@ -256,7 +279,8 @@ export function AdminUsersTable({ users }: AdminUsersTableProps) {
               .getAllColumns()
               .filter(
                 (column) =>
-                  typeof column.accessorFn !== "undefined" && column.getCanHide()
+                  typeof column.accessorFn !== "undefined" &&
+                  column.getCanHide()
               )
               .map((column) => {
                 return (
@@ -264,15 +288,51 @@ export function AdminUsersTable({ users }: AdminUsersTableProps) {
                     key={column.id}
                     className="capitalize"
                     checked={column.getIsVisible()}
-                    onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                    onCheckedChange={(value) =>
+                      column.toggleVisibility(!!value)
+                    }
                   >
                     {column.id}
                   </DropdownMenuCheckboxItem>
-                )
+                );
               })}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      {/* Bulk Actions Toolbar */}
+      {table.getFilteredSelectedRowModel().rows.length > 0 && (
+        <div className="flex items-center gap-2 rounded-lg border bg-muted/50 p-2">
+          <span className="text-sm font-medium">
+            {table.getFilteredSelectedRowModel().rows.length} selected
+          </span>
+          <div className="ml-auto flex items-center gap-2">
+            <Button variant="outline" size="sm">
+              Verify Emails
+            </Button>
+            <Button variant="outline" size="sm">
+              Change Role
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  More Actions
+                  <IconChevronDown />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem>Send Notification</DropdownMenuItem>
+                <DropdownMenuItem>Reset Passwords</DropdownMenuItem>
+                <DropdownMenuItem>Export Selected</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem variant="destructive">
+                  Delete Selected
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      )}
 
       <div className="overflow-hidden rounded-lg border">
         <Table>
@@ -289,7 +349,7 @@ export function AdminUsersTable({ users }: AdminUsersTableProps) {
                             header.getContext()
                           )}
                     </TableHead>
-                  )
+                  );
                 })}
               </TableRow>
             ))}
@@ -303,14 +363,20 @@ export function AdminUsersTable({ users }: AdminUsersTableProps) {
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
                   No users found.
                 </TableCell>
               </TableRow>
@@ -332,11 +398,13 @@ export function AdminUsersTable({ users }: AdminUsersTableProps) {
             <Select
               value={`${table.getState().pagination.pageSize}`}
               onValueChange={(value) => {
-                table.setPageSize(Number(value))
+                table.setPageSize(Number(value));
               }}
             >
               <SelectTrigger size="sm" className="w-20" id="rows-per-page">
-                <SelectValue placeholder={table.getState().pagination.pageSize} />
+                <SelectValue
+                  placeholder={table.getState().pagination.pageSize}
+                />
               </SelectTrigger>
               <SelectContent side="top">
                 {[10, 20, 30, 40, 50].map((pageSize) => (
@@ -395,5 +463,5 @@ export function AdminUsersTable({ users }: AdminUsersTableProps) {
         </div>
       </div>
     </div>
-  )
+  );
 }

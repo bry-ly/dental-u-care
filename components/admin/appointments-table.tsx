@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
 import {
   IconChevronDown,
   IconChevronLeft,
@@ -10,7 +10,15 @@ import {
   IconDotsVertical,
   IconLayoutColumns,
   IconSearch,
-} from "@tabler/icons-react"
+} from "@tabler/icons-react";
+import { toast } from "sonner";
+import {
+  confirmAppointments,
+  cancelAppointments,
+  completeAppointments,
+  deleteAppointments,
+  deleteAppointment,
+} from "@/lib/actions/admin-actions";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -24,11 +32,11 @@ import {
   SortingState,
   useReactTable,
   VisibilityState,
-} from "@tanstack/react-table"
+} from "@tanstack/react-table";
 
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -36,16 +44,16 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -53,61 +61,67 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 
 type Appointment = {
-  id: string
-  date: Date
-  timeSlot: string
-  status: string
-  notes: string | null
+  id: string;
+  date: Date;
+  timeSlot: string;
+  status: string;
+  notes: string | null;
   patient: {
-    name: string
-    email: string
-  }
+    name: string;
+    email: string;
+  };
   dentist: {
-    name: string
-  }
+    name: string;
+  };
   service: {
-    name: string
-    price: number
-  }
+    name: string;
+    price: number;
+  };
   payment: {
-    status: string
-    amount: number
-  } | null
-}
+    status: string;
+    amount: number;
+  } | null;
+};
 
 const getStatusBadge = (status: string) => {
-  const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+  const variants: Record<
+    string,
+    "default" | "secondary" | "destructive" | "outline"
+  > = {
     pending: "secondary",
     confirmed: "default",
     cancelled: "destructive",
     completed: "outline",
     rescheduled: "secondary",
-  }
+  };
 
   return (
     <Badge variant={variants[status] || "default"} className="text-xs">
       {status.toUpperCase()}
     </Badge>
-  )
-}
+  );
+};
 
 const getPaymentBadge = (status: string) => {
-  const variants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+  const variants: Record<
+    string,
+    "default" | "secondary" | "destructive" | "outline"
+  > = {
     paid: "default",
     pending: "secondary",
     failed: "destructive",
     refunded: "outline",
-  }
+  };
 
   return (
     <Badge variant={variants[status] || "default"} className="text-xs">
       {status.toUpperCase()}
     </Badge>
-  )
-}
+  );
+};
 
 const columns: ColumnDef<Appointment>[] = [
   {
@@ -143,7 +157,9 @@ const columns: ColumnDef<Appointment>[] = [
     cell: ({ row }) => (
       <div>
         <p className="font-medium">{row.original.patient.name}</p>
-        <p className="text-xs text-muted-foreground">{row.original.patient.email}</p>
+        <p className="text-xs text-muted-foreground">
+          {row.original.patient.email}
+        </p>
       </div>
     ),
     enableHiding: false,
@@ -186,13 +202,89 @@ const columns: ColumnDef<Appointment>[] = [
     accessorKey: "amount",
     header: () => <div className="text-right">Amount</div>,
     cell: ({ row }) => {
-      const amount = row.original.payment
-        ? row.original.payment.amount
-        : row.original.service.price
-      return <div className="text-right">₱{amount.toFixed(2)}</div>
+      if (row.original.payment) {
+        const amount = row.original.payment.amount;
+        return <div className="text-right">₱{amount.toFixed(2)}</div>;
+      }
+      // service.price is a string (e.g., "₱500 – ₱1,500" or "₱1,500")
+      const price = row.original.service.price;
+      return <div className="text-right">{price}</div>;
     },
   },
-  {
+];
+
+type AdminAppointmentsTableProps = {
+  appointments: Appointment[];
+};
+
+export function AdminAppointmentsTable({
+  appointments,
+}: AdminAppointmentsTableProps) {
+  const [rowSelection, setRowSelection] = React.useState({});
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({});
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    []
+  );
+  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [pagination, setPagination] = React.useState({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+  const [isLoading, setIsLoading] = React.useState(false);
+
+  const handleBulkAction = async (
+    action: (ids: string[]) => Promise<{ success: boolean; message: string }>,
+    actionName: string
+  ) => {
+    const selectedRows = table.getFilteredSelectedRowModel().rows;
+    const ids = selectedRows.map((row) => row.original.id);
+
+    if (ids.length === 0) {
+      toast.error("No appointments selected");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const result = await action(ids);
+      if (result.success) {
+        toast.success(result.message);
+        setRowSelection({});
+        window.location.reload();
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      toast.error(`Failed to ${actionName}`);
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSingleAction = async (
+    action: () => Promise<{ success: boolean; message: string }>,
+    actionName: string
+  ) => {
+    setIsLoading(true);
+    try {
+      const result = await action();
+      if (result.success) {
+        toast.success(result.message);
+        window.location.reload();
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      toast.error(`Failed to ${actionName}`);
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const actionsColumn: ColumnDef<Appointment> = {
     id: "actions",
     cell: ({ row }) => (
       <DropdownMenu>
@@ -201,40 +293,60 @@ const columns: ColumnDef<Appointment>[] = [
             variant="ghost"
             className="data-[state=open]:bg-muted text-muted-foreground flex size-8"
             size="icon"
+            disabled={isLoading}
           >
             <IconDotsVertical />
             <span className="sr-only">Open menu</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-40">
-          <DropdownMenuItem>View Details</DropdownMenuItem>
-          <DropdownMenuItem>Edit</DropdownMenuItem>
-          <DropdownMenuItem>Reschedule</DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => toast.info("View details feature coming soon")}
+          >
+            View Details
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => toast.info("Edit feature coming soon")}
+          >
+            Edit
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => toast.info("Reschedule feature coming soon")}
+          >
+            Reschedule
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem variant="destructive">Cancel</DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() =>
+              handleSingleAction(
+                () => cancelAppointments([row.original.id]),
+                "cancel appointment"
+              )
+            }
+          >
+            Cancel
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            variant="destructive"
+            onClick={() =>
+              handleSingleAction(
+                () => deleteAppointment(row.original.id),
+                "delete appointment"
+              )
+            }
+          >
+            Delete
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     ),
-  },
-]
+  };
 
-type AdminAppointmentsTableProps = {
-  appointments: Appointment[]
-}
-
-export function AdminAppointmentsTable({ appointments }: AdminAppointmentsTableProps) {
-  const [rowSelection, setRowSelection] = React.useState({})
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  const [sorting, setSorting] = React.useState<SortingState>([])
-  const [pagination, setPagination] = React.useState({
-    pageIndex: 0,
-    pageSize: 10,
-  })
+  const columnsWithActions = [...columns, actionsColumn];
 
   const table = useReactTable({
     data: appointments,
-    columns,
+    columns: columnsWithActions,
     state: {
       sorting,
       columnVisibility,
@@ -254,7 +366,7 @@ export function AdminAppointmentsTable({ appointments }: AdminAppointmentsTableP
     getSortedRowModel: getSortedRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
-  })
+  });
 
   return (
     <div className="flex flex-col gap-4">
@@ -263,7 +375,9 @@ export function AdminAppointmentsTable({ appointments }: AdminAppointmentsTableP
           <IconSearch className="absolute left-2 top-2.5 size-4 text-muted-foreground" />
           <Input
             placeholder="Search appointments..."
-            value={(table.getColumn("patientName")?.getFilterValue() as string) ?? ""}
+            value={
+              (table.getColumn("patientName")?.getFilterValue() as string) ?? ""
+            }
             onChange={(event) =>
               table.getColumn("patientName")?.setFilterValue(event.target.value)
             }
@@ -283,7 +397,8 @@ export function AdminAppointmentsTable({ appointments }: AdminAppointmentsTableP
               .getAllColumns()
               .filter(
                 (column) =>
-                  typeof column.accessorFn !== "undefined" && column.getCanHide()
+                  typeof column.accessorFn !== "undefined" &&
+                  column.getCanHide()
               )
               .map((column) => {
                 return (
@@ -291,15 +406,95 @@ export function AdminAppointmentsTable({ appointments }: AdminAppointmentsTableP
                     key={column.id}
                     className="capitalize"
                     checked={column.getIsVisible()}
-                    onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                    onCheckedChange={(value) =>
+                      column.toggleVisibility(!!value)
+                    }
                   >
                     {column.id}
                   </DropdownMenuCheckboxItem>
-                )
+                );
               })}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      {/* Bulk Actions Toolbar */}
+      {table.getFilteredSelectedRowModel().rows.length > 0 && (
+        <div className="flex items-center gap-2 rounded-lg border bg-muted/50 p-2">
+          <span className="text-sm font-medium">
+            {table.getFilteredSelectedRowModel().rows.length} selected
+          </span>
+          <div className="ml-auto flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={isLoading}
+              onClick={() =>
+                handleBulkAction(confirmAppointments, "confirm appointments")
+              }
+            >
+              Confirm Selected
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={isLoading}
+              onClick={() => toast.info("Reschedule feature coming soon")}
+            >
+              Reschedule Selected
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={isLoading}
+              onClick={() => toast.info("Send reminders feature coming soon")}
+            >
+              Send Reminders
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" disabled={isLoading}>
+                  More Actions
+                  <IconChevronDown />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={() =>
+                    handleBulkAction(
+                      completeAppointments,
+                      "complete appointments"
+                    )
+                  }
+                >
+                  Mark as Completed
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => toast.info("Export feature coming soon")}
+                >
+                  Export Selected
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() =>
+                    handleBulkAction(cancelAppointments, "cancel appointments")
+                  }
+                >
+                  Cancel Selected
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() =>
+                    handleBulkAction(deleteAppointments, "delete appointments")
+                  }
+                >
+                  Delete Selected
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      )}
 
       <div className="overflow-hidden rounded-lg border">
         <Table>
@@ -316,7 +511,7 @@ export function AdminAppointmentsTable({ appointments }: AdminAppointmentsTableP
                             header.getContext()
                           )}
                     </TableHead>
-                  )
+                  );
                 })}
               </TableRow>
             ))}
@@ -330,14 +525,20 @@ export function AdminAppointmentsTable({ appointments }: AdminAppointmentsTableP
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
                   No appointments found.
                 </TableCell>
               </TableRow>
@@ -359,11 +560,13 @@ export function AdminAppointmentsTable({ appointments }: AdminAppointmentsTableP
             <Select
               value={`${table.getState().pagination.pageSize}`}
               onValueChange={(value) => {
-                table.setPageSize(Number(value))
+                table.setPageSize(Number(value));
               }}
             >
               <SelectTrigger size="sm" className="w-20" id="rows-per-page">
-                <SelectValue placeholder={table.getState().pagination.pageSize} />
+                <SelectValue
+                  placeholder={table.getState().pagination.pageSize}
+                />
               </SelectTrigger>
               <SelectContent side="top">
                 {[10, 20, 30, 40, 50].map((pageSize) => (
@@ -422,5 +625,5 @@ export function AdminAppointmentsTable({ appointments }: AdminAppointmentsTableP
         </div>
       </div>
     </div>
-  )
+  );
 }

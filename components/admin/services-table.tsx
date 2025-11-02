@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
 import {
   IconChevronDown,
   IconChevronLeft,
@@ -10,7 +10,14 @@ import {
   IconDotsVertical,
   IconLayoutColumns,
   IconSearch,
-} from "@tabler/icons-react"
+} from "@tabler/icons-react";
+import { toast } from "sonner";
+import {
+  updateServiceStatus,
+  deleteServices,
+  deleteService,
+  duplicateService,
+} from "@/lib/actions/admin-actions";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -24,11 +31,11 @@ import {
   SortingState,
   useReactTable,
   VisibilityState,
-} from "@tanstack/react-table"
+} from "@tanstack/react-table";
 
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -36,16 +43,16 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -53,21 +60,21 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 
 type Service = {
-  id: string
-  name: string
-  description: string
-  duration: number
-  price: number
-  category: string
-  isActive: boolean
-  createdAt: Date
+  id: string;
+  name: string;
+  description: string;
+  duration: number;
+  price: number;
+  category: string;
+  isActive: boolean;
+  createdAt: Date;
   appointments: Array<{
-    id: string
-  }>
-}
+    id: string;
+  }>;
+};
 
 const columns: ColumnDef<Service>[] = [
   {
@@ -127,7 +134,7 @@ const columns: ColumnDef<Service>[] = [
     accessorKey: "price",
     header: () => <div className="text-right">Price</div>,
     cell: ({ row }) => (
-      <div className="text-right font-medium">₱{row.original.price.toFixed(2)}</div>
+      <div className="text-right font-medium">{row.original.price}</div>
     ),
   },
   {
@@ -139,12 +146,86 @@ const columns: ColumnDef<Service>[] = [
     accessorKey: "isActive",
     header: "Status",
     cell: ({ row }) => (
-      <Badge variant={row.original.isActive ? "default" : "secondary"} className="text-xs">
+      <Badge
+        variant={row.original.isActive ? "default" : "secondary"}
+        className="text-xs"
+      >
         {row.original.isActive ? "Active" : "Inactive"}
       </Badge>
     ),
   },
-  {
+];
+
+type AdminServicesTableProps = {
+  services: Service[];
+};
+
+export function AdminServicesTable({ services }: AdminServicesTableProps) {
+  const [rowSelection, setRowSelection] = React.useState({});
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({});
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    []
+  );
+  const [sorting, setSorting] = React.useState<SortingState>([]);
+  const [pagination, setPagination] = React.useState({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+  const [isLoading, setIsLoading] = React.useState(false);
+
+  const handleServiceAction = async (
+    action: () => Promise<{ success: boolean; message: string }>,
+    actionName: string
+  ) => {
+    setIsLoading(true);
+    try {
+      const result = await action();
+      if (result.success) {
+        toast.success(result.message);
+        window.location.reload();
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      toast.error(`Failed to ${actionName}`);
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleBulkAction = async (
+    action: (ids: string[]) => Promise<{ success: boolean; message: string }>,
+    actionName: string
+  ) => {
+    const selectedRows = table.getFilteredSelectedRowModel().rows;
+    const ids = selectedRows.map((row) => row.original.id);
+
+    if (ids.length === 0) {
+      toast.error("No services selected");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const result = await action(ids);
+      if (result.success) {
+        toast.success(result.message);
+        setRowSelection({});
+        window.location.reload();
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      toast.error(`Failed to ${actionName}`);
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const actionsColumn: ColumnDef<Service> = {
     id: "actions",
     cell: ({ row }) => (
       <DropdownMenu>
@@ -153,43 +234,65 @@ const columns: ColumnDef<Service>[] = [
             variant="ghost"
             className="data-[state=open]:bg-muted text-muted-foreground flex size-8"
             size="icon"
+            disabled={isLoading}
           >
             <IconDotsVertical />
             <span className="sr-only">Open menu</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-40">
-          <DropdownMenuItem>Edit Service</DropdownMenuItem>
-          <DropdownMenuItem>Duplicate</DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => toast.info("Edit feature coming soon")}
+          >
+            Edit Service
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() =>
+              handleServiceAction(
+                () => duplicateService(row.original.id),
+                "duplicate service"
+              )
+            }
+          >
+            Duplicate
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() =>
+              handleServiceAction(
+                () =>
+                  updateServiceStatus(
+                    [row.original.id],
+                    !row.original.isActive
+                  ),
+                "toggle service status"
+              )
+            }
+          >
             {row.original.isActive ? "Deactivate" : "Activate"}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem variant="destructive">Delete</DropdownMenuItem>
+          <DropdownMenuItem
+            variant="destructive"
+            onClick={() =>
+              handleServiceAction(
+                () => deleteService(row.original.id),
+                "delete service"
+              )
+            }
+          >
+            Delete
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     ),
-  },
-]
+  };
 
-type AdminServicesTableProps = {
-  services: Service[]
-}
-
-export function AdminServicesTable({ services }: AdminServicesTableProps) {
-  const [rowSelection, setRowSelection] = React.useState({})
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  const [sorting, setSorting] = React.useState<SortingState>([])
-  const [pagination, setPagination] = React.useState({
-    pageIndex: 0,
-    pageSize: 10,
-  })
+  const columnsWithActions = [...columns, actionsColumn];
 
   const table = useReactTable({
     data: services,
-    columns,
+    columns: columnsWithActions,
     state: {
       sorting,
       columnVisibility,
@@ -209,7 +312,7 @@ export function AdminServicesTable({ services }: AdminServicesTableProps) {
     getSortedRowModel: getSortedRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
-  })
+  });
 
   return (
     <div className="flex flex-col gap-4">
@@ -238,7 +341,8 @@ export function AdminServicesTable({ services }: AdminServicesTableProps) {
               .getAllColumns()
               .filter(
                 (column) =>
-                  typeof column.accessorFn !== "undefined" && column.getCanHide()
+                  typeof column.accessorFn !== "undefined" &&
+                  column.getCanHide()
               )
               .map((column) => {
                 return (
@@ -246,15 +350,90 @@ export function AdminServicesTable({ services }: AdminServicesTableProps) {
                     key={column.id}
                     className="capitalize"
                     checked={column.getIsVisible()}
-                    onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                    onCheckedChange={(value) =>
+                      column.toggleVisibility(!!value)
+                    }
                   >
                     {column.id}
                   </DropdownMenuCheckboxItem>
-                )
+                );
               })}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      {/* Bulk Actions Toolbar */}
+      {table.getFilteredSelectedRowModel().rows.length > 0 && (
+        <div className="flex items-center gap-2 rounded-lg border bg-muted/50 p-2">
+          <span className="text-sm font-medium">
+            {table.getFilteredSelectedRowModel().rows.length} selected
+          </span>
+          <div className="ml-auto flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={isLoading}
+              onClick={() =>
+                handleBulkAction(
+                  (ids) => updateServiceStatus(ids, true),
+                  "activate services"
+                )
+              }
+            >
+              Activate Selected
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={isLoading}
+              onClick={() =>
+                handleBulkAction(
+                  (ids) => updateServiceStatus(ids, false),
+                  "deactivate services"
+                )
+              }
+            >
+              Deactivate Selected
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" disabled={isLoading}>
+                  More Actions
+                  <IconChevronDown />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={() => toast.info("Duplicate feature coming soon")}
+                >
+                  Duplicate Selected
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() =>
+                    toast.info("Update prices feature coming soon")
+                  }
+                >
+                  Update Prices
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => toast.info("Export feature coming soon")}
+                >
+                  Export Selected
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() =>
+                    handleBulkAction(deleteServices, "delete services")
+                  }
+                >
+                  Delete Selected
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      )}
 
       <div className="overflow-hidden rounded-lg border">
         <Table>
@@ -271,7 +450,7 @@ export function AdminServicesTable({ services }: AdminServicesTableProps) {
                             header.getContext()
                           )}
                     </TableHead>
-                  )
+                  );
                 })}
               </TableRow>
             ))}
@@ -285,14 +464,20 @@ export function AdminServicesTable({ services }: AdminServicesTableProps) {
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
                   No services found.
                 </TableCell>
               </TableRow>
@@ -314,11 +499,13 @@ export function AdminServicesTable({ services }: AdminServicesTableProps) {
             <Select
               value={`${table.getState().pagination.pageSize}`}
               onValueChange={(value) => {
-                table.setPageSize(Number(value))
+                table.setPageSize(Number(value));
               }}
             >
               <SelectTrigger size="sm" className="w-20" id="rows-per-page">
-                <SelectValue placeholder={table.getState().pagination.pageSize} />
+                <SelectValue
+                  placeholder={table.getState().pagination.pageSize}
+                />
               </SelectTrigger>
               <SelectContent side="top">
                 {[10, 20, 30, 40, 50].map((pageSize) => (
@@ -377,5 +564,5 @@ export function AdminServicesTable({ services }: AdminServicesTableProps) {
         </div>
       </div>
     </div>
-  )
+  );
 }

@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
 import {
   IconChevronDown,
   IconChevronLeft,
@@ -12,7 +12,7 @@ import {
   IconSearch,
   IconMail,
   IconPhone,
-} from "@tabler/icons-react"
+} from "@tabler/icons-react";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -26,10 +26,10 @@ import {
   SortingState,
   useReactTable,
   VisibilityState,
-} from "@tanstack/react-table"
+} from "@tanstack/react-table";
 
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -37,16 +37,16 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -54,25 +54,25 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 
 type Patient = {
-  id: string
-  name: string
-  email: string
-  phone: string | null
-  dateOfBirth: Date | null
-  medicalHistory: string | null
-  createdAt: Date
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  dateOfBirth: Date | null;
+  medicalHistory: string | null;
+  createdAt: Date;
   appointmentsAsPatient: Array<{
-    id: string
-    status: string
-  }>
+    id: string;
+    status: string;
+  }>;
   payments: Array<{
-    id: string
-    amount: number
-  }>
-}
+    id: string;
+    amount: number;
+  }>;
+};
 
 const columns: ColumnDef<Patient>[] = [
   {
@@ -145,8 +145,8 @@ const columns: ColumnDef<Patient>[] = [
       const totalSpent = row.original.payments.reduce(
         (sum, payment) => sum + payment.amount,
         0
-      )
-      return <div className="text-right">₱{totalSpent.toFixed(2)}</div>
+      );
+      return <div className="text-right">₱{totalSpent.toFixed(2)}</div>;
     },
   },
   {
@@ -178,21 +178,24 @@ const columns: ColumnDef<Patient>[] = [
       </DropdownMenu>
     ),
   },
-]
+];
 
 type AdminPatientsTableProps = {
-  patients: Patient[]
-}
+  patients: Patient[];
+};
 
 export function AdminPatientsTable({ patients }: AdminPatientsTableProps) {
-  const [rowSelection, setRowSelection] = React.useState({})
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  const [sorting, setSorting] = React.useState<SortingState>([])
+  const [rowSelection, setRowSelection] = React.useState({});
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({});
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    []
+  );
+  const [sorting, setSorting] = React.useState<SortingState>([]);
   const [pagination, setPagination] = React.useState({
     pageIndex: 0,
     pageSize: 10,
-  })
+  });
 
   const table = useReactTable({
     data: patients,
@@ -216,7 +219,7 @@ export function AdminPatientsTable({ patients }: AdminPatientsTableProps) {
     getSortedRowModel: getSortedRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
-  })
+  });
 
   return (
     <div className="flex flex-col gap-4">
@@ -245,7 +248,8 @@ export function AdminPatientsTable({ patients }: AdminPatientsTableProps) {
               .getAllColumns()
               .filter(
                 (column) =>
-                  typeof column.accessorFn !== "undefined" && column.getCanHide()
+                  typeof column.accessorFn !== "undefined" &&
+                  column.getCanHide()
               )
               .map((column) => {
                 return (
@@ -253,15 +257,51 @@ export function AdminPatientsTable({ patients }: AdminPatientsTableProps) {
                     key={column.id}
                     className="capitalize"
                     checked={column.getIsVisible()}
-                    onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                    onCheckedChange={(value) =>
+                      column.toggleVisibility(!!value)
+                    }
                   >
                     {column.id}
                   </DropdownMenuCheckboxItem>
-                )
+                );
               })}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      {/* Bulk Actions Toolbar */}
+      {table.getFilteredSelectedRowModel().rows.length > 0 && (
+        <div className="flex items-center gap-2 rounded-lg border bg-muted/50 p-2">
+          <span className="text-sm font-medium">
+            {table.getFilteredSelectedRowModel().rows.length} selected
+          </span>
+          <div className="ml-auto flex items-center gap-2">
+            <Button variant="outline" size="sm">
+              Send Email
+            </Button>
+            <Button variant="outline" size="sm">
+              Send SMS
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  More Actions
+                  <IconChevronDown />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem>Export Selected</DropdownMenuItem>
+                <DropdownMenuItem>Add to Group</DropdownMenuItem>
+                <DropdownMenuItem>Send Appointment Reminder</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem variant="destructive">
+                  Delete Selected
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      )}
 
       <div className="overflow-hidden rounded-lg border">
         <Table>
@@ -278,7 +318,7 @@ export function AdminPatientsTable({ patients }: AdminPatientsTableProps) {
                             header.getContext()
                           )}
                     </TableHead>
-                  )
+                  );
                 })}
               </TableRow>
             ))}
@@ -292,14 +332,20 @@ export function AdminPatientsTable({ patients }: AdminPatientsTableProps) {
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
                   No patients found.
                 </TableCell>
               </TableRow>
@@ -321,11 +367,13 @@ export function AdminPatientsTable({ patients }: AdminPatientsTableProps) {
             <Select
               value={`${table.getState().pagination.pageSize}`}
               onValueChange={(value) => {
-                table.setPageSize(Number(value))
+                table.setPageSize(Number(value));
               }}
             >
               <SelectTrigger size="sm" className="w-20" id="rows-per-page">
-                <SelectValue placeholder={table.getState().pagination.pageSize} />
+                <SelectValue
+                  placeholder={table.getState().pagination.pageSize}
+                />
               </SelectTrigger>
               <SelectContent side="top">
                 {[10, 20, 30, 40, 50].map((pageSize) => (
@@ -384,5 +432,5 @@ export function AdminPatientsTable({ patients }: AdminPatientsTableProps) {
         </div>
       </div>
     </div>
-  )
+  );
 }

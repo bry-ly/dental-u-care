@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import * as React from "react"
+import * as React from "react";
 import {
   IconChevronDown,
   IconChevronLeft,
@@ -10,7 +10,7 @@ import {
   IconDotsVertical,
   IconLayoutColumns,
   IconSearch,
-} from "@tabler/icons-react"
+} from "@tabler/icons-react";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -24,11 +24,11 @@ import {
   SortingState,
   useReactTable,
   VisibilityState,
-} from "@tanstack/react-table"
+} from "@tanstack/react-table";
 
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -36,16 +36,16 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -53,23 +53,23 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 
 type Dentist = {
-  id: string
-  name: string
-  email: string
-  phone: string | null
-  specialization: string | null
-  qualifications: string | null
-  experience: string | null
-  isAvailable: boolean
-  createdAt: Date
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  specialization: string | null;
+  qualifications: string | null;
+  experience: string | null;
+  isAvailable: boolean;
+  createdAt: Date;
   appointmentsAsDentist: Array<{
-    id: string
-    status: string
-  }>
-}
+    id: string;
+    status: string;
+  }>;
+};
 
 const columns: ColumnDef<Dentist>[] = [
   {
@@ -123,23 +123,28 @@ const columns: ColumnDef<Dentist>[] = [
     accessorKey: "appointments",
     header: "Appointments",
     cell: ({ row }) => {
-      const appointmentCount = row.original.appointmentsAsDentist.length
+      const appointmentCount = row.original.appointmentsAsDentist.length;
       const completedCount = row.original.appointmentsAsDentist.filter(
         (apt) => apt.status === "completed"
-      ).length
+      ).length;
       return (
         <div className="text-sm">
           <p>{appointmentCount} total</p>
-          <p className="text-xs text-muted-foreground">{completedCount} completed</p>
+          <p className="text-xs text-muted-foreground">
+            {completedCount} completed
+          </p>
         </div>
-      )
+      );
     },
   },
   {
     accessorKey: "isAvailable",
     header: "Status",
     cell: ({ row }) => (
-      <Badge variant={row.original.isAvailable ? "default" : "secondary"} className="text-xs">
+      <Badge
+        variant={row.original.isAvailable ? "default" : "secondary"}
+        className="text-xs"
+      >
         {row.original.isAvailable ? "Available" : "Unavailable"}
       </Badge>
     ),
@@ -151,7 +156,7 @@ const columns: ColumnDef<Dentist>[] = [
   },
   {
     id: "actions",
-    cell: ({ row }) => (
+    cell: () => (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
@@ -173,21 +178,24 @@ const columns: ColumnDef<Dentist>[] = [
       </DropdownMenu>
     ),
   },
-]
+];
 
 type AdminDentistsTableProps = {
-  dentists: Dentist[]
-}
+  dentists: Dentist[];
+};
 
 export function AdminDentistsTable({ dentists }: AdminDentistsTableProps) {
-  const [rowSelection, setRowSelection] = React.useState({})
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  const [sorting, setSorting] = React.useState<SortingState>([])
+  const [rowSelection, setRowSelection] = React.useState({});
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({});
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
+    []
+  );
+  const [sorting, setSorting] = React.useState<SortingState>([]);
   const [pagination, setPagination] = React.useState({
     pageIndex: 0,
     pageSize: 10,
-  })
+  });
 
   const table = useReactTable({
     data: dentists,
@@ -211,7 +219,7 @@ export function AdminDentistsTable({ dentists }: AdminDentistsTableProps) {
     getSortedRowModel: getSortedRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
-  })
+  });
 
   return (
     <div className="flex flex-col gap-4">
@@ -240,7 +248,8 @@ export function AdminDentistsTable({ dentists }: AdminDentistsTableProps) {
               .getAllColumns()
               .filter(
                 (column) =>
-                  typeof column.accessorFn !== "undefined" && column.getCanHide()
+                  typeof column.accessorFn !== "undefined" &&
+                  column.getCanHide()
               )
               .map((column) => {
                 return (
@@ -248,15 +257,51 @@ export function AdminDentistsTable({ dentists }: AdminDentistsTableProps) {
                     key={column.id}
                     className="capitalize"
                     checked={column.getIsVisible()}
-                    onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                    onCheckedChange={(value) =>
+                      column.toggleVisibility(!!value)
+                    }
                   >
                     {column.id}
                   </DropdownMenuCheckboxItem>
-                )
+                );
               })}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      {/* Bulk Actions Toolbar */}
+      {table.getFilteredSelectedRowModel().rows.length > 0 && (
+        <div className="flex items-center gap-2 rounded-lg border bg-muted/50 p-2">
+          <span className="text-sm font-medium">
+            {table.getFilteredSelectedRowModel().rows.length} selected
+          </span>
+          <div className="ml-auto flex items-center gap-2">
+            <Button variant="outline" size="sm">
+              Set Available
+            </Button>
+            <Button variant="outline" size="sm">
+              Set Unavailable
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  More Actions
+                  <IconChevronDown />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem>Send Notification</DropdownMenuItem>
+                <DropdownMenuItem>Export Selected</DropdownMenuItem>
+                <DropdownMenuItem>View Schedules</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem variant="destructive">
+                  Deactivate Selected
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      )}
 
       <div className="overflow-hidden rounded-lg border">
         <Table>
@@ -273,7 +318,7 @@ export function AdminDentistsTable({ dentists }: AdminDentistsTableProps) {
                             header.getContext()
                           )}
                     </TableHead>
-                  )
+                  );
                 })}
               </TableRow>
             ))}
@@ -287,14 +332,20 @@ export function AdminDentistsTable({ dentists }: AdminDentistsTableProps) {
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
                   No dentists found.
                 </TableCell>
               </TableRow>
@@ -316,11 +367,13 @@ export function AdminDentistsTable({ dentists }: AdminDentistsTableProps) {
             <Select
               value={`${table.getState().pagination.pageSize}`}
               onValueChange={(value) => {
-                table.setPageSize(Number(value))
+                table.setPageSize(Number(value));
               }}
             >
               <SelectTrigger size="sm" className="w-20" id="rows-per-page">
-                <SelectValue placeholder={table.getState().pagination.pageSize} />
+                <SelectValue
+                  placeholder={table.getState().pagination.pageSize}
+                />
               </SelectTrigger>
               <SelectContent side="top">
                 {[10, 20, 30, 40, 50].map((pageSize) => (
@@ -379,5 +432,5 @@ export function AdminDentistsTable({ dentists }: AdminDentistsTableProps) {
         </div>
       </div>
     </div>
-  )
+  );
 }
