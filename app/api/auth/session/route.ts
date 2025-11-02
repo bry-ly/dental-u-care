@@ -1,4 +1,4 @@
-import { auth } from "@/lib/auth";
+import { auth } from "@/lib/auth-session/auth";
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 
@@ -20,6 +20,9 @@ export async function GET() {
     return NextResponse.json(session);
   } catch (error) {
     console.error("Session fetch error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
