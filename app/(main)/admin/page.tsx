@@ -142,7 +142,7 @@ export default async function Page() {
   }));
 
   // Fetch recent appointments for table
-  const appointmentsRaw = await prisma.appointment.findMany({
+  const appointments = await prisma.appointment.findMany({
     take: 20,
     orderBy: {
       createdAt: "desc",
@@ -154,15 +154,6 @@ export default async function Page() {
       payment: true,
     },
   });
-
-  // Transform appointments to convert service.price from string to number
-  const appointments = appointmentsRaw.map((appointment) => ({
-    ...appointment,
-    service: {
-      ...appointment.service,
-      price: Number(appointment.service.price),
-    },
-  }));
 
   const dashboardStats = {
     totalAppointments,

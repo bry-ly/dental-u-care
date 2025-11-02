@@ -21,6 +21,11 @@ export const auth = betterAuth({
     process.env.BETTER_AUTH_URL ||
     process.env.NEXT_PUBLIC_APP_URL ||
     "http://localhost:3000",
+  trustedOrigins: [
+    process.env.BETTER_AUTH_URL || "",
+    process.env.NEXT_PUBLIC_APP_URL || "",
+    "http://localhost:3000",
+  ].filter(Boolean),
   database: prismaAdapter(prisma, {
     provider: "mongodb",
   }),

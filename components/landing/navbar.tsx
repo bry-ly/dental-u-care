@@ -562,7 +562,7 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
                   ) : (
                     <>
                       <Button variant="outline">
-                        <Link href="/login">Sign in</Link>
+                        <Link href="/sign-in">Sign in</Link>
                       </Button>
                       <Button onClick={() => setShowRequiredDialog(true)}>
                         Book Now
