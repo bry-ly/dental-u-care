@@ -1,5 +1,12 @@
 import * as React from "react";
 
+export interface ServiceItem {
+  description: string;
+  qty: number;
+  unitPrice: number;
+  total: number;
+}
+
 export interface DentalInvoiceProps {
   invoiceNumber: string;
   invoiceDate: string;
@@ -21,6 +28,10 @@ export interface DentalInvoiceProps {
   nextAppointmentDate: string;
   nextAppointmentTime: string;
   nextAppointmentPurpose: string;
+  services: ServiceItem[];
+  subtotal: number;
+  tax: number;
+  totalDue: number;
 }
 import {
   Html,
@@ -76,10 +87,10 @@ const DentalInvoice: React.FC<DentalInvoiceProps> = (props) => {
                     Dental U Care Clinic
                   </Text>
                   <Text className="text-[14px] text-gray-600 m-0">
-                    123 Smile Street
+                    Baltan Street
                   </Text>
                   <Text className="text-[14px] text-gray-600 m-0">
-                    Lipa City, Batangas 4217
+                    Puerto Princesa City, Palawan 5300
                   </Text>
                   <Text className="text-[14px] text-gray-600 m-0">
                     Phone: (043) 756-1234
@@ -180,65 +191,34 @@ const DentalInvoice: React.FC<DentalInvoiceProps> = (props) => {
                 </Column>
               </Row>
 
-              {/* Service Items */}
-              <Row className="border-solid border-[1px] border-t-0 border-gray-200">
-                <Column className="p-[12px] w-[50%]">
-                  <Text className="text-[14px] text-gray-700 m-0">
-                    Dental Cleaning & Prophylaxis
-                  </Text>
-                </Column>
-                <Column className="p-[12px] w-[15%] text-center">
-                  <Text className="text-[14px] text-gray-700 m-0">1</Text>
-                </Column>
-                <Column className="p-[12px] w-[20%] text-center">
-                  <Text className="text-[14px] text-gray-700 m-0">
-                    ₱2,500.00
-                  </Text>
-                </Column>
-                <Column className="p-[12px] w-[15%] text-center">
-                  <Text className="text-[14px] text-gray-700 m-0">
-                    ₱2,500.00
-                  </Text>
-                </Column>
-              </Row>
-
-              <Row className="border-solid border-[1px] border-t-0 border-gray-200">
-                <Column className="p-[12px] w-[50%]">
-                  <Text className="text-[14px] text-gray-700 m-0">
-                    Tooth Filling (Composite)
-                  </Text>
-                </Column>
-                <Column className="p-[12px] w-[15%] text-center">
-                  <Text className="text-[14px] text-gray-700 m-0">2</Text>
-                </Column>
-                <Column className="p-[12px] w-[20%] text-center">
-                  <Text className="text-[14px] text-gray-700 m-0">
-                    ₱1,800.00
-                  </Text>
-                </Column>
-                <Column className="p-[12px] w-[15%] text-center">
-                  <Text className="text-[14px] text-gray-700 m-0">
-                    ₱3,600.00
-                  </Text>
-                </Column>
-              </Row>
-
-              <Row className="border-solid border-[1px] border-t-0 border-gray-200">
-                <Column className="p-[12px] w-[50%]">
-                  <Text className="text-[14px] text-gray-700 m-0">
-                    Fluoride Treatment
-                  </Text>
-                </Column>
-                <Column className="p-[12px] w-[15%] text-center">
-                  <Text className="text-[14px] text-gray-700 m-0">1</Text>
-                </Column>
-                <Column className="p-[12px] w-[20%] text-center">
-                  <Text className="text-[14px] text-gray-700 m-0">₱800.00</Text>
-                </Column>
-                <Column className="p-[12px] w-[15%] text-center">
-                  <Text className="text-[14px] text-gray-700 m-0">₱800.00</Text>
-                </Column>
-              </Row>
+              {/* Dynamic Service Items */}
+              {props.services.map((service, index) => (
+                <Row
+                  key={index}
+                  className="border-solid border-[1px] border-t-0 border-gray-200"
+                >
+                  <Column className="p-[12px] w-[50%]">
+                    <Text className="text-[14px] text-gray-700 m-0">
+                      {service.description}
+                    </Text>
+                  </Column>
+                  <Column className="p-[12px] w-[15%] text-center">
+                    <Text className="text-[14px] text-gray-700 m-0">
+                      {service.qty}
+                    </Text>
+                  </Column>
+                  <Column className="p-[12px] w-[20%] text-center">
+                    <Text className="text-[14px] text-gray-700 m-0">
+                      ₱{service.unitPrice.toFixed(2)}
+                    </Text>
+                  </Column>
+                  <Column className="p-[12px] w-[15%] text-center">
+                    <Text className="text-[14px] text-gray-700 m-0">
+                      ₱{service.total.toFixed(2)}
+                    </Text>
+                  </Column>
+                </Row>
+              ))}
             </Section>
 
             {/* Totals */}
@@ -254,7 +234,7 @@ const DentalInvoice: React.FC<DentalInvoiceProps> = (props) => {
                     </Column>
                     <Column className="w-[40%] text-right">
                       <Text className="text-[14px] text-gray-700 m-0">
-                        ₱6,900.00
+                        ₱{props.subtotal.toFixed(2)}
                       </Text>
                     </Column>
                   </Row>
@@ -266,7 +246,7 @@ const DentalInvoice: React.FC<DentalInvoiceProps> = (props) => {
                     </Column>
                     <Column className="w-[40%] text-right">
                       <Text className="text-[14px] text-gray-700 m-0">
-                        ₱828.00
+                        ₱{props.tax.toFixed(2)}
                       </Text>
                     </Column>
                   </Row>
@@ -279,7 +259,7 @@ const DentalInvoice: React.FC<DentalInvoiceProps> = (props) => {
                     </Column>
                     <Column className="w-[40%] text-right">
                       <Text className="text-[16px] font-bold text-blue-600 m-0">
-                        ₱7,728.00
+                        ₱{props.totalDue.toFixed(2)}
                       </Text>
                     </Column>
                   </Row>
@@ -359,12 +339,12 @@ const DentalInvoice: React.FC<DentalInvoiceProps> = (props) => {
             {/* Company Footer */}
             <Section className="px-[32px] py-[16px] bg-gray-50 text-center rounded-b-[8px]">
               <Text className="text-[12px] text-gray-500 m-0">
-                Dental U Care Clinic | 123 Smile Street, Lipa City, Batangas
-                4217
+                Dental U Care Clinic | Baltan Street, Puerto Princesa City, Palawan
+                  5300
               </Text>
               <Text className="text-[12px] text-gray-500 m-0">
-                © 2024 Dental U Care. All rights reserved. | License
-                #DC-2024-001
+                © 2025 Dental U Care. All rights reserved. | License
+                #DC-2025-001
               </Text>
             </Section>
           </Container>

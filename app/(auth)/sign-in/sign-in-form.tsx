@@ -42,59 +42,56 @@ export function LoginForm({
     setIsLoading(true);
 
     try {
-      const result = await authClient.signIn.email({
-        email,
-        password,
-      });
-      const error = result?.error;
+      await authClient.signIn.email(
+        {
+          email,
+          password,
+        },
+        {
+          onSuccess: async (ctx) => {
+            // User data is available in ctx.data
+            const user = ctx.data?.user;
+            const role = user?.role;
 
-      if (error) {
-        if (error.status === 403) {
-          setShowVerifyNotice(true);
-          toast.error("Please verify your email address", {
-            description: "Check your inbox for the verification link.",
-          });
-        } else {
-          setShowVerifyNotice(false);
-          toast.error("Login failed", {
-            description: error.message || "Invalid email or password.",
-          });
-        }
-      } else {
-        setShowVerifyNotice(false);
-        toast.success("Login successful!", {
-          description: "Redirecting to dashboard...",
-        });
+            setShowVerifyNotice(false);
+            toast.success("Login successful!", {
+              description: "Redirecting to dashboard...",
+            });
 
-        // Small delay to allow toast to render
-        setTimeout(async () => {
-          setIsRedirecting(true);
-          // Fetch session to get user role
-          try {
-            const sessionRes = await fetch("/api/auth/session");
-            const session = await sessionRes.json();
-            const role = session?.user?.role;
-            const token = session?.token || session?.accessToken || "";
+            setIsRedirecting(true);
+
+            // Direct redirect based on role from sign-in response
             if (role === "admin") {
               router.push("/admin");
             } else if (role === "dentist") {
               router.push("/dentist");
             } else if (role === "patient") {
-              router.push(`/patient${token ? `?token=${token}` : ""}`);
+              router.push("/patient");
             } else {
               router.push("/");
             }
-          } catch {
-            router.push("/");
-          }
-        }, 500); // 500ms delay to show the toast
-      }
+          },
+          onError: (ctx) => {
+            if (ctx.error.status === 403) {
+              setShowVerifyNotice(true);
+              toast.error("Please verify your email address", {
+                description: "Check your inbox for the verification link.",
+              });
+            } else {
+              setShowVerifyNotice(false);
+              toast.error("Login failed", {
+                description: ctx.error.message || "Invalid email or password.",
+              });
+            }
+            setIsLoading(false);
+          },
+        }
+      );
     } catch {
       toast.error("An unexpected error occurred", {
         description: "Please try again later.",
       });
       setIsRedirecting(false);
-    } finally {
       setIsLoading(false);
     }
   }
@@ -129,43 +126,24 @@ export function LoginForm({
   async function handleGoogleSignIn() {
     try {
       setIsGoogleLoading(true);
+
+      // Google OAuth redirects to Google, then back to /api/auth/callback/google
+      // which Better Auth handles and redirects to root "/"
+      // We store the current path so the callback page knows where we came from
+      sessionStorage.setItem("auth-redirect-pending", "true");
+
       await authClient.signIn.social({
         provider: "google",
       });
 
-      toast.success("Login successful!", {
-        description: "Redirecting to dashboard...",
-      });
-
-      // Small delay to allow toast to render
-      setTimeout(async () => {
-        setIsRedirecting(true);
-        // After Google sign-in, fetch session and redirect based on role
-        try {
-          const sessionRes = await fetch("/api/auth/session");
-          const session = await sessionRes.json();
-          const role = session?.user?.role;
-          const token = session?.token || session?.accessToken || "";
-          if (role === "admin") {
-            router.push("/admin");
-          } else if (role === "dentist") {
-            router.push("/dentist");
-          } else if (role === "patient") {
-            router.push(`/patient${token ? `?token=${token}` : ""}`);
-          } else {
-            router.push("/");
-          }
-        } catch {
-          router.push("/");
-        }
-      }, 500); // 500ms delay to show the toast
+      // This will cause a redirect, so code after this won't execute
     } catch (error) {
       console.error("Google sign-in failed:", error);
       toast.error("Google sign-in failed", {
         description: "Please try again.",
       });
       setIsGoogleLoading(false);
-      setIsRedirecting(false);
+      sessionStorage.removeItem("auth-redirect-pending");
     }
   }
 
