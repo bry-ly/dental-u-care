@@ -167,6 +167,16 @@ export async function POST(request: NextRequest) {
       .filter((s) => s.qty > 0)
       .reduce((sum, s) => sum + s.qty * 60, 0);
 
+    // Calculate financial totals
+    const subtotal = services
+      .filter((s) => s.qty > 0)
+      .reduce((sum, s) => sum + s.total, 0);
+    const tax = subtotal * 0.12; // 12% tax
+    const totalDue = subtotal + tax;
+
+    // Filter services with qty > 0 for email
+    const activeServices = services.filter((s) => s.qty > 0);
+
     try {
       console.log("Attempting to send email to:", personalInfo.email);
       console.log(
@@ -204,6 +214,10 @@ export async function POST(request: NextRequest) {
           nextAppointmentDate,
           nextAppointmentTime: appointment.time,
           nextAppointmentPurpose: "Regular Dental Checkup & Cleaning",
+          services: activeServices,
+          subtotal,
+          tax,
+          totalDue,
         }),
       });
 
