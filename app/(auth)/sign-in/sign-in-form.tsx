@@ -137,6 +137,9 @@ export function LoginForm({
           router.push(`/patient${token ? `?token=${token}` : ""}`)
         } else {
           router.push("/")
+          toast.success("Login successful!", {
+            description: "Redirecting to dashboard...",
+          })
         }
       } catch {
         router.push("/")
