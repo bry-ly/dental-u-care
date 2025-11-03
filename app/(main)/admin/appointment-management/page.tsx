@@ -13,7 +13,9 @@ export const metadata: Metadata = {
 export default async function AppointmentManagementPage() {
   const { user } = await requireAdmin();
 
+  // Add pagination limit to prevent loading too much data at once
   const appointments = await prisma.appointment.findMany({
+    take: 100, // Limit to 100 most recent appointments
     include: {
       patient: true,
       dentist: true,

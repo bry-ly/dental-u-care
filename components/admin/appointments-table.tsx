@@ -12,6 +12,7 @@ import {
   IconSearch,
 } from "@tabler/icons-react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import {
   confirmAppointments,
   cancelAppointments,
@@ -220,6 +221,7 @@ type AdminAppointmentsTableProps = {
 export function AdminAppointmentsTable({
   appointments,
 }: AdminAppointmentsTableProps) {
+  const router = useRouter();
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
@@ -251,7 +253,7 @@ export function AdminAppointmentsTable({
       if (result.success) {
         toast.success(result.message);
         setRowSelection({});
-        window.location.reload();
+        router.refresh();
       } else {
         toast.error(result.message);
       }
@@ -272,7 +274,7 @@ export function AdminAppointmentsTable({
       const result = await action();
       if (result.success) {
         toast.success(result.message);
-        window.location.reload();
+        router.refresh();
       } else {
         toast.error(result.message);
       }

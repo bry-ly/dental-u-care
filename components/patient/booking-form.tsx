@@ -156,8 +156,8 @@ export default function BookingForm({
   const [isNewPatient, setIsNewPatient] = useState(true);
   const [showMedicalHistory, setShowMedicalHistory] = useState(false);
 
-  // Auto-save to localStorage
-  const STORAGE_KEY = `booking-form-${patientId}`;
+  // Auto-save to localStorage - memoize to prevent unnecessary re-renders
+  const STORAGE_KEY = useMemo(() => `booking-form-${patientId}`, [patientId]);
 
   const services = useMemo(
     () =>

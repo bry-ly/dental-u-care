@@ -14,17 +14,27 @@ export default async function PatientManagementPage() {
   const { user } = await requireAdmin();
 
   const patients = await prisma.user.findMany({
+    take: 50, // Limit to 50 patients to prevent excessive data loading
     where: {
       role: "patient",
     },
     include: {
       appointmentsAsPatient: {
+        take: 10, // Limit appointments per patient to avoid N+1 issue
         include: {
           service: true,
           dentist: true,
         },
+        orderBy: {
+          date: "desc",
+        },
       },
-      payments: true,
+      payments: {
+        take: 10, // Limit payments per patient
+        orderBy: {
+          createdAt: "desc",
+        },
+      },
     },
     orderBy: {
       createdAt: "desc",

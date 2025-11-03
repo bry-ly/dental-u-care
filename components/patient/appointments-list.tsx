@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -33,6 +34,7 @@ type AppointmentsListProps = {
 }
 
 export function AppointmentsList({ appointments }: AppointmentsListProps) {
+  const router = useRouter()
   const [isLoading, setIsLoading] = useState<string | null>(null)
 
   const upcomingAppointments = appointments.filter(
@@ -66,7 +68,7 @@ export function AppointmentsList({ appointments }: AppointmentsListProps) {
       }
 
       toast.success("Appointment cancelled successfully")
-      window.location.reload()
+      router.refresh()
     } catch (error) {
       console.error(error)
       toast.error("Failed to cancel appointment")
