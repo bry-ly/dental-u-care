@@ -85,14 +85,22 @@ export async function getUserRole() {
 
 /**
  * Require admin role in a Server Component or Server Action
- * Redirects to home page (/) if not admin or not authenticated
+ * Redirects to appropriate page based on user role if not admin
  * @returns The session object
  */
 export async function requireAdmin() {
   const session = await requireAuth();
 
   if (session.user?.role !== "admin") {
-    redirect("/admin");
+    // Redirect non-admin users to their appropriate portal
+    const role = session.user?.role;
+    if (role === "dentist") {
+      redirect("/dentist");
+    } else if (role === "patient") {
+      redirect("/patient");
+    } else {
+      redirect("/");
+    }
   }
 
   return session;
@@ -100,14 +108,22 @@ export async function requireAdmin() {
 
 /**
  * Require dentist role in a Server Component or Server Action
- * Redirects to home page (/) if not dentist or not authenticated
+ * Redirects to appropriate page based on user role if not dentist
  * @returns The session object
  */
 export async function requireDentist() {
   const session = await requireAuth();
 
   if (session.user?.role !== "dentist") {
-    redirect("/dentist");
+    // Redirect non-dentist users to their appropriate portal
+    const role = session.user?.role;
+    if (role === "admin") {
+      redirect("/admin");
+    } else if (role === "patient") {
+      redirect("/patient");
+    } else {
+      redirect("/");
+    }
   }
 
   return session;
@@ -115,7 +131,7 @@ export async function requireDentist() {
 
 /**
  * Require admin or dentist role in a Server Component or Server Action
- * Redirects to home page (/) if neither admin nor dentist
+ * Redirects to patient portal or home if neither admin nor dentist
  * @returns The session object
  */
 export async function requireStaff() {
@@ -123,7 +139,12 @@ export async function requireStaff() {
 
   const role = session.user?.role;
   if (role !== "admin" && role !== "dentist") {
-    redirect("/patient");
+    // Redirect patients to patient portal, others to home
+    if (role === "patient") {
+      redirect("/patient");
+    } else {
+      redirect("/");
+    }
   }
 
   return session;

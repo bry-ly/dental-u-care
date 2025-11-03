@@ -34,7 +34,14 @@ export function AuthRedirectHandler() {
             router.push("/dentist");
           } else if (role === "patient") {
             router.push("/patient");
+          } else {
+            // If no role is set, redirect to home page
+            console.warn("User has no role assigned, redirecting to home");
+            router.push("/");
           }
+        } else {
+          // No session found, clear the flag
+          sessionStorage.removeItem("auth-redirect-pending");
         }
       } catch (error) {
         console.error("Failed to check session:", error);

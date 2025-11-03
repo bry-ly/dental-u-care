@@ -54,20 +54,30 @@ export function LoginForm({
             const role = user?.role;
 
             setShowVerifyNotice(false);
-            toast.success("Login successful!", {
-              description: "Redirecting to dashboard...",
-            });
 
             setIsRedirecting(true);
 
             // Direct redirect based on role from sign-in response
             if (role === "admin") {
+              toast.success("Login successful!", {
+                description: "Redirecting to admin panel...",
+              });
               router.push("/admin");
             } else if (role === "dentist") {
+              toast.success("Login successful!", {
+                description: "Redirecting to dentist portal...",
+              });
               router.push("/dentist");
             } else if (role === "patient") {
+              toast.success("Login successful!", {
+                description: "Redirecting to patient portal...",
+              });
               router.push("/patient");
             } else {
+              // Fallback for users without a role - redirect to home
+              toast.success("Login successful!", {
+                description: "Welcome back!",
+              });
               router.push("/");
             }
           },
