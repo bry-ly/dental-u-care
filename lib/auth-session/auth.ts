@@ -151,12 +151,28 @@ export const auth = betterAuth({
   },
   emailVerification: {
     sendVerificationEmail: async ({ user, url }) => {
-      resend.emails.send({
-        from: `${process.env.EMAIL_SENDER_NAME} <${process.env.EMAIL_SENDER_ADDRESS}>`,
-        to: user.email,
-        subject: "Verify your email",
-        react: VerificationEmail({ username: user.name, verificationUrl: url }),
-      });
+      try {
+        console.log(`[AUTH] Sending verification email to: ${user.email}`);
+        const { data, error } = await resend.emails.send({
+          from: `${process.env.EMAIL_SENDER_NAME || "Dental U Care"} <${process.env.EMAIL_SENDER_ADDRESS || "send@dentalucare.tech"}>`,
+          to: user.email,
+          subject: "Verify your email",
+          react: VerificationEmail({
+            username: user.name,
+            verificationUrl: url,
+          }),
+        });
+
+        if (error) {
+          console.error("❌ Verification email error:", error);
+          throw error;
+        }
+
+        console.log("✅ Verification email sent successfully:", data);
+      } catch (error) {
+        console.error("❌ Failed to send verification email:", error);
+        throw error;
+      }
     },
   },
   user: {
