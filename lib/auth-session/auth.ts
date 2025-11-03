@@ -1,20 +1,14 @@
 import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { stripe } from "@better-auth/stripe";
 import { createAuthMiddleware } from "better-auth/api";
 import { Resend } from "resend";
 import ForgotPasswordEmail from "@/components/emails/reset-password";
 import { PrismaClient } from "@prisma/client";
 import VerificationEmail from "@/components/emails/email-verification";
-import Stripe from "stripe";
 
 const resend = new Resend(process.env.RESEND_API_KEY!);
 const prisma = new PrismaClient();
-
-const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-09-30.clover", // Latest API version as of Stripe SDK v19
-});
 
 export const auth = betterAuth({
   baseURL:
@@ -25,7 +19,7 @@ export const auth = betterAuth({
     process.env.BETTER_AUTH_URL || "",
     process.env.NEXT_PUBLIC_APP_URL || "",
     "http://localhost:3000",
-  ].filter(Boolean),
+  ],
   database: prismaAdapter(prisma, {
     provider: "mongodb",
   }),
@@ -39,7 +33,7 @@ export const auth = betterAuth({
     cookiePrefix: "better-auth",
     useSecureCookies: process.env.NODE_ENV === "production",
     crossSubDomainCookies: {
-      enabled: false,
+      enabled: true,
     },
   },
   hooks: {
@@ -181,36 +175,7 @@ export const auth = betterAuth({
       redirectURI: `${process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/auth/callback/google`,
     },
   },
-  plugins: [
-    nextCookies(),
-    stripe({
-      stripeClient,
-      stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
-      createCustomerOnSignUp: true,
-      subscription: {
-        enabled: true,
-        plans: [
-          {
-            name: "basic",
-            priceId: "price_basic_monthly", // You'll need to replace with actual Stripe price IDs
-            limits: {
-              appointments: 5,
-            },
-          },
-          {
-            name: "premium",
-            priceId: "price_premium_monthly",
-            limits: {
-              appointments: 20,
-            },
-            freeTrial: {
-              days: 14,
-            },
-          },
-        ],
-      },
-    }),
-  ], // This must be the last plugin in the array
+  plugins: [nextCookies()], // This must be the last plugin in the array
 });
 export type Session = typeof auth.$Infer.Session;
 export type User = typeof auth.$Infer.Session.user;
