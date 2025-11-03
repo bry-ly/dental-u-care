@@ -60,7 +60,7 @@ type User = {
   name: string;
   email: string;
   image?: string | null;
-  roles?: string[];
+  role?: string;
 } | null;
 
 type NavbarProps = {
@@ -69,8 +69,8 @@ type NavbarProps = {
 };
 
 const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
-  // Debug: log user roles to verify admin detection
-  console.log("Navbar user roles:", user?.roles);
+  // Debug: log user role to verify admin detection
+  console.log("Navbar user role:", user?.role);
   const [isScrolled, setIsScrolled] = useState(false);
   const router = useRouter();
 
@@ -393,7 +393,7 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
                         <DropdownMenuSeparator />
                       </>
                     )}
-                    {!user?.roles?.includes("admin") && (
+                    {user?.role !== "admin" && (
                       <DropdownMenuItem asChild>
                         <Link href="/patient" className="cursor-pointer">
                           <User className="mr-2 h-4 w-4" />
@@ -543,7 +543,7 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
                           </Link>
                         </Button>
                       )}
-                      {!user?.roles?.includes("admin") && (
+                      {user?.role !== "admin" && (
                         <Button variant="outline" asChild>
                           <Link href="/profile">
                             <User className="mr-2 h-4 w-4" />

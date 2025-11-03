@@ -12,13 +12,19 @@ export function NavbarWrapper() {
         const res = await fetch("/api/auth/session");
         if (res.ok) {
           const session = await res.json();
+          console.log("NavbarWrapper: Session fetched", {
+            user: session.user,
+            role: session.user?.role,
+          });
           setUser(session.user);
           setIsUserAdmin(session.user?.role === "admin");
         } else {
+          console.log("NavbarWrapper: No session found");
           setUser(null);
           setIsUserAdmin(false);
         }
-      } catch {
+      } catch (error) {
+        console.error("NavbarWrapper: Error fetching session", error);
         setUser(null);
         setIsUserAdmin(false);
       }
