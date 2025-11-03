@@ -20,6 +20,7 @@ export default async function PaymentsPage() {
   }
 
   const payments = await prisma.payment.findMany({
+    take: 50, // Limit to 50 most recent payments
     where: {
       userId: user.id,
     },

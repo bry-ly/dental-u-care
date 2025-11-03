@@ -14,6 +14,7 @@ export default async function UserManagementPage() {
   const { user } = await requireAdmin();
 
   const usersRaw = await prisma.user.findMany({
+    take: 100, // Limit to 100 most recent users
     orderBy: {
       createdAt: "desc",
     },

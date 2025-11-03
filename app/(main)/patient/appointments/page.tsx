@@ -28,6 +28,7 @@ export default async function AppointmentsPage({
   }
 
   const appointmentsData = await prisma.appointment.findMany({
+    take: 50, // Limit to 50 most recent appointments
     where: {
       patientId: user.id,
     },
