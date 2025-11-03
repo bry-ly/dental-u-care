@@ -69,17 +69,22 @@ type NavbarProps = {
 };
 
 const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
-  // Debug: log user role to verify admin detection
-  console.log("Navbar user role:", user?.role);
   const [isScrolled, setIsScrolled] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
+    let ticking = false;
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setIsScrolled(window.scrollY > 50);
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
 
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
