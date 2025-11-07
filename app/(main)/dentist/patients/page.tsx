@@ -2,9 +2,8 @@ import { AppSidebar } from "@/components/layout/app-sidebar";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { DentistPatientsTable } from "@/components/dentist/patients-table";
-import { requireAuth } from "@/lib/auth-session/auth-server";
+import { requireDentist } from "@/lib/auth-session/auth-server";
 import { prisma } from "@/lib/types/prisma";
-import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -12,12 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default async function DentistPatientsPage() {
-  const session = await requireAuth();
-  const user = session.user;
-
-  if (user.role !== "dentist") {
-    redirect("/");
-  }
+  const { user } = await requireDentist();
 
   // Get all unique patients who have appointments with this dentist
   const appointments = await prisma.appointment.findMany({

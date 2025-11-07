@@ -1,28 +1,17 @@
-import { auth } from "@/lib/auth-session/auth";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { requireDentist } from "@/lib/auth-session/auth-server";
 import { UserSettingsContent } from "@/components/user/settings-content";
 import { prisma } from "@/lib/types/prisma";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { redirect } from "next/navigation";
 
 export default async function DentistSettingsPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    redirect("/sign-in");
-  }
-
-  if (session.user.role !== "dentist") {
-    redirect("/forbidden");
-  }
+  const { user: sessionUser } = await requireDentist();
 
   // Fetch full user data
   const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
+    where: { id: sessionUser.id },
     select: {
       id: true,
       name: true,

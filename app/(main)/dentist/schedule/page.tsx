@@ -8,8 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { requireAuth } from "@/lib/auth-session/auth-server";
-import { redirect } from "next/navigation";
+import { requireDentist } from "@/lib/auth-session/auth-server";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -17,12 +16,7 @@ export const metadata: Metadata = {
 };
 
 export default async function DentistSchedulePage() {
-  const session = await requireAuth();
-  const user = session.user;
-
-  if (user.role !== "dentist") {
-    redirect("/");
-  }
+  const { user } = await requireDentist();
 
   return (
     <SidebarProvider

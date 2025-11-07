@@ -2,9 +2,8 @@ import { AppSidebar } from "@/components/layout/app-sidebar";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { DentistAppointmentsList } from "@/components/dentist/appointments-list";
-import { requireAuth } from "@/lib/auth-session/auth-server";
+import { requireDentist } from "@/lib/auth-session/auth-server";
 import { prisma } from "@/lib/types/prisma";
-import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -12,12 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default async function DentistAppointmentsPage() {
-  const session = await requireAuth();
-  const user = session.user;
-
-  if (user.role !== "dentist") {
-    redirect("/");
-  }
+  const { user } = await requireDentist();
 
   const appointmentsData = await prisma.appointment.findMany({
     take: 100, // Limit to 100 most recent appointments

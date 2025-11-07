@@ -11,9 +11,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Calendar, Clock, Users, CheckCircle } from "lucide-react";
 import Link from "next/link";
-import { requireAuth } from "@/lib/auth-session/auth-server";
+import { requireDentist } from "@/lib/auth-session/auth-server";
 import { prisma } from "@/lib/types/prisma";
-import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -21,12 +20,8 @@ export const metadata: Metadata = {
 };
 
 export default async function DentistDashboard() {
-  const session = await requireAuth();
-  const user = session.user;
-
-  if (user.role !== "dentist") {
-    redirect("/");
-  }
+  // Require dentist role - will redirect to appropriate page if not dentist
+  const { user } = await requireDentist();
 
   // Fetch today's appointments
   const today = new Date();
