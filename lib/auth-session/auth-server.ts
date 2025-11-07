@@ -1,22 +1,16 @@
-import { auth } from "@/lib/auth-session/auth";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { cache } from "react";
+import { getServerSession } from "./get-session";
 
 /**
  * Get the current session in a Server Component or Server Action
  * Cached to avoid multiple lookups in the same request
  * @returns The session object or null if not authenticated
  */
-export const getSession = cache(async () => {
-  return await auth.api.getSession({
-    headers: await headers(),
-  });
-});
+export const getSession = getServerSession;
 
 /**
  * Require authentication in a Server Component or Server Action
- * Redirects to /login if not authenticated
+ * Redirects to /sign-in if not authenticated
  * @returns The session object
  */
 export async function requireAuth() {
