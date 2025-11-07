@@ -3,6 +3,8 @@ import { SiteHeader } from "@/components/layout/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { ReactNode } from "react";
 
+type UserRole = "admin" | "dentist" | "patient";
+
 interface DashboardLayoutProps {
   user: {
     id: string;
@@ -11,7 +13,7 @@ interface DashboardLayoutProps {
     role: string;
     image?: string | null;
   };
-  role: "admin" | "dentist" | "patient";
+  role: UserRole;
   children: ReactNode;
   variant?: "inset" | "sidebar";
 }
