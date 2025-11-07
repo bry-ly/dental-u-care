@@ -149,3 +149,26 @@ export async function requireStaff() {
 
   return session;
 }
+
+/**
+ * Require patient role in a Server Component or Server Action
+ * Redirects to appropriate page based on user role if not patient
+ * @returns The session object
+ */
+export async function requirePatient() {
+  const session = await requireAuth();
+
+  if (session.user?.role !== "patient") {
+    // Redirect non-patient users to their appropriate portal
+    const role = session.user?.role;
+    if (role === "admin") {
+      redirect("/admin");
+    } else if (role === "dentist") {
+      redirect("/dentist");
+    } else {
+      redirect("/");
+    }
+  }
+
+  return session;
+}
