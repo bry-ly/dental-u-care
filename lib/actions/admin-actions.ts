@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/types/prisma";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth-session/auth";
+import { Prisma } from "@prisma/client";
 
 // Helper to check if user is admin
 async function isAdmin() {
@@ -28,7 +29,12 @@ export async function confirmAppointments(appointmentIds: string[]) {
       data: { status: "confirmed" },
     });
 
+    // Revalidate all relevant paths
     revalidatePath("/admin");
+    revalidatePath("/admin/appointments");
+    revalidatePath("/patient/appointments");
+    revalidatePath("/dentist/appointments");
+
     return {
       success: true,
       message: `${appointmentIds.length} appointment(s) confirmed`,
@@ -48,7 +54,12 @@ export async function cancelAppointments(appointmentIds: string[]) {
       data: { status: "cancelled", cancelReason: "Cancelled by admin" },
     });
 
+    // Revalidate all relevant paths
     revalidatePath("/admin");
+    revalidatePath("/admin/appointments");
+    revalidatePath("/patient/appointments");
+    revalidatePath("/dentist/appointments");
+
     return {
       success: true,
       message: `${appointmentIds.length} appointment(s) cancelled`,
@@ -68,7 +79,12 @@ export async function completeAppointments(appointmentIds: string[]) {
       data: { status: "completed" },
     });
 
+    // Revalidate all relevant paths
     revalidatePath("/admin");
+    revalidatePath("/admin/appointments");
+    revalidatePath("/patient/appointments");
+    revalidatePath("/dentist/appointments");
+
     return {
       success: true,
       message: `${appointmentIds.length} appointment(s) marked as completed`,
@@ -111,6 +127,31 @@ export async function deleteAppointment(appointmentId: string) {
   } catch (error) {
     console.error("Error deleting appointment:", error);
     return { success: false, message: "Failed to delete appointment" };
+  }
+}
+
+export async function updateAppointment(
+  appointmentId: string,
+  data: Prisma.AppointmentUpdateInput
+) {
+  await isAdmin();
+
+  try {
+    await prisma.appointment.update({
+      where: { id: appointmentId },
+      data,
+    });
+
+    // Revalidate all relevant paths
+    revalidatePath("/admin");
+    revalidatePath("/admin/appointments");
+    revalidatePath("/patient/appointments");
+    revalidatePath("/dentist/appointments");
+
+    return { success: true, message: "Appointment updated successfully" };
+  } catch (error) {
+    console.error("Error updating appointment:", error);
+    return { success: false, message: "Failed to update appointment" };
   }
 }
 
