@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -43,6 +44,7 @@ type DentistAppointmentsListProps = {
 export function DentistAppointmentsList({
   appointments,
 }: DentistAppointmentsListProps) {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState<string | null>(null);
 
   const pendingAppointments = appointments.filter(
@@ -74,7 +76,7 @@ export function DentistAppointmentsList({
       }
 
       toast.success("Appointment confirmed successfully");
-      window.location.reload();
+      router.refresh();
     } catch (error) {
       console.error(error);
       toast.error("Failed to confirm appointment");
@@ -107,7 +109,7 @@ export function DentistAppointmentsList({
       }
 
       toast.success("Appointment declined");
-      window.location.reload();
+      router.refresh();
     } catch (error) {
       console.error(error);
       toast.error("Failed to decline appointment");
@@ -135,7 +137,7 @@ export function DentistAppointmentsList({
       }
 
       toast.success("Appointment marked as completed");
-      window.location.reload();
+      router.refresh();
     } catch (error) {
       console.error(error);
       toast.error("Failed to complete appointment");

@@ -1,5 +1,6 @@
 "use client";
 
+<<<<<<< HEAD
 import { useState } from "react";
 import {
   Card,
@@ -20,6 +21,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+=======
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Calendar, Clock, User, DollarSign } from "lucide-react"
+import { toast } from "sonner"
+>>>>>>> 1404de1bf68bc5e5edd16d56d1f047ca635c37ed
 
 type Appointment = {
   id: string;
@@ -46,9 +57,14 @@ type AppointmentsListProps = {
 };
 
 export function AppointmentsList({ appointments }: AppointmentsListProps) {
+<<<<<<< HEAD
   const [isLoading, setIsLoading] = useState<string | null>(null);
   const [selectedAppointment, setSelectedAppointment] =
     useState<Appointment | null>(null);
+=======
+  const router = useRouter()
+  const [isLoading, setIsLoading] = useState<string | null>(null)
+>>>>>>> 1404de1bf68bc5e5edd16d56d1f047ca635c37ed
 
   const upcomingAppointments = appointments.filter(
     (apt) => new Date(apt.date) >= new Date() && apt.status !== "cancelled"
@@ -80,8 +96,13 @@ export function AppointmentsList({ appointments }: AppointmentsListProps) {
         throw new Error("Failed to cancel appointment");
       }
 
+<<<<<<< HEAD
       toast.success("Appointment cancelled successfully");
       window.location.reload();
+=======
+      toast.success("Appointment cancelled successfully")
+      router.refresh()
+>>>>>>> 1404de1bf68bc5e5edd16d56d1f047ca635c37ed
     } catch (error) {
       console.error(error);
       toast.error("Failed to cancel appointment");

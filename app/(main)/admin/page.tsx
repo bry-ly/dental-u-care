@@ -15,79 +15,86 @@ export default async function Page() {
   // Require admin role - will redirect to home page (/) if not admin
   const { user } = await requireAdmin();
 
-  // Fetch dashboard statistics
+  // Fetch dashboard statistics - optimize by running queries in parallel
   const now = new Date();
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
 
-  // Total appointments in last 30 days
-  const totalAppointments = await prisma.appointment.count({
-    where: {
-      createdAt: { gte: thirtyDaysAgo },
-    },
-  });
-
-  // Previous period appointments for comparison
-  const previousAppointments = await prisma.appointment.count({
-    where: {
-      createdAt: { gte: sixtyDaysAgo, lt: thirtyDaysAgo },
-    },
-  });
-
-  // New patients in last 30 days
-  const newPatients = await prisma.user.count({
-    where: {
-      role: "patient",
-      createdAt: { gte: thirtyDaysAgo },
-    },
-  });
-
-  // Previous period patients
-  const previousPatients = await prisma.user.count({
-    where: {
-      role: "patient",
-      createdAt: { gte: sixtyDaysAgo, lt: thirtyDaysAgo },
-    },
-  });
-
-  // Revenue this month
-  const payments = await prisma.payment.aggregate({
-    where: {
-      status: "paid",
-      paidAt: { gte: thirtyDaysAgo },
-    },
-    _sum: {
-      amount: true,
-    },
-  });
-
-  const previousPayments = await prisma.payment.aggregate({
-    where: {
-      status: "paid",
-      paidAt: { gte: sixtyDaysAgo, lt: thirtyDaysAgo },
-    },
-    _sum: {
-      amount: true,
-    },
-  });
+  // Run all count queries in parallel for better performance
+  const [
+    totalAppointments,
+    previousAppointments,
+    newPatients,
+    previousPatients,
+    payments,
+    previousPayments,
+    completedAppointments,
+    previousCompleted,
+  ] = await Promise.all([
+    // Total appointments in last 30 days
+    prisma.appointment.count({
+      where: {
+        createdAt: { gte: thirtyDaysAgo },
+      },
+    }),
+    // Previous period appointments for comparison
+    prisma.appointment.count({
+      where: {
+        createdAt: { gte: sixtyDaysAgo, lt: thirtyDaysAgo },
+      },
+    }),
+    // New patients in last 30 days
+    prisma.user.count({
+      where: {
+        role: "patient",
+        createdAt: { gte: thirtyDaysAgo },
+      },
+    }),
+    // Previous period patients
+    prisma.user.count({
+      where: {
+        role: "patient",
+        createdAt: { gte: sixtyDaysAgo, lt: thirtyDaysAgo },
+      },
+    }),
+    // Revenue this month
+    prisma.payment.aggregate({
+      where: {
+        status: "paid",
+        paidAt: { gte: thirtyDaysAgo },
+      },
+      _sum: {
+        amount: true,
+      },
+    }),
+    // Previous period revenue
+    prisma.payment.aggregate({
+      where: {
+        status: "paid",
+        paidAt: { gte: sixtyDaysAgo, lt: thirtyDaysAgo },
+      },
+      _sum: {
+        amount: true,
+      },
+    }),
+    // Calculate completed appointments for satisfaction (mock calculation)
+    prisma.appointment.count({
+      where: {
+        status: "completed",
+        updatedAt: { gte: thirtyDaysAgo },
+      },
+    }),
+    // Previous completed
+    prisma.appointment.count({
+      where: {
+        status: "completed",
+        updatedAt: { gte: sixtyDaysAgo, lt: thirtyDaysAgo },
+      },
+    }),
+  ]);
 
   const revenue = payments._sum.amount || 0;
   const previousRevenue = previousPayments._sum.amount || 0;
-
-  // Calculate completed appointments for satisfaction (mock calculation)
-  const completedAppointments = await prisma.appointment.count({
-    where: {
-      status: "completed",
-      updatedAt: { gte: thirtyDaysAgo },
-    },
-  });
-
-  const previousCompleted = await prisma.appointment.count({
-    where: {
-      status: "completed",
-      updatedAt: { gte: sixtyDaysAgo, lt: thirtyDaysAgo },
-    },
-  });
 
   // Calculate percentage changes
   const appointmentChange =

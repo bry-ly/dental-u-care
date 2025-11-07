@@ -14,8 +14,14 @@ export default async function ServiceManagementPage() {
   const { user } = await requireAdmin();
 
   const servicesData = await prisma.service.findMany({
+    take: 100, // Limit to 100 services
     include: {
-      appointments: true,
+      appointments: {
+        take: 5, // Limit appointments per service to avoid N+1 issue
+        orderBy: {
+          date: "desc",
+        },
+      },
     },
     orderBy: {
       name: "asc",
