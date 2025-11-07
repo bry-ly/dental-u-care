@@ -81,12 +81,12 @@ const adminData = {
   documents: [
     {
       name: "Analytics",
-      url: "#",
+      url: "/Dashboard",
       icon: IconChartBar,
     },
     {
       name: "Reports",
-      url: "#",
+      url: "/Reports",
       icon: IconReport,
     },
   ],
