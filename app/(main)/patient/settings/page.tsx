@@ -1,17 +1,19 @@
-import { requirePatient } from "@/lib/auth-session/auth-server";
+import { requireAuth } from "@/lib/auth-session/auth-server";
 import { redirect } from "next/navigation";
 import { UserSettingsContent } from "@/components/user/settings-content";
 import { prisma } from "@/lib/types/prisma";
-import { AppSidebar } from "@/components/layout/app-sidebar";
-import { SiteHeader } from "@/components/layout/site-header";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { DashboardLayout } from "@/components/layout/dashboard-layout";
 
 export default async function UserSettingsPage() {
-  const { user: sessionUser } = await requirePatient();
+  const session = await requireAuth();
+
+  if (session.user.role !== "patient") {
+    redirect("/");
+  }
 
   // Fetch full user data
   const user = await prisma.user.findUnique({
-    where: { id: sessionUser.id },
+    where: { id: session.user.id },
     select: {
       id: true,
       name: true,
@@ -29,19 +31,8 @@ export default async function UserSettingsPage() {
   }
 
   return (
-    <SidebarProvider
-      style={
-        {
-          "--sidebar-width": "calc(var(--spacing) * 72)",
-          "--header-height": "calc(var(--spacing) * 12)",
-        } as React.CSSProperties
-      }
-    >
-      <AppSidebar user={user} />
-      <SidebarInset>
-        <SiteHeader role="patient" />
-        <UserSettingsContent user={user} />
-      </SidebarInset>
-    </SidebarProvider>
+    <DashboardLayout user={user} role="patient">
+      <UserSettingsContent user={user} />
+    </DashboardLayout>
   );
 }

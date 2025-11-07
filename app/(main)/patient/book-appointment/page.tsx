@@ -1,7 +1,5 @@
 import type React from "react";
-import { AppSidebar } from "@/components/layout/app-sidebar";
-import { SiteHeader } from "@/components/layout/site-header";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import BookingForm from "@/components/patient/booking-form";
 import { requirePatient } from "@/lib/auth-session/auth-server";
 import { prisma } from "@/lib/types/prisma";
@@ -70,33 +68,20 @@ export default async function BookAppointmentPage({
   const showCanceled = params.canceled === "true";
 
   return (
-    <SidebarProvider
-      style={
-        {
-          "--sidebar-width": "calc(var(--spacing) * 72)",
-          "--header-height": "calc(var(--spacing) * 12)",
-        } as React.CSSProperties
-      }
-    >
-      <AppSidebar variant="inset" user={user} />
-      <SidebarInset>
-        <SiteHeader role={user.role} />
-        <div className="flex flex-1 flex-col">
-          {showCanceled && (
-            <Alert className="m-4 md:m-8 border-red-200 bg-red-50 dark:bg-red-950/30">
-              <XCircle className="h-4 w-4 text-red-600" />
-              <AlertDescription className="text-red-800 dark:text-red-200">
-                Payment was canceled. You can try booking again.
-              </AlertDescription>
-            </Alert>
-          )}
-          <BookingForm
-            services={services}
-            dentists={transformedDentists}
-            patientId={user.id}
-          />
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+    <DashboardLayout user={user} role="patient">
+      {showCanceled && (
+        <Alert className="m-4 md:m-8 border-red-200 bg-red-50 dark:bg-red-950/30">
+          <XCircle className="h-4 w-4 text-red-600" />
+          <AlertDescription className="text-red-800 dark:text-red-200">
+            Payment was canceled. You can try booking again.
+          </AlertDescription>
+        </Alert>
+      )}
+      <BookingForm
+        services={services}
+        dentists={transformedDentists}
+        patientId={user.id}
+      />
+    </DashboardLayout>
   );
 }

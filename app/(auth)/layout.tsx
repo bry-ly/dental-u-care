@@ -10,19 +10,20 @@ export default async function AuthLayout({
   const session = await getServerSession();
   const user = session?.user;
 
-   if (user) {
-     const role = user.role;
-     if (role === "admin") {
-       redirect("/admin");
-     } else if (role === "dentist") {
-       redirect("/dentist");
-     } else if (role === "patient") {
-       redirect("/patient");
-     } else {
-       // Fallback for users without a role
-       redirect("/");
-     }
-   }
+  // Redirect authenticated users to their role-specific dashboard
+  if (user) {
+    const role = user.role;
+    if (role === "admin") {
+      redirect("/admin");
+    } else if (role === "dentist") {
+      redirect("/dentist");
+    } else if (role === "patient") {
+      redirect("/patient");
+    } else {
+      // Fallback for users without a role
+      redirect("/");
+    }
+  }
 
   return children;
 }
