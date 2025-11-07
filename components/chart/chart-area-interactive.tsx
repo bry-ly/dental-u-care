@@ -138,7 +138,34 @@ const chartConfig = {
 export function ChartAreaInteractive({ data }: { data?: ChartDataPoint[] }) {
   const isMobile = useIsMobile();
   const [timeRange, setTimeRange] = React.useState("90d");
-  const chartData = data && data.length > 0 ? data : defaultChartData;
+
+  // Use provided data or fallback to default
+  const chartData = React.useMemo(() => {
+    if (!data || data.length === 0) {
+      return defaultChartData;
+    }
+
+    // Fill in missing dates with 0 appointments
+    const referenceDate = new Date();
+    const filledData: ChartDataPoint[] = [];
+
+    // Create a map of existing data
+    const dataMap = new Map(data.map((item) => [item.date, item.appointments]));
+
+    // Generate data for last 90 days
+    for (let i = 89; i >= 0; i--) {
+      const date = new Date(referenceDate);
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split("T")[0];
+
+      filledData.push({
+        date: dateStr,
+        appointments: dataMap.get(dateStr) || 0,
+      });
+    }
+
+    return filledData;
+  }, [data]);
 
   React.useEffect(() => {
     if (isMobile) {
@@ -146,8 +173,7 @@ export function ChartAreaInteractive({ data }: { data?: ChartDataPoint[] }) {
     }
   }, [isMobile]);
 
-  const filteredData = chartData.filter((item) => {
-    const date = new Date(item.date);
+  const filteredData = React.useMemo(() => {
     const referenceDate = new Date();
     let daysToSubtract = 90;
     if (timeRange === "30d") {
@@ -157,8 +183,12 @@ export function ChartAreaInteractive({ data }: { data?: ChartDataPoint[] }) {
     }
     const startDate = new Date(referenceDate);
     startDate.setDate(startDate.getDate() - daysToSubtract);
-    return date >= startDate;
-  });
+
+    return chartData.filter((item) => {
+      const date = new Date(item.date);
+      return date >= startDate;
+    });
+  }, [chartData, timeRange]);
 
   return (
     <Card className="@container/card">
