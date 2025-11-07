@@ -3,9 +3,8 @@ import { AppSidebar } from "@/components/layout/app-sidebar";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import BookingForm from "@/components/patient/booking-form";
-import { requireAuth } from "@/lib/auth-session/auth-server";
+import { requirePatient } from "@/lib/auth-session/auth-server";
 import { prisma } from "@/lib/types/prisma";
-import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { XCircle } from "lucide-react";
@@ -21,12 +20,7 @@ interface BookAppointmentPageProps {
 export default async function BookAppointmentPage({
   searchParams,
 }: BookAppointmentPageProps) {
-  const session = await requireAuth();
-  const user = session.user;
-
-  if (user.role !== "patient") {
-    redirect("/");
-  }
+  const { user } = await requirePatient();
 
   // Fetch available services from database
   const servicesFromDb = await prisma.service.findMany({

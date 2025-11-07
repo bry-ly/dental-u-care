@@ -2,9 +2,8 @@ import { AppSidebar } from "@/components/layout/app-sidebar";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { PatientSectionCards } from "@/components/patient/section-cards";
-import { requireAuth } from "@/lib/auth-session/auth-server";
+import { requirePatient } from "@/lib/auth-session/auth-server";
 import { prisma } from "@/lib/types/prisma";
-import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -12,13 +11,8 @@ export const metadata: Metadata = {
 };
 
 export default async function PatientDashboard() {
-  const session = await requireAuth();
-  const user = session.user;
-
-  // Check if user is a patient
-  if (user.role !== "patient") {
-    redirect("/");
-  }
+  // Require patient role - will redirect to appropriate page if not patient
+  const { user } = await requirePatient();
 
   // Fetch statistics
   const upcomingAppointmentsCount = await prisma.appointment.count({

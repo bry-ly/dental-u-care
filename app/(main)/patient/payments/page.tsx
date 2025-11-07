@@ -2,9 +2,8 @@ import { AppSidebar } from "@/components/layout/app-sidebar";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { PaymentHistory } from "@/components/patient/payment-history";
-import { requireAuth } from "@/lib/auth-session/auth-server";
+import { requirePatient } from "@/lib/auth-session/auth-server";
 import { prisma } from "@/lib/types/prisma";
-import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -12,12 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default async function PaymentsPage() {
-  const session = await requireAuth();
-  const user = session.user;
-
-  if (user.role !== "patient") {
-    redirect("/");
-  }
+  const { user } = await requirePatient();
 
   const payments = await prisma.payment.findMany({
     take: 50, // Limit to 50 most recent payments

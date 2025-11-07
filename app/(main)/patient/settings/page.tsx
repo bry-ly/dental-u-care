@@ -1,5 +1,4 @@
-import { auth } from "@/lib/auth-session/auth";
-import { headers } from "next/headers";
+import { requirePatient } from "@/lib/auth-session/auth-server";
 import { redirect } from "next/navigation";
 import { UserSettingsContent } from "@/components/user/settings-content";
 import { prisma } from "@/lib/types/prisma";
@@ -8,17 +7,11 @@ import { SiteHeader } from "@/components/layout/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 export default async function UserSettingsPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    redirect("/sign-in");
-  }
+  const { user: sessionUser } = await requirePatient();
 
   // Fetch full user data
   const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
+    where: { id: sessionUser.id },
     select: {
       id: true,
       name: true,

@@ -2,9 +2,8 @@ import { AppSidebar } from "@/components/layout/app-sidebar";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { AppointmentsList } from "@/components/patient/appointments-list";
-import { requireAuth } from "@/lib/auth-session/auth-server";
+import { requirePatient } from "@/lib/auth-session/auth-server";
 import { prisma } from "@/lib/types/prisma";
-import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle } from "lucide-react";
@@ -20,12 +19,7 @@ interface AppointmentsPageProps {
 export default async function AppointmentsPage({
   searchParams,
 }: AppointmentsPageProps) {
-  const session = await requireAuth();
-  const user = session.user;
-
-  if (user.role !== "patient") {
-    redirect("/");
-  }
+  const { user } = await requirePatient();
 
   const appointmentsData = await prisma.appointment.findMany({
     take: 50, // Limit to 50 most recent appointments

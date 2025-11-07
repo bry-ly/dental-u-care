@@ -8,9 +8,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { requireAuth } from "@/lib/auth-session/auth-server";
+import { requirePatient } from "@/lib/auth-session/auth-server";
 import { prisma } from "@/lib/types/prisma";
-import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { FileText, Calendar, User } from "lucide-react";
 
@@ -19,12 +18,7 @@ export const metadata: Metadata = {
 };
 
 export default async function HealthRecordsPage() {
-  const session = await requireAuth();
-  const user = session.user;
-
-  if (user.role !== "patient") {
-    redirect("/");
-  }
+  const { user } = await requirePatient();
 
   const userDetails = await prisma.user.findUnique({
     where: { id: user.id },
