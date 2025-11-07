@@ -45,7 +45,7 @@ export default async function AppointmentsPage({
     ...appointment,
     service: {
       ...appointment.service,
-      price: Number(appointment.service.price),
+      price: appointment.service.price, // Keep price as is (can be string or number)
     },
   }));
 
