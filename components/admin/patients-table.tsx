@@ -14,6 +14,16 @@ import {
   IconPhone,
 } from "@tabler/icons-react";
 import {
+  User,
+  Mail,
+  Phone,
+  Calendar,
+  FileText,
+  DollarSign,
+} from "lucide-react";
+import { toast } from "sonner";
+import { deletePatients, deletePatient } from "@/lib/actions/admin-actions";
+import {
   ColumnDef,
   ColumnFiltersState,
   flexRender,
@@ -55,6 +65,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 
 type Patient = {
   id: string;

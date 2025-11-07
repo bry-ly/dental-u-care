@@ -11,6 +11,7 @@ import {
   IconLayoutColumns,
   IconSearch,
 } from "@tabler/icons-react";
+import { Calendar, Clock, User, Mail } from "lucide-react";
 import { toast } from "sonner";
 import {
   confirmAppointments,
@@ -62,6 +63,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type Appointment = {
   id: string;
@@ -232,6 +240,18 @@ export function AdminAppointmentsTable({
     pageSize: 10,
   });
   const [isLoading, setIsLoading] = React.useState(false);
+  const [selectedAppointment, setSelectedAppointment] =
+    React.useState<Appointment | null>(null);
+
+  const formatPrice = (price: number | string): string => {
+    if (typeof price === "string") {
+      return price;
+    }
+    if (isNaN(price)) {
+      return "Contact for pricing";
+    }
+    return `₱${price.toLocaleString()}`;
+  };
 
   const handleBulkAction = async (
     action: (ids: string[]) => Promise<{ success: boolean; message: string }>,
@@ -301,7 +321,7 @@ export function AdminAppointmentsTable({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-40">
           <DropdownMenuItem
-            onClick={() => toast.info("View details feature coming soon")}
+            onClick={() => setSelectedAppointment(row.original)}
           >
             View Details
           </DropdownMenuItem>
@@ -624,6 +644,238 @@ export function AdminAppointmentsTable({
           </div>
         </div>
       </div>
+
+      {/* Appointment Details Dialog */}
+      <Dialog
+        open={!!selectedAppointment}
+        onOpenChange={() => setSelectedAppointment(null)}
+      >
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <div className="flex items-start justify-between">
+              <div>
+                <DialogTitle className="text-2xl">
+                  Appointment Details
+                </DialogTitle>
+                <DialogDescription>
+                  Booking ID: {selectedAppointment?.id}
+                </DialogDescription>
+              </div>
+              {selectedAppointment &&
+                getStatusBadge(selectedAppointment.status)}
+            </div>
+          </DialogHeader>
+
+          {selectedAppointment && (
+            <div className="space-y-6">
+              {/* Patient Information */}
+              <div className="space-y-3">
+                <h3 className="font-semibold text-lg border-b pb-2">
+                  Patient Information
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-start gap-2">
+                    <User className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">
+                        Patient Name
+                      </p>
+                      <p className="font-medium">
+                        {selectedAppointment.patient.name}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Mail className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Email</p>
+                      <p className="font-medium text-sm">
+                        {selectedAppointment.patient.email}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Service Information */}
+              <div className="space-y-3">
+                <h3 className="font-semibold text-lg border-b pb-2">
+                  Service Information
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Service</p>
+                    <p className="font-medium">
+                      {selectedAppointment.service.name}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Price</p>
+                    <p className="font-medium">
+                      {formatPrice(selectedAppointment.service.price)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Appointment Schedule */}
+              <div className="space-y-3">
+                <h3 className="font-semibold text-lg border-b pb-2">
+                  Appointment Schedule
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-start gap-2">
+                    <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Date</p>
+                      <p className="font-medium">
+                        {new Date(selectedAppointment.date).toLocaleDateString(
+                          "en-US",
+                          {
+                            weekday: "long",
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          }
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Clock className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Time</p>
+                      <p className="font-medium">
+                        {selectedAppointment.timeSlot}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Dentist Information */}
+              <div className="space-y-3">
+                <h3 className="font-semibold text-lg border-b pb-2">
+                  Assigned Dentist
+                </h3>
+                <div className="flex items-center gap-2">
+                  <User className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Dentist</p>
+                    <p className="font-medium">
+                      Dr. {selectedAppointment.dentist.name}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Payment Information */}
+              {selectedAppointment.payment && (
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-lg border-b pb-2">
+                    Payment Information
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">
+                        Payment Status
+                      </p>
+                      <div className="mt-1">
+                        {getPaymentBadge(selectedAppointment.payment.status)}
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Amount</p>
+                      <p className="font-medium">
+                        ₱{selectedAppointment.payment.amount.toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Notes */}
+              {selectedAppointment.notes && (
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-lg border-b pb-2">
+                    Special Requests / Notes
+                  </h3>
+                  <p className="text-sm bg-muted p-3 rounded-lg">
+                    {selectedAppointment.notes}
+                  </p>
+                </div>
+              )}
+
+              {/* Admin Action Buttons */}
+              <div className="flex gap-2 pt-4 border-t">
+                {selectedAppointment.status === "pending" && (
+                  <Button
+                    className="flex-1"
+                    onClick={() => {
+                      const id = selectedAppointment.id;
+                      setSelectedAppointment(null);
+                      handleSingleAction(
+                        () => confirmAppointments([id]),
+                        "confirm appointment"
+                      );
+                    }}
+                    disabled={isLoading}
+                  >
+                    Confirm Appointment
+                  </Button>
+                )}
+                {(selectedAppointment.status === "pending" ||
+                  selectedAppointment.status === "confirmed") && (
+                  <>
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => {
+                        setSelectedAppointment(null);
+                        toast.info("Reschedule feature coming soon");
+                      }}
+                    >
+                      Reschedule
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      className="flex-1"
+                      onClick={() => {
+                        const id = selectedAppointment.id;
+                        setSelectedAppointment(null);
+                        handleSingleAction(
+                          () => cancelAppointments([id]),
+                          "cancel appointment"
+                        );
+                      }}
+                      disabled={isLoading}
+                    >
+                      Cancel Appointment
+                    </Button>
+                  </>
+                )}
+                {selectedAppointment.status === "confirmed" && (
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => {
+                      const id = selectedAppointment.id;
+                      setSelectedAppointment(null);
+                      handleSingleAction(
+                        () => completeAppointments([id]),
+                        "mark as completed"
+                      );
+                    }}
+                    disabled={isLoading}
+                  >
+                    Mark as Completed
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

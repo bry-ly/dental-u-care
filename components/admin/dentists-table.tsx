@@ -11,6 +11,12 @@ import {
   IconLayoutColumns,
   IconSearch,
 } from "@tabler/icons-react";
+import { User, Mail, Phone, Calendar, Award, Briefcase } from "lucide-react";
+import { toast } from "sonner";
+import {
+  updateDentistAvailability,
+  deleteDentist,
+} from "@/lib/actions/admin-actions";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -54,6 +60,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type Dentist = {
   id: string;
@@ -196,10 +209,126 @@ export function AdminDentistsTable({ dentists }: AdminDentistsTableProps) {
     pageIndex: 0,
     pageSize: 10,
   });
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [selectedDentist, setSelectedDentist] = React.useState<Dentist | null>(
+    null
+  );
+
+  const handleBulkAvailability = async (isAvailable: boolean) => {
+    const selectedRows = table.getFilteredSelectedRowModel().rows;
+    const ids = selectedRows.map((row) => row.original.id);
+
+    if (ids.length === 0) {
+      toast.error("No dentists selected");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const result = await updateDentistAvailability(ids, isAvailable);
+      if (result.success) {
+        toast.success(result.message);
+        setRowSelection({});
+        window.location.reload();
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      toast.error(`Failed to update availability`);
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSingleAction = async (
+    action: () => Promise<{ success: boolean; message: string }>,
+    actionName: string
+  ) => {
+    setIsLoading(true);
+    try {
+      const result = await action();
+      if (result.success) {
+        toast.success(result.message);
+        window.location.reload();
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      toast.error(`Failed to ${actionName}`);
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const actionsColumn: ColumnDef<Dentist> = {
+    id: "actions",
+    cell: ({ row }) => (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            className="data-[state=open]:bg-muted text-muted-foreground flex size-8"
+            size="icon"
+            disabled={isLoading}
+          >
+            <IconDotsVertical />
+            <span className="sr-only">Open menu</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-40">
+          <DropdownMenuItem onClick={() => setSelectedDentist(row.original)}>
+            View Details
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => toast.info("Edit feature coming soon")}
+          >
+            Edit Profile
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => toast.info("Schedule feature coming soon")}
+          >
+            View Schedule
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={() =>
+              handleSingleAction(
+                () =>
+                  updateDentistAvailability(
+                    [row.original.id],
+                    !row.original.isAvailable
+                  ),
+                row.original.isAvailable ? "set unavailable" : "set available"
+              )
+            }
+          >
+            {row.original.isAvailable ? "Set Unavailable" : "Set Available"}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            variant="destructive"
+            onClick={() => {
+              if (confirm("Are you sure you want to delete this dentist?")) {
+                handleSingleAction(
+                  () => deleteDentist(row.original.id),
+                  "delete dentist"
+                );
+              }
+            }}
+          >
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    ),
+  };
+
+  const columnsWithActions = [...columns.slice(0, -1), actionsColumn];
 
   const table = useReactTable({
     data: dentists,
-    columns,
+    columns: columnsWithActions,
     state: {
       sorting,
       columnVisibility,
@@ -276,25 +405,60 @@ export function AdminDentistsTable({ dentists }: AdminDentistsTableProps) {
             {table.getFilteredSelectedRowModel().rows.length} selected
           </span>
           <div className="ml-auto flex items-center gap-2">
-            <Button variant="outline" size="sm">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={isLoading}
+              onClick={() => handleBulkAvailability(true)}
+            >
               Set Available
             </Button>
-            <Button variant="outline" size="sm">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={isLoading}
+              onClick={() => handleBulkAvailability(false)}
+            >
               Set Unavailable
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" disabled={isLoading}>
                   More Actions
                   <IconChevronDown />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem>Send Notification</DropdownMenuItem>
-                <DropdownMenuItem>Export Selected</DropdownMenuItem>
-                <DropdownMenuItem>View Schedules</DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() =>
+                    toast.info("Send notification feature coming soon")
+                  }
+                >
+                  Send Notification
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => toast.info("Export feature coming soon")}
+                >
+                  Export Selected
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => toast.info("Schedule feature coming soon")}
+                >
+                  View Schedules
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem variant="destructive">
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() => {
+                    if (
+                      confirm(
+                        "Are you sure you want to deactivate these dentists?"
+                      )
+                    ) {
+                      handleBulkAvailability(false);
+                    }
+                  }}
+                >
                   Deactivate Selected
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -431,6 +595,213 @@ export function AdminDentistsTable({ dentists }: AdminDentistsTableProps) {
           </div>
         </div>
       </div>
+
+      {/* Dentist Details Dialog */}
+      <Dialog
+        open={!!selectedDentist}
+        onOpenChange={() => setSelectedDentist(null)}
+      >
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <div className="flex items-start justify-between">
+              <div>
+                <DialogTitle className="text-2xl">Dentist Details</DialogTitle>
+                <DialogDescription>ID: {selectedDentist?.id}</DialogDescription>
+              </div>
+              {selectedDentist && (
+                <Badge
+                  variant={
+                    selectedDentist.isAvailable ? "default" : "secondary"
+                  }
+                  className="text-xs"
+                >
+                  {selectedDentist.isAvailable ? "Available" : "Unavailable"}
+                </Badge>
+              )}
+            </div>
+          </DialogHeader>
+
+          {selectedDentist && (
+            <div className="space-y-6">
+              {/* Personal Information */}
+              <div className="space-y-3">
+                <h3 className="font-semibold text-lg border-b pb-2">
+                  Personal Information
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-start gap-2">
+                    <User className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Full Name</p>
+                      <p className="font-medium">Dr. {selectedDentist.name}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Mail className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Email</p>
+                      <p className="font-medium text-sm">
+                        {selectedDentist.email}
+                      </p>
+                    </div>
+                  </div>
+                  {selectedDentist.phone && (
+                    <div className="flex items-start gap-2">
+                      <Phone className="h-5 w-5 text-muted-foreground mt-0.5" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Phone</p>
+                        <p className="font-medium">{selectedDentist.phone}</p>
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex items-start gap-2">
+                    <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Joined</p>
+                      <p className="font-medium">
+                        {new Date(selectedDentist.createdAt).toLocaleDateString(
+                          "en-US",
+                          {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          }
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Professional Information */}
+              <div className="space-y-3">
+                <h3 className="font-semibold text-lg border-b pb-2">
+                  Professional Information
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  {selectedDentist.specialization && (
+                    <div className="flex items-start gap-2">
+                      <Award className="h-5 w-5 text-muted-foreground mt-0.5" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">
+                          Specialization
+                        </p>
+                        <p className="font-medium">
+                          {selectedDentist.specialization}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  {selectedDentist.experience && (
+                    <div className="flex items-start gap-2">
+                      <Briefcase className="h-5 w-5 text-muted-foreground mt-0.5" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">
+                          Experience
+                        </p>
+                        <p className="font-medium">
+                          {selectedDentist.experience}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {selectedDentist.qualifications && (
+                  <div className="mt-3">
+                    <p className="text-sm text-muted-foreground mb-1">
+                      Qualifications
+                    </p>
+                    <p className="text-sm bg-muted p-3 rounded-lg">
+                      {selectedDentist.qualifications}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Appointment Statistics */}
+              <div className="space-y-3">
+                <h3 className="font-semibold text-lg border-b pb-2">
+                  Appointment Statistics
+                </h3>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="bg-muted p-4 rounded-lg">
+                    <p className="text-2xl font-bold">
+                      {selectedDentist.appointmentsAsDentist.length}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Total Appointments
+                    </p>
+                  </div>
+                  <div className="bg-muted p-4 rounded-lg">
+                    <p className="text-2xl font-bold">
+                      {
+                        selectedDentist.appointmentsAsDentist.filter(
+                          (apt) => apt.status === "completed"
+                        ).length
+                      }
+                    </p>
+                    <p className="text-sm text-muted-foreground">Completed</p>
+                  </div>
+                  <div className="bg-muted p-4 rounded-lg">
+                    <p className="text-2xl font-bold">
+                      {
+                        selectedDentist.appointmentsAsDentist.filter(
+                          (apt) =>
+                            apt.status === "pending" ||
+                            apt.status === "confirmed"
+                        ).length
+                      }
+                    </p>
+                    <p className="text-sm text-muted-foreground">Upcoming</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-2 pt-4 border-t">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    setSelectedDentist(null);
+                    toast.info("Edit feature coming soon");
+                  }}
+                >
+                  Edit Profile
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    setSelectedDentist(null);
+                    toast.info("Schedule feature coming soon");
+                  }}
+                >
+                  View Schedule
+                </Button>
+                <Button
+                  variant={selectedDentist.isAvailable ? "outline" : "default"}
+                  className="flex-1"
+                  onClick={() => {
+                    const id = selectedDentist.id;
+                    const newStatus = !selectedDentist.isAvailable;
+                    setSelectedDentist(null);
+                    handleSingleAction(
+                      () => updateDentistAvailability([id], newStatus),
+                      newStatus ? "set available" : "set unavailable"
+                    );
+                  }}
+                  disabled={isLoading}
+                >
+                  {selectedDentist.isAvailable
+                    ? "Set Unavailable"
+                    : "Set Available"}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

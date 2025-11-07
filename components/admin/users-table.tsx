@@ -14,6 +14,13 @@ import {
   IconUser,
   IconUserCheck,
 } from "@tabler/icons-react";
+import { User as UserIcon, Mail, Calendar, Shield } from "lucide-react";
+import { toast } from "sonner";
+import {
+  updateUserEmailVerification,
+  deleteUsers,
+  deleteUser,
+} from "@/lib/actions/admin-actions";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -57,6 +64,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import Image from "next/image";
 
 type User = {
@@ -174,41 +189,6 @@ const columns: ColumnDef<User>[] = [
     header: "Last Updated",
     cell: ({ row }) => new Date(row.original.updatedAt).toLocaleDateString(),
   },
-  {
-    id: "actions",
-    cell: ({ row }) => {
-      const isAdmin = row.original.role === "admin";
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              className="data-[state=open]:bg-muted text-muted-foreground flex size-8"
-              size="icon"
-            >
-              <IconDotsVertical />
-              <span className="sr-only">Open menu</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-40">
-            <DropdownMenuItem>View Profile</DropdownMenuItem>
-            <DropdownMenuItem>Edit User</DropdownMenuItem>
-            <DropdownMenuItem>Change Role</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>Reset Password</DropdownMenuItem>
-            {!isAdmin && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem variant="destructive">
-                  Delete User
-                </DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      );
-    },
-  },
 ];
 
 type AdminUsersTableProps = {
@@ -227,10 +207,220 @@ export function AdminUsersTable({ users }: AdminUsersTableProps) {
     pageIndex: 0,
     pageSize: 10,
   });
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [selectedUser, setSelectedUser] = React.useState<User | null>(null);
+  const [changeRoleUser, setChangeRoleUser] = React.useState<User | null>(null);
+  const [newRole, setNewRole] = React.useState<string>("");
+  const [userToDelete, setUserToDelete] = React.useState<User | null>(null);
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = React.useState(false);
+
+  const handleChangeRole = async () => {
+    if (!changeRoleUser || !newRole) return;
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/users/${changeRoleUser.id}/role`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: newRole }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        toast.success(`Role changed to ${newRole} successfully`);
+        setChangeRoleUser(null);
+        setNewRole("");
+        window.location.reload();
+      } else {
+        toast.error(result.error || "Failed to change role");
+      }
+    } catch (error) {
+      toast.error("Failed to change role");
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleBulkEmailVerification = async () => {
+    const selectedRows = table.getFilteredSelectedRowModel().rows;
+    const ids = selectedRows.map((row) => row.original.id);
+
+    if (ids.length === 0) {
+      toast.error("No users selected");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const result = await updateUserEmailVerification(ids, true);
+      if (result.success) {
+        toast.success(result.message);
+        setRowSelection({});
+        window.location.reload();
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      toast.error("Failed to verify emails");
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    const selectedRows = table.getFilteredSelectedRowModel().rows;
+    const ids = selectedRows.map((row) => row.original.id);
+
+    if (ids.length === 0) {
+      toast.error("No users selected");
+      return;
+    }
+
+    // Check if any admin is selected
+    const hasAdmin = selectedRows.some((row) => row.original.role === "admin");
+    if (hasAdmin) {
+      toast.error("Cannot delete admin users");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const result = await deleteUsers(ids);
+      if (result.success) {
+        toast.success(result.message);
+        setRowSelection({});
+        setShowBulkDeleteDialog(false);
+        window.location.reload();
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      toast.error("Failed to delete users");
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const confirmDeleteUser = async () => {
+    if (!userToDelete) return;
+
+    setIsLoading(true);
+    try {
+      const result = await deleteUser(userToDelete.id);
+      if (result.success) {
+        toast.success(result.message);
+        setUserToDelete(null);
+        window.location.reload();
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      toast.error("Failed to delete user");
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSingleAction = async (
+    action: () => Promise<{ success: boolean; message: string }>,
+    actionName: string
+  ) => {
+    setIsLoading(true);
+    try {
+      const result = await action();
+      if (result.success) {
+        toast.success(result.message);
+        window.location.reload();
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      toast.error(`Failed to ${actionName}`);
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const actionsColumn: ColumnDef<User> = {
+    id: "actions",
+    cell: ({ row }) => {
+      const isAdmin = row.original.role === "admin";
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              className="data-[state=open]:bg-muted text-muted-foreground flex size-8"
+              size="icon"
+              disabled={isLoading}
+            >
+              <IconDotsVertical />
+              <span className="sr-only">Open menu</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-40">
+            <DropdownMenuItem onClick={() => setSelectedUser(row.original)}>
+              View Profile
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => toast.info("Edit feature coming soon")}
+            >
+              Edit User
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => {
+                setChangeRoleUser(row.original);
+                setNewRole(row.original.role || "patient");
+              }}
+            >
+              Change Role
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            {!row.original.emailVerified && (
+              <DropdownMenuItem
+                onClick={() =>
+                  handleSingleAction(
+                    () => updateUserEmailVerification([row.original.id], true),
+                    "verify email"
+                  )
+                }
+              >
+                Verify Email
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem
+              onClick={() => toast.info("Reset password feature coming soon")}
+            >
+              Reset Password
+            </DropdownMenuItem>
+            {!isAdmin && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() => setUserToDelete(row.original)}
+                >
+                  Delete User
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    },
+  };
+
+  const columnsWithActions = [...columns, actionsColumn];
 
   const table = useReactTable({
     data: users,
-    columns,
+    columns: columnsWithActions,
     state: {
       sorting,
       columnVisibility,
@@ -307,25 +497,54 @@ export function AdminUsersTable({ users }: AdminUsersTableProps) {
             {table.getFilteredSelectedRowModel().rows.length} selected
           </span>
           <div className="ml-auto flex items-center gap-2">
-            <Button variant="outline" size="sm">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={isLoading}
+              onClick={handleBulkEmailVerification}
+            >
               Verify Emails
             </Button>
-            <Button variant="outline" size="sm">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={isLoading}
+              onClick={() => toast.info("Change role feature coming soon")}
+            >
               Change Role
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" disabled={isLoading}>
                   More Actions
                   <IconChevronDown />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem>Send Notification</DropdownMenuItem>
-                <DropdownMenuItem>Reset Passwords</DropdownMenuItem>
-                <DropdownMenuItem>Export Selected</DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() =>
+                    toast.info("Send notification feature coming soon")
+                  }
+                >
+                  Send Notification
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() =>
+                    toast.info("Reset passwords feature coming soon")
+                  }
+                >
+                  Reset Passwords
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => toast.info("Export feature coming soon")}
+                >
+                  Export Selected
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem variant="destructive">
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() => setShowBulkDeleteDialog(true)}
+                >
                   Delete Selected
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -462,6 +681,410 @@ export function AdminUsersTable({ users }: AdminUsersTableProps) {
           </div>
         </div>
       </div>
+
+      {/* User Details Dialog */}
+      <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <div className="flex items-start justify-between">
+              <div>
+                <DialogTitle className="text-2xl">User Profile</DialogTitle>
+                <DialogDescription>
+                  User ID: {selectedUser?.id}
+                </DialogDescription>
+              </div>
+              {selectedUser && getRoleBadge(selectedUser.role)}
+            </div>
+          </DialogHeader>
+
+          {selectedUser && (
+            <div className="space-y-6">
+              {/* Profile Picture & Basic Info */}
+              <div className="flex items-center gap-4 pb-4 border-b">
+                {selectedUser.image ? (
+                  <Image
+                    src={selectedUser.image}
+                    alt={selectedUser.name}
+                    className="size-20 rounded-full object-cover"
+                    width={80}
+                    height={80}
+                  />
+                ) : (
+                  <div className="flex size-20 items-center justify-center rounded-full bg-muted">
+                    <UserIcon className="size-10 text-muted-foreground" />
+                  </div>
+                )}
+                <div className="flex-1">
+                  <h3 className="text-xl font-semibold">{selectedUser.name}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedUser.email}
+                  </p>
+                  <div className="mt-2">
+                    <Badge
+                      variant={
+                        selectedUser.emailVerified ? "default" : "secondary"
+                      }
+                      className="text-xs"
+                    >
+                      {selectedUser.emailVerified
+                        ? "✓ Email Verified"
+                        : "Email Unverified"}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+
+              {/* Account Information */}
+              <div className="space-y-3">
+                <h3 className="font-semibold text-lg border-b pb-2">
+                  Account Information
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-start gap-2">
+                    <UserIcon className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Full Name</p>
+                      <p className="font-medium">{selectedUser.name}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Mail className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">
+                        Email Address
+                      </p>
+                      <p className="font-medium text-sm break-all">
+                        {selectedUser.email}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Shield className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Role</p>
+                      <p className="font-medium capitalize">
+                        {selectedUser.role || "Patient"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">
+                        Member Since
+                      </p>
+                      <p className="font-medium">
+                        {new Date(selectedUser.createdAt).toLocaleDateString(
+                          "en-US",
+                          {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          }
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Account Status */}
+              <div className="space-y-3">
+                <h3 className="font-semibold text-lg border-b pb-2">
+                  Account Status
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-muted p-4 rounded-lg">
+                    <p className="text-sm text-muted-foreground mb-1">
+                      Email Verification
+                    </p>
+                    <p className="text-lg font-semibold">
+                      {selectedUser.emailVerified
+                        ? "Verified ✓"
+                        : "Not Verified"}
+                    </p>
+                  </div>
+                  <div className="bg-muted p-4 rounded-lg">
+                    <p className="text-sm text-muted-foreground mb-1">
+                      Last Updated
+                    </p>
+                    <p className="text-lg font-semibold">
+                      {new Date(selectedUser.updatedAt).toLocaleDateString(
+                        "en-US",
+                        {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        }
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-2 pt-4 border-t">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    setSelectedUser(null);
+                    toast.info("Edit feature coming soon");
+                  }}
+                >
+                  Edit Profile
+                </Button>
+                {!selectedUser.emailVerified && (
+                  <Button
+                    variant="default"
+                    className="flex-1"
+                    onClick={() => {
+                      const id = selectedUser.id;
+                      setSelectedUser(null);
+                      handleSingleAction(
+                        () => updateUserEmailVerification([id], true),
+                        "verify email"
+                      );
+                    }}
+                    disabled={isLoading}
+                  >
+                    Verify Email
+                  </Button>
+                )}
+                {selectedUser.role !== "admin" && (
+                  <Button
+                    variant="destructive"
+                    className="flex-1"
+                    onClick={() => {
+                      setUserToDelete(selectedUser);
+                      setSelectedUser(null);
+                    }}
+                    disabled={isLoading}
+                  >
+                    Delete User
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Change Role Dialog */}
+      <Dialog
+        open={!!changeRoleUser}
+        onOpenChange={() => setChangeRoleUser(null)}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Change User Role</DialogTitle>
+            <DialogDescription>
+              Change the role for <strong>{changeRoleUser?.name}</strong>
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4">
+            <Label
+              htmlFor="role-select"
+              className="text-sm font-medium mb-2 block"
+            >
+              Select New Role
+            </Label>
+            <Select value={newRole} onValueChange={setNewRole}>
+              <SelectTrigger id="role-select" className="w-full">
+                <SelectValue placeholder="Select a role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="patient">
+                  <div className="flex items-center gap-2">
+                    <IconUser className="size-4" />
+                    <span>Patient</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="dentist">
+                  <div className="flex items-center gap-2">
+                    <IconUserCheck className="size-4" />
+                    <span>Dentist</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="admin">
+                  <div className="flex items-center gap-2">
+                    <IconShield className="size-4" />
+                    <span>Admin</span>
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+
+            {changeRoleUser?.role && (
+              <p className="text-sm text-muted-foreground mt-2">
+                Current role:{" "}
+                <strong className="capitalize">{changeRoleUser.role}</strong>
+              </p>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setChangeRoleUser(null)}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleChangeRole}
+              disabled={
+                isLoading || !newRole || newRole === changeRoleUser?.role
+              }
+            >
+              {isLoading ? "Changing..." : "Change Role"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete User Confirmation Dialog */}
+      <Dialog open={!!userToDelete} onOpenChange={() => setUserToDelete(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete User</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this user? This action cannot be
+              undone.
+            </DialogDescription>
+          </DialogHeader>
+
+          {userToDelete && (
+            <div className="space-y-4 py-4">
+              <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+                {userToDelete.image ? (
+                  <Image
+                    src={userToDelete.image}
+                    alt={userToDelete.name}
+                    className="size-12 rounded-full object-cover"
+                    width={48}
+                    height={48}
+                  />
+                ) : (
+                  <div className="flex size-12 items-center justify-center rounded-full bg-background">
+                    <IconUser className="size-6 text-muted-foreground" />
+                  </div>
+                )}
+                <div className="flex-1">
+                  <p className="font-medium">{userToDelete.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {userToDelete.email}
+                  </p>
+                  <div className="mt-1">{getRoleBadge(userToDelete.role)}</div>
+                </div>
+              </div>
+
+              <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-lg border border-destructive/20">
+                ⚠️ This will permanently delete the user and all associated
+                data.
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setUserToDelete(null)}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDeleteUser}
+              disabled={isLoading}
+            >
+              {isLoading ? "Deleting..." : "Delete User"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <Dialog
+        open={showBulkDeleteDialog}
+        onOpenChange={setShowBulkDeleteDialog}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete Multiple Users</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete the selected users? This action
+              cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="p-3 bg-muted rounded-lg">
+              <p className="font-medium">
+                {table.getFilteredSelectedRowModel().rows.length} user(s) will
+                be deleted:
+              </p>
+              <div className="mt-3 max-h-[200px] overflow-y-auto space-y-2">
+                {table.getFilteredSelectedRowModel().rows.map((row) => (
+                  <div
+                    key={row.original.id}
+                    className="flex items-center gap-2 text-sm"
+                  >
+                    {row.original.image ? (
+                      <Image
+                        src={row.original.image}
+                        alt={row.original.name}
+                        className="size-8 rounded-full object-cover"
+                        width={32}
+                        height={32}
+                      />
+                    ) : (
+                      <div className="flex size-8 items-center justify-center rounded-full bg-background">
+                        <IconUser className="size-4 text-muted-foreground" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">
+                        {row.original.name}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {row.original.email}
+                      </p>
+                    </div>
+                    {getRoleBadge(row.original.role)}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-lg border border-destructive/20">
+              ⚠️ This will permanently delete all selected users and their
+              associated data.
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowBulkDeleteDialog(false)}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleBulkDelete}
+              disabled={isLoading}
+            >
+              {isLoading
+                ? "Deleting..."
+                : `Delete ${table.getFilteredSelectedRowModel().rows.length} User(s)`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
