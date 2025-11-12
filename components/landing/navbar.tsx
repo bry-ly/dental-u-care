@@ -398,15 +398,28 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
                         <DropdownMenuSeparator />
                       </>
                     )}
-                    {user?.role !== "admin" && (
-                      <DropdownMenuItem asChild>
-                        <Link href="/patient" className="cursor-pointer">
-                          <User className="mr-2 h-4 w-4" />
-                          <span>Dashboard</span>
-                        </Link>
-                      </DropdownMenuItem>
+                    {user?.role === "dentist" && (
+                      <>
+                        <DropdownMenuItem asChild>
+                          <Link href="/dentist" className="cursor-pointer">
+                            <User className="mr-2 h-4 w-4" />
+                            <span>Dashboard</span>
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                      </>
                     )}
-                    <DropdownMenuSeparator />
+                    {user?.role === "patient" && (
+                      <>
+                        <DropdownMenuItem asChild>
+                          <Link href="/patient" className="cursor-pointer">
+                            <User className="mr-2 h-4 w-4" />
+                            <span>Dashboard</span>
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                      </>
+                    )}
                     <DropdownMenuItem
                       onClick={() => setShowLogoutDialog(true)}
                       className="cursor-pointer text-red-600"
@@ -544,15 +557,23 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
                         <Button variant="outline" asChild>
                           <Link href="/admin">
                             <Shield className="mr-2 h-4 w-4" />
-                            Dashboard
+                            Admin Dashboard
                           </Link>
                         </Button>
                       )}
-                      {user?.role !== "admin" && (
+                      {user?.role === "dentist" && (
                         <Button variant="outline" asChild>
-                          <Link href="/profile">
+                          <Link href="/dentist">
                             <User className="mr-2 h-4 w-4" />
-                            Profile
+                            Dentist Dashboard
+                          </Link>
+                        </Button>
+                      )}
+                      {user?.role === "patient" && (
+                        <Button variant="outline" asChild>
+                          <Link href="/patient">
+                            <User className="mr-2 h-4 w-4" />
+                            Dashboard
                           </Link>
                         </Button>
                       )}

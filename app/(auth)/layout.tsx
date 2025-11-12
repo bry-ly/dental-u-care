@@ -1,11 +1,17 @@
 import { ReactNode } from "react";
+import { AuthLayoutRedirect } from "@/components/layout/auth-layout-redirect";
 
 export default async function AuthLayout({
   children,
 }: {
   children: ReactNode;
 }) {
-  // Removed session check - let client-side handle redirects after login
+  // Client-side redirect for authenticated users
   // This prevents server-side redirect conflicts in production
-  return children;
+  return (
+    <>
+      <AuthLayoutRedirect />
+      {children}
+    </>
+  );
 }
