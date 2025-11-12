@@ -12,47 +12,55 @@ export default async function PatientDashboard() {
   // Require patient role - will redirect to appropriate page if not patient
   const { user } = await requirePatient();
 
-  // Fetch statistics
-  const upcomingAppointmentsCount = await prisma.appointment.count({
-    where: {
-      patientId: user.id,
-      date: {
-        gte: new Date(),
+  const now = new Date();
+
+  // Run all queries in parallel for better performance
+  const [
+    upcomingAppointmentsCount,
+    completedAppointmentsCount,
+    totalSpentResult,
+    pendingPaymentsResult,
+  ] = await Promise.all([
+    // Fetch upcoming appointments count
+    prisma.appointment.count({
+      where: {
+        patientId: user.id,
+        date: {
+          gte: now,
+        },
+        status: {
+          in: ["pending", "confirmed"],
+        },
       },
-      status: {
-        in: ["pending", "confirmed"],
+    }),
+    // Fetch completed appointments count
+    prisma.appointment.count({
+      where: {
+        patientId: user.id,
+        status: "completed",
       },
-    },
-  });
-
-  const completedAppointmentsCount = await prisma.appointment.count({
-    where: {
-      patientId: user.id,
-      status: "completed",
-    },
-  });
-
-  // Calculate total spent (paid payments)
-  const totalSpentResult = await prisma.payment.aggregate({
-    where: {
-      userId: user.id,
-      status: "paid",
-    },
-    _sum: {
-      amount: true,
-    },
-  });
-
-  // Calculate pending payments
-  const pendingPaymentsResult = await prisma.payment.aggregate({
-    where: {
-      userId: user.id,
-      status: "pending",
-    },
-    _sum: {
-      amount: true,
-    },
-  });
+    }),
+    // Calculate total spent (paid payments)
+    prisma.payment.aggregate({
+      where: {
+        userId: user.id,
+        status: "paid",
+      },
+      _sum: {
+        amount: true,
+      },
+    }),
+    // Calculate pending payments
+    prisma.payment.aggregate({
+      where: {
+        userId: user.id,
+        status: "pending",
+      },
+      _sum: {
+        amount: true,
+      },
+    }),
+  ]);
 
   const patientStats = {
     upcomingAppointments: upcomingAppointmentsCount,
