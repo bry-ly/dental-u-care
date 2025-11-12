@@ -141,9 +141,8 @@ export function SignupForm({
     try {
       setIsGoogleLoading(true);
       // Google OAuth will redirect to Google, then back to callback
-      // No callbackURL specified - defaults to "/"
-      // The auth layout will detect the session and redirect to role-specific dashboard
-      // New users get "patient" role by default and redirect to /patient
+      // The onAfterSignUp hook in auth.ts assigns "patient" role to new users
+      // After callback, the auth layout redirects to the role-specific dashboard
       await authClient.signIn.social({
         provider: "google",
       });

@@ -13,10 +13,12 @@ export default async function Page() {
   // Require admin role - will redirect to home page (/) if not admin
   const { user } = await requireAdmin();
 
-  // Fetch dashboard statistics - optimize by running queries in parallel
+  // Calculate date ranges once for reuse
   const now = new Date();
-  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-  const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+  const DAY_IN_MS = 24 * 60 * 60 * 1000;
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * DAY_IN_MS);
+  const sixtyDaysAgo = new Date(now.getTime() - 60 * DAY_IN_MS);
+  const ninetyDaysAgo = new Date(now.getTime() - 90 * DAY_IN_MS);
 
   // Run all count queries in parallel for better performance
   const [
@@ -28,6 +30,8 @@ export default async function Page() {
     previousPayments,
     completedAppointments,
     previousCompleted,
+    appointmentsForChart,
+    appointments,
   ] = await Promise.all([
     // Total appointments in last 30 days
     prisma.appointment.count({
@@ -89,6 +93,31 @@ export default async function Page() {
         updatedAt: { gte: sixtyDaysAgo, lt: thirtyDaysAgo },
       },
     }),
+    // Fetch appointments for chart (last 90 days)
+    prisma.appointment.findMany({
+      where: {
+        createdAt: { gte: ninetyDaysAgo },
+      },
+      select: {
+        createdAt: true,
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+    }),
+    // Fetch recent appointments for table
+    prisma.appointment.findMany({
+      take: 20,
+      orderBy: {
+        createdAt: "desc",
+      },
+      include: {
+        patient: true,
+        dentist: true,
+        service: true,
+        payment: true,
+      },
+    }),
   ]);
 
   const revenue = payments._sum.amount || 0;
@@ -116,21 +145,7 @@ export default async function Page() {
   // Mock satisfaction rate (in a real app, this would come from reviews/ratings)
   const satisfactionRate = 98.5;
 
-  // Fetch appointments for chart (last 90 days)
-  const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-  const appointmentsForChart = await prisma.appointment.findMany({
-    where: {
-      createdAt: { gte: ninetyDaysAgo },
-    },
-    select: {
-      createdAt: true,
-    },
-    orderBy: {
-      createdAt: "asc",
-    },
-  });
-
-  // Group appointments by date
+  // Group appointments by date for chart
   const chartData = appointmentsForChart.reduce(
     (acc: Record<string, number>, appointment) => {
       const date = appointment.createdAt.toISOString().split("T")[0];
@@ -145,20 +160,6 @@ export default async function Page() {
     date,
     appointments: count,
   }));
-
-  // Fetch recent appointments for table
-  const appointments = await prisma.appointment.findMany({
-    take: 20,
-    orderBy: {
-      createdAt: "desc",
-    },
-    include: {
-      patient: true,
-      dentist: true,
-      service: true,
-      payment: true,
-    },
-  });
 
   const dashboardStats = {
     totalAppointments,
