@@ -22,22 +22,36 @@ export function AuthRedirectHandler() {
         const session = await authClient.getSession();
 
         if (session?.data) {
-          // Clear the flag
-          sessionStorage.removeItem("auth-redirect-pending");
-
+          // Determine target path from role
           const role = (session.data.user as User)?.role;
+          const target =
+            role === "admin"
+              ? "/admin"
+              : role === "dentist"
+                ? "/dentist"
+                : role === "patient"
+                  ? "/patient"
+                  : "/";
 
-          // Redirect based on role
-          if (role === "admin") {
-            router.push("/admin");
-          } else if (role === "dentist") {
-            router.push("/dentist");
-          } else if (role === "patient") {
-            router.push("/patient");
-          } else {
-            // If no role is set, redirect to home page
-            console.warn("User has no role assigned, redirecting to home");
-            router.push("/");
+          // If we're already on the target path, just clear the flag and do nothing
+          try {
+            const currentPath = window.location.pathname;
+            if (currentPath === target) {
+              sessionStorage.removeItem("auth-redirect-pending");
+              return;
+            }
+          } catch (e) {
+            // Accessing window might fail in some environments; ignore and continue
+            console.warn("Could not read window.location.pathname:", e);
+          }
+
+          // Clear the flag and navigate using replace to avoid polluting history
+          sessionStorage.removeItem("auth-redirect-pending");
+          try {
+            router.replace(target);
+          } catch (e) {
+            // Fallback to push if replace fails
+            router.push(target);
           }
         } else {
           // No session found, clear the flag

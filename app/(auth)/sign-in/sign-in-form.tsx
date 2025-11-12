@@ -14,14 +14,12 @@ import Link from "next/link";
 import { useState } from "react";
 import { authClient } from "@/lib/auth-session/auth-client";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"form">) {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -54,32 +52,32 @@ export function LoginForm({
             const role = user?.role;
 
             setShowVerifyNotice(false);
-
             setIsRedirecting(true);
 
-            // Direct redirect based on role from sign-in response
-            if (role === "admin") {
-              toast.success("Login successful!", {
-                description: "Redirecting to admin panel...",
-              });
-              router.push("/admin");
-            } else if (role === "dentist") {
-              toast.success("Login successful!", {
-                description: "Redirecting to dentist portal...",
-              });
-              router.push("/dentist");
-            } else if (role === "patient") {
-              toast.success("Login successful!", {
-                description: "Redirecting to patient portal...",
-              });
-              router.push("/patient");
-            } else {
-              // Fallback for users without a role - redirect to home
-              toast.success("Login successful!", {
-                description: "Welcome back!",
-              });
-              router.push("/");
-            }
+            // Determine target based on role
+            const target =
+              role === "admin"
+                ? "/admin"
+                : role === "dentist"
+                  ? "/dentist"
+                  : role === "patient"
+                    ? "/patient"
+                    : "/";
+
+            const description =
+              role === "admin"
+                ? "Redirecting to admin panel..."
+                : role === "dentist"
+                  ? "Redirecting to dentist portal..."
+                  : role === "patient"
+                    ? "Redirecting to patient portal..."
+                    : "Welcome back!";
+
+            toast.success("Login successful!", { description });
+
+            // Use window.location.href for full page reload to avoid client-side race conditions
+            // This ensures server-side auth layout properly handles the authenticated state
+            window.location.href = target;
           },
           onError: (ctx) => {
             if (ctx.error.status === 403) {
@@ -138,10 +136,8 @@ export function LoginForm({
       setIsGoogleLoading(true);
 
       // Google OAuth redirects to Google, then back to /api/auth/callback/google
-      // which Better Auth handles and redirects to root "/"
-      // We store the current path so the callback page knows where we came from
-      sessionStorage.setItem("auth-redirect-pending", "true");
-
+      // Better Auth handles this and redirects to root "/"
+      // The auth layout will handle the final redirect based on role
       await authClient.signIn.social({
         provider: "google",
       });
@@ -153,7 +149,6 @@ export function LoginForm({
         description: "Please try again.",
       });
       setIsGoogleLoading(false);
-      sessionStorage.removeItem("auth-redirect-pending");
     }
   }
 
