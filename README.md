@@ -20,6 +20,17 @@ This project uses [Better Auth](https://better-auth.com) for authentication. See
 - **[NEXTJS_INTEGRATION.md](./NEXTJS_INTEGRATION.md)** - Complete Next.js integration guide
 - **[GOOGLE_AUTH_SETUP.md](./GOOGLE_AUTH_SETUP.md)** - Google OAuth setup instructions
 
+## ⚡ Performance
+
+This application is optimized for performance with:
+
+- **Database Connection Pooling** - Singleton PrismaClient instance
+- **Parallel Query Execution** - Multiple queries run simultaneously
+- **Database Indexing** - Optimized indexes for frequently queried fields
+- **Caching** - React cache() for session lookups
+
+See **[PERFORMANCE_OPTIMIZATION.md](./PERFORMANCE_OPTIMIZATION.md)** for detailed performance optimizations and recommendations.
+
 ## 📋 Prerequisites
 
 - Node.js 18+ 

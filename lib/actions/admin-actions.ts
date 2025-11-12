@@ -4,11 +4,12 @@ import { prisma } from "@/lib/types/prisma";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth-session/auth";
 import { Prisma } from "@prisma/client";
+import { headers } from "next/headers";
 
 // Helper to check if user is admin
 async function isAdmin() {
   const session = await auth.api.getSession({
-    headers: await import("next/headers").then((mod) => mod.headers()),
+    headers: await headers(),
   });
 
   if (!session?.user || session.user.role !== "admin") {

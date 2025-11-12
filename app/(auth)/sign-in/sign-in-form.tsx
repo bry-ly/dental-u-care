@@ -141,8 +141,10 @@ export function LoginForm({
       setIsGoogleLoading(true);
 
       // Google OAuth redirects to Google, then back to /api/auth/callback/google
-      // Better Auth handles this and redirects to root "/"
-      // The auth layout will handle the final redirect based on role
+      // Better Auth handles the callback and creates/updates the session
+      // The onAfterSignUp hook in auth.ts ensures new users get the "patient" role
+      // After callback, users are redirected to root "/" 
+      // The auth layout then redirects to role-specific dashboard
       await authClient.signIn.social({
         provider: "google",
       });

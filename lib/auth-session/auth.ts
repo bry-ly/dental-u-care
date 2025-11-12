@@ -3,11 +3,10 @@ import { nextCookies } from "better-auth/next-js";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { Resend } from "resend";
 import ForgotPasswordEmail from "@/components/emails/reset-password";
-import { PrismaClient } from "@prisma/client";
 import VerificationEmail from "@/components/emails/email-verification";
+import { prisma } from "@/lib/types/prisma";
 
 const resend = new Resend(process.env.RESEND_API_KEY!);
-const prisma = new PrismaClient();
 
 export const auth = betterAuth({
   baseURL:
@@ -86,13 +85,14 @@ export const auth = betterAuth({
       redirectURI: `${process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/auth/callback/google`,
     },
   },
-  session: {
-    expiresIn: 60 * 60 * 24 * 7, // 7 days
-    updateAge: 60 * 60 * 24, // Update every day
-    cookieCache: {
-      enabled: true,
-      maxAge: 5 * 60, // 5 minutes
-    },
+  onAfterSignUp: async ({ user }: { user: { id: string; role?: string } }) => {
+    // Assign default role to new users if not already set
+    if (!user.role) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { role: "patient" },
+      });
+    }
   },
   plugins: [nextCookies()], // This must be the last plugin in the array
 });
