@@ -28,7 +28,6 @@ export function LoginForm({
   const [showVerifyNotice, setShowVerifyNotice] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
-  const [isRedirecting, setIsRedirecting] = useState(false);
 
   function togglePassword(e: React.MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
@@ -52,7 +51,6 @@ export function LoginForm({
             const role = user?.role;
 
             setShowVerifyNotice(false);
-            setIsRedirecting(true);
 
             // Determine target based on role
             const target =
@@ -75,13 +73,7 @@ export function LoginForm({
 
             toast.success("Login successful!", { description });
 
-            // Wait longer for the session cookie to be fully written and processed
-            // This prevents race condition where redirect happens before cookie is persisted
-            // 800ms gives enough time for the cookie to be set across all layers
-            await new Promise((resolve) => setTimeout(resolve, 800));
-
-            // Use window.location.href for full page reload to avoid client-side race conditions
-            // This ensures server-side auth layout properly handles the authenticated state
+            // Direct redirect without delay - Better Auth handles cookie setting
             window.location.href = target;
           },
           onError: (ctx) => {
@@ -104,7 +96,6 @@ export function LoginForm({
       toast.error("An unexpected error occurred", {
         description: "Please try again later.",
       });
-      setIsRedirecting(false);
       setIsLoading(false);
     }
   }
@@ -143,7 +134,7 @@ export function LoginForm({
       // Google OAuth redirects to Google, then back to /api/auth/callback/google
       // Better Auth handles the callback and creates/updates the session
       // The onAfterSignUp hook in auth.ts ensures new users get the "patient" role
-      // After callback, users are redirected to root "/" 
+      // After callback, users are redirected to root "/"
       // The auth layout then redirects to role-specific dashboard
       await authClient.signIn.social({
         provider: "google",
