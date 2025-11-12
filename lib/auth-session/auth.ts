@@ -10,7 +10,11 @@ const resend = new Resend(process.env.RESEND_API_KEY!);
 const prisma = new PrismaClient();
 
 export const auth = betterAuth({
-
+  baseURL:
+    process.env.BETTER_AUTH_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    "http://localhost:3000",
+  trustedOrigins: [process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"],
   database: prismaAdapter(prisma, {
     provider: "mongodb",
   }),
@@ -82,6 +86,13 @@ export const auth = betterAuth({
       redirectURI: `${process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/auth/callback/google`,
     },
   },
+  session: {
+    expiresIn: 60 * 60 * 24 * 7, // 7 days
+    updateAge: 60 * 60 * 24, // Update every day
+    cookieCache: {
+      enabled: true,
+      maxAge: 5 * 60, // 5 minutes
+    },
+  },
   plugins: [nextCookies()], // This must be the last plugin in the array
 });
-

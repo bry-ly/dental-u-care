@@ -4,18 +4,17 @@ import { toast } from "sonner";
 import { organizationClient } from "better-auth/client/plugins";
 import { stripeClient } from "@better-auth/stripe/client";
 
-
-
 export const authClient = createAuthClient({
   plugins: [
     organizationClient(),
     stripeClient({
-      subscription: true //if you want to enable subscription management
-    })
+      subscription: true, //if you want to enable subscription management
+    }),
   ],
   // You can pass client configuration here
   baseURL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
   fetchOptions: {
+    credentials: "include", // Send cookies with every request
     onError: async (context) => {
       const { response } = context;
       if (response.status === 429) {
@@ -52,7 +51,6 @@ export const signInWithEmail = async (email: string, password: string) => {
     {
       email,
       password,
-
     },
     {
       onError: (ctx) => {

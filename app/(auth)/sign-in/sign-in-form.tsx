@@ -75,9 +75,10 @@ export function LoginForm({
 
             toast.success("Login successful!", { description });
 
-            // Wait a bit for the session cookie to be fully written before redirecting
-            // This prevents race condition where redirect happens before cookie is set
-            await new Promise((resolve) => setTimeout(resolve, 300));
+            // Wait longer for the session cookie to be fully written and processed
+            // This prevents race condition where redirect happens before cookie is persisted
+            // 800ms gives enough time for the cookie to be set across all layers
+            await new Promise((resolve) => setTimeout(resolve, 800));
 
             // Use window.location.href for full page reload to avoid client-side race conditions
             // This ensures server-side auth layout properly handles the authenticated state
