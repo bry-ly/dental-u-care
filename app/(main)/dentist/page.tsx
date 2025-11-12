@@ -21,77 +21,86 @@ export default async function DentistDashboard() {
   // Require dentist role - will redirect to appropriate page if not dentist
   const { user } = await requireDentist();
 
-  // Fetch today's appointments
+  // Calculate date ranges
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
+  const now = new Date();
 
-  const todayAppointments = await prisma.appointment.findMany({
-    where: {
-      dentistId: user.id,
-      date: {
-        gte: today,
-        lt: tomorrow,
+  // Run all queries in parallel for better performance
+  const [
+    todayAppointments,
+    pendingAppointments,
+    totalPatients,
+    completedAppointments,
+    upcomingAppointments,
+  ] = await Promise.all([
+    // Fetch today's appointments
+    prisma.appointment.findMany({
+      where: {
+        dentistId: user.id,
+        date: {
+          gte: today,
+          lt: tomorrow,
+        },
+        status: {
+          in: ["pending", "confirmed"],
+        },
       },
-      status: {
-        in: ["pending", "confirmed"],
+      include: {
+        patient: true,
+        service: true,
       },
-    },
-    include: {
-      patient: true,
-      service: true,
-    },
-    orderBy: {
-      timeSlot: "asc",
-    },
-  });
-
-  // Fetch pending appointments
-  const pendingAppointments = await prisma.appointment.findMany({
-    where: {
-      dentistId: user.id,
-      status: "pending",
-      date: {
-        gte: new Date(),
+      orderBy: {
+        timeSlot: "asc",
       },
-    },
-    include: {
-      patient: true,
-      service: true,
-    },
-    orderBy: {
-      date: "asc",
-    },
-    take: 5,
-  });
-
-  // Get statistics
-  const totalPatients = await prisma.appointment.groupBy({
-    by: ["patientId"],
-    where: {
-      dentistId: user.id,
-    },
-  });
-
-  const completedAppointments = await prisma.appointment.count({
-    where: {
-      dentistId: user.id,
-      status: "completed",
-    },
-  });
-
-  const upcomingAppointments = await prisma.appointment.count({
-    where: {
-      dentistId: user.id,
-      status: {
-        in: ["pending", "confirmed"],
+    }),
+    // Fetch pending appointments
+    prisma.appointment.findMany({
+      where: {
+        dentistId: user.id,
+        status: "pending",
+        date: {
+          gte: now,
+        },
       },
-      date: {
-        gte: new Date(),
+      include: {
+        patient: true,
+        service: true,
       },
-    },
-  });
+      orderBy: {
+        date: "asc",
+      },
+      take: 5,
+    }),
+    // Get total unique patients
+    prisma.appointment.groupBy({
+      by: ["patientId"],
+      where: {
+        dentistId: user.id,
+      },
+    }),
+    // Get completed appointments count
+    prisma.appointment.count({
+      where: {
+        dentistId: user.id,
+        status: "completed",
+      },
+    }),
+    // Get upcoming appointments count
+    prisma.appointment.count({
+      where: {
+        dentistId: user.id,
+        status: {
+          in: ["pending", "confirmed"],
+        },
+        date: {
+          gte: now,
+        },
+      },
+    }),
+  ]);
 
   return (
     <DashboardLayout user={user} role="dentist">

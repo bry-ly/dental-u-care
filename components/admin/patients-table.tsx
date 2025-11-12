@@ -14,16 +14,6 @@ import {
   IconPhone,
 } from "@tabler/icons-react";
 import {
-  User,
-  Mail,
-  Phone,
-  Calendar,
-  FileText,
-  DollarSign,
-} from "lucide-react";
-import { toast } from "sonner";
-import { deletePatients, deletePatient } from "@/lib/actions/admin-actions";
-import {
   ColumnDef,
   ColumnFiltersState,
   flexRender,
