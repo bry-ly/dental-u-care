@@ -73,7 +73,11 @@ export function LoginForm({
 
             toast.success("Login successful!", { description });
 
-            // Direct redirect without delay - Better Auth handles cookie setting
+            // Small delay to ensure cookie is set before redirect
+            // This is critical for production where cookie propagation takes time
+            await new Promise((resolve) => setTimeout(resolve, 500));
+
+            // Use window.location.href for full page reload
             window.location.href = target;
           },
           onError: (ctx) => {

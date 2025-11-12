@@ -13,7 +13,16 @@ export const auth = betterAuth({
     process.env.BETTER_AUTH_URL ||
     process.env.NEXT_PUBLIC_APP_URL ||
     "http://localhost:3000",
-  trustedOrigins: [process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"],
+  trustedOrigins: [
+    process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+    process.env.BETTER_AUTH_URL || "http://localhost:3000",
+  ],
+  session: {
+    cookieCache: {
+      enabled: true,
+      maxAge: 5 * 60, // 5 minutes
+    },
+  },
   database: prismaAdapter(prisma, {
     provider: "mongodb",
   }),
