@@ -263,14 +263,11 @@ export function LoginForm({
           </div>
         </Field>
         <Field>
-          <Button
-            type="submit"
-            disabled={isLoading || isGoogleLoading || isRedirecting}
-          >
-            {isLoading || isRedirecting ? (
+          <Button type="submit" disabled={isLoading || isGoogleLoading}>
+            {isLoading ? (
               <>
                 <Loader2 className="size-4 animate-spin mr-2" />
-                {isRedirecting ? "Redirecting..." : "Logging in..."}
+                {"Logging in..."}
               </>
             ) : (
               "Login"
@@ -283,12 +280,12 @@ export function LoginForm({
             variant="outline"
             type="button"
             onClick={handleGoogleSignIn}
-            disabled={isLoading || isGoogleLoading || isRedirecting}
+            disabled={isLoading || isGoogleLoading}
           >
-            {isGoogleLoading || isRedirecting ? (
+            {isGoogleLoading ? (
               <>
                 <Loader2 className="size-4 animate-spin mr-2" />
-                {isRedirecting ? "Redirecting..." : "Signing in..."}
+                {"Signing in..."}
               </>
             ) : (
               <>

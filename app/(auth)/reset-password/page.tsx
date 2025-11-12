@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Suspense } from "react";
 
 import { ResetPasswordForm } from "./reset-password-form";
 
@@ -22,7 +23,9 @@ export default function ForgotPasswordPage() {
           </div>
           <span>Dental U Care</span>
         </Link>
-        <ResetPasswordForm />
+        <Suspense fallback={<div className="text-center">Loading...</div>}>
+          <ResetPasswordForm />
+        </Suspense>
       </div>
     </div>
   );
