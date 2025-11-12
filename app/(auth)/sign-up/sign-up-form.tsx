@@ -14,14 +14,12 @@ import Link from "next/link";
 import { useState } from "react";
 import { authClient } from "@/lib/auth-session/auth-client";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
 export function SignupForm({
   className,
   ...props
 }: React.ComponentProps<"form">) {
-  const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -98,9 +96,9 @@ export function SignupForm({
         toast.success("Account created successfully!", {
           description: "Please check your email to verify your account.",
         });
-        // Redirect to login page after successful signup
+        // Redirect to login page after successful signup using full page reload
         setTimeout(() => {
-          router.push("/sign-in");
+          window.location.href = "/sign-in";
         }, 2000);
       }
     } catch {
@@ -142,9 +140,10 @@ export function SignupForm({
   async function handleGoogleSignUp() {
     try {
       setIsGoogleLoading(true);
+      // Google OAuth will redirect to Google, then back to callback
+      // The auth layout will handle the final redirect based on role
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/",
       });
     } catch (error) {
       console.error("Google sign-up failed:", error);
