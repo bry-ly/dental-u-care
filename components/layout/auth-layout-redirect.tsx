@@ -15,11 +15,11 @@ export function AuthLayoutRedirect() {
     // Check session on client side only
     const checkSession = async () => {
       const { data: session, error } = await authClient.getSession();
-      
+
       if (!error && session?.user) {
         const user = session.user as { role?: string };
         const role = user.role;
-        
+
         // Redirect based on role
         if (role === "admin") {
           router.replace("/admin");
