@@ -81,7 +81,7 @@ export const auth = betterAuth({
       redirectURI: `${process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/auth/callback/google`,
     },
   },
-  onAfterSignUp: async ({ user }) => {
+  onAfterSignUp: async ({ user }: { user: { id: string; role?: string } }) => {
     // Assign default role to new users if not already set
     if (!user.role) {
       await prisma.user.update({
