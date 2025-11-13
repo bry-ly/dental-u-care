@@ -11,8 +11,7 @@ export const authClient = createAuthClient({
       subscription: true, //if you want to enable subscription management
     }),
   ],
-  // You can pass client configuration here
-  baseURL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+  // Don't set baseURL - use relative paths to ensure cookies work correctly
   fetchOptions: {
     credentials: "include", // Send cookies with every request
     onError: async (context) => {

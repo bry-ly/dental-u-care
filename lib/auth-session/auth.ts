@@ -23,6 +23,16 @@ export const auth = betterAuth({
       maxAge: 5 * 60, // 5 minutes
     },
   },
+  advanced: {
+    useSecureCookies: process.env.NODE_ENV === "production",
+    cookiePrefix: "better-auth",
+    defaultCookieAttributes: {
+      sameSite: "lax",
+      path: "/",
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+    },
+  },
   database: prismaAdapter(prisma, {
     provider: "mongodb",
   }),
