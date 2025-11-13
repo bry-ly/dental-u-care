@@ -21,17 +21,29 @@ import { NextRequest, NextResponse } from "next/server";
  * - Patients → /patient
  */
 export async function middleware(request: NextRequest) {
-  // Get the session token from cookies
-  const sessionToken = request.cookies.get("better-auth.session_token")?.value;
+  // Try multiple cookie names to catch any variation
+  const sessionToken =
+    request.cookies.get("better-auth.session_token")?.value ||
+    request.cookies.get("better-auth.session")?.value ||
+    request.cookies.get("session_token")?.value;
 
-  // Log for debugging (only in development)
-  if (process.env.NODE_ENV === "development") {
-    console.log("[Middleware] Path:", request.nextUrl.pathname);
-    console.log("[Middleware] Session:", sessionToken ? "Present" : "Missing");
-  }
+  // Log for debugging
+  console.log("[Middleware] Path:", request.nextUrl.pathname);
+  console.log(
+    "[Middleware] All cookies:",
+    request.cookies.getAll().map((c) => c.name)
+  );
+  console.log(
+    "[Middleware] Session token:",
+    sessionToken ? "Found" : "Missing"
+  );
+  console.log("[Middleware] Host:", request.headers.get("host"));
+  console.log("[Middleware] Origin:", request.headers.get("origin"));
+  console.log("[Middleware] Referer:", request.headers.get("referer"));
 
   // Check if user is authenticated
   if (!sessionToken) {
+    console.log("[Middleware] No session token - redirecting to sign-in");
     // Build redirect URL preserving the intended destination
     const signInUrl = new URL("/sign-in", request.url);
     signInUrl.searchParams.set("from", request.nextUrl.pathname);
@@ -39,7 +51,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // User is authenticated, allow access
-  // Role-based authorization happens at the page level
+  console.log("[Middleware] Session token found - allowing access");
   const response = NextResponse.next();
 
   // Add cache control headers for authenticated pages

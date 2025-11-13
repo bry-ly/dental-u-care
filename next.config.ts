@@ -33,6 +33,19 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      {
+        source: "/api/auth/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "no-store, no-cache, must-revalidate",
+          },
+          {
+            key: "Access-Control-Allow-Credentials",
+            value: "true",
+          },
+        ],
+      },
     ];
   },
 };
