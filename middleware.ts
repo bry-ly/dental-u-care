@@ -23,11 +23,11 @@ import { NextRequest, NextResponse } from "next/server";
 export async function middleware(request: NextRequest) {
   // Try multiple cookie names to catch any variation
   // In production with HTTPS, cookies are prefixed with "_Secure-"
-  const sessionToken = 
+  const sessionToken =
     request.cookies.get("_Secure-better-auth.session_token")?.value ||
     request.cookies.get("better-auth.session_token")?.value ||
     request.cookies.get("better-auth.session")?.value ||
-    request.cookies.get("session_token")?.value;  // Log for debugging
+    request.cookies.get("session_token")?.value; // Log for debugging
   console.log("[Middleware] Path:", request.nextUrl.pathname);
   console.log(
     "[Middleware] All cookies:",
