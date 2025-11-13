@@ -1,9 +1,27 @@
 {
-	"servers": {
-		"my-mcp-server-f475f1de": {
-			"url": "https://mcp.chonkie.ai/better-auth/better-auth-builder/mcp",
-			"type": "http"
-		}
-	},
-	"inputs": []
+  "servers": {
+    "my-mcp-server-f475f1de": {
+      "url": "https://mcp.chonkie.ai/better-auth/better-auth-builder/mcp",
+      "type": "http"
+    },
+    "my-mcp-server-5e3fe95b": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "shadcn@latest",
+        "mcp",
+        "init",
+        "--client",
+        "vscode"
+      ]
+    },
+    "shadcn": {
+      "command": "npx",
+      "args": [
+        "shadcn@latest",
+        "mcp"
+      ]
+    }
+  },
+  "inputs": []
 }
