@@ -41,7 +41,7 @@ export async function middleware(request: NextRequest) {
   // User is authenticated, allow access
   // Role-based authorization happens at the page level
   const response = NextResponse.next();
-  
+
   // Add cache control headers for authenticated pages
   response.headers.set(
     "Cache-Control",
@@ -49,7 +49,7 @@ export async function middleware(request: NextRequest) {
   );
   response.headers.set("Pragma", "no-cache");
   response.headers.set("Expires", "0");
-  
+
   return response;
 }
 
@@ -62,6 +62,6 @@ export const config = {
     "/patient/:path*",
     "/patient",
     "/profile/:path*",
-    "/profile"
+    "/profile",
   ],
 };
