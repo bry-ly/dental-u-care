@@ -10,7 +10,7 @@ const resend = new Resend(process.env.RESEND_API_KEY!);
 
 /**
  * Better Auth Configuration
- * 
+ *
  * Best practices:
  * - Use environment variables for secrets and URLs
  * - Enable secure cookies in production

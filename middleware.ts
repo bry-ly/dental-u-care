@@ -3,14 +3,14 @@ import { betterFetch } from "@better-fetch/fetch";
 
 /**
  * Middleware for protecting authenticated routes
- * 
+ *
  * Best practices from Better Auth:
  * - Use betterFetch to validate sessions
  * - Check for multiple cookie name variations (production vs development)
  * - Handle redirects properly with intent preservation
  * - Exclude public routes and API routes
  * - Don't perform RBAC here (do it at page level with database access)
- * 
+ *
  * Protected routes:
  * - /admin/* - Admin panel (role check in page)
  * - /dentist/* - Dentist portal (role check in page)
@@ -31,15 +31,14 @@ export async function middleware(request: NextRequest) {
 
   // Validate session using Better Auth's approach
   try {
-    const session = await betterFetch<{ user: { id: string; role?: string } } | null>(
-      "/api/auth/get-session",
-      {
-        baseURL: request.nextUrl.origin,
-        headers: {
-          cookie: request.headers.get("cookie") || "",
-        },
-      }
-    );
+    const session = await betterFetch<{
+      user: { id: string; role?: string };
+    } | null>("/api/auth/get-session", {
+      baseURL: request.nextUrl.origin,
+      headers: {
+        cookie: request.headers.get("cookie") || "",
+      },
+    });
 
     // No session - redirect to sign-in
     if (!session.data || !session.data.user) {

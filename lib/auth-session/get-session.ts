@@ -5,19 +5,19 @@ import { prisma } from "@/lib/types/prisma";
 
 /**
  * Get the current session in a Server Component or Server Action
- * 
+ *
  * Best practices:
  * - Cached to avoid multiple lookups in the same request
  * - Includes user role from database
  * - Returns null if not authenticated
  * - Use this in Server Components and Server Actions
- * 
+ *
  * @returns The session object with user role or null if not authenticated
  */
 export const getServerSession = cache(async () => {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
-    
+
     if (!session || !session.user) {
       return null;
     }
@@ -29,7 +29,7 @@ export const getServerSession = cache(async () => {
         where: { id: session.user.id },
         select: { role: true },
       });
-      
+
       if (dbUser) {
         session.user.role = dbUser.role || "patient";
       }

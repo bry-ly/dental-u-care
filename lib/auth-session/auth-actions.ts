@@ -6,13 +6,13 @@ import { redirect } from "next/navigation";
 
 /**
  * Server Actions for Authentication
- * 
+ *
  * Best practices:
  * - Use "use server" directive
  * - Return consistent response shapes
  * - Handle errors gracefully
  * - Use Better Auth's API methods
- * 
+ *
  * Note: Prefer using authClient on the client side when possible
  * These are mainly for server-side flows or progressive enhancement
  */

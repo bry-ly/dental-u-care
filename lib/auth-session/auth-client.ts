@@ -5,7 +5,7 @@ import { stripeClient } from "@better-auth/stripe/client";
 
 /**
  * Better Auth Client Configuration
- * 
+ *
  * Best practices:
  * - Don't set baseURL (use relative paths for same-origin cookies)
  * - Always include credentials
@@ -15,12 +15,12 @@ import { stripeClient } from "@better-auth/stripe/client";
 export const authClient = createAuthClient({
   // Use relative paths for same-origin requests
   // baseURL is only needed if auth API is on different domain
-  
+
   fetchOptions: {
     credentials: "include", // Include cookies in all requests
     onError: async (context) => {
       const { response, error } = context;
-      
+
       // Rate limiting
       if (response?.status === 429) {
         const retryAfter = response.headers.get("X-Retry-After");
@@ -29,13 +29,13 @@ export const authClient = createAuthClient({
         );
         return;
       }
-      
+
       // Network errors
       if (!response) {
         toast.error("Network error. Please check your connection.");
         return;
       }
-      
+
       // Other errors
       console.error("Auth error:", error);
     },
