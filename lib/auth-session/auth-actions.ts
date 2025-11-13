@@ -5,32 +5,44 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 /**
- * Example server action for email/password sign in
+ * Server Actions for Authentication
+ * 
+ * Best practices:
+ * - Use "use server" directive
+ * - Return consistent response shapes
+ * - Handle errors gracefully
+ * - Use Better Auth's API methods
+ * 
+ * Note: Prefer using authClient on the client side when possible
+ * These are mainly for server-side flows or progressive enhancement
+ */
+
+/**
+ * Sign in with email and password
+ * @param email - User's email
+ * @param password - User's password
  */
 export async function signInWithEmail(email: string, password: string) {
   try {
-    const result = await auth.api.signInEmail({
-      body: {
-        email,
-        password,
-      },
+    await auth.api.signInEmail({
+      body: { email, password },
     });
 
-    return {
-      success: true,
-      data: result,
-    };
+    return { success: true as const };
   } catch (error) {
-    console.error("Sign in error:", error);
+    console.error("[signInWithEmail] Error:", error);
     return {
-      success: false,
+      success: false as const,
       error: error instanceof Error ? error.message : "Sign in failed",
     };
   }
 }
 
 /**
- * Example server action for email/password sign up
+ * Sign up with email and password
+ * @param email - User's email
+ * @param password - User's password
+ * @param name - User's name
  */
 export async function signUpWithEmail(
   email: string,
@@ -38,63 +50,57 @@ export async function signUpWithEmail(
   name: string
 ) {
   try {
-    const result = await auth.api.signUpEmail({
-      body: {
-        email,
-        password,
-        name,
-      },
+    await auth.api.signUpEmail({
+      body: { email, password, name },
     });
 
-    return {
-      success: true,
-      data: result,
-    };
+    return { success: true as const };
   } catch (error) {
-    console.error("Sign up error:", error);
+    console.error("[signUpWithEmail] Error:", error);
     return {
-      success: false,
+      success: false as const,
       error: error instanceof Error ? error.message : "Sign up failed",
     };
   }
 }
 
 /**
- * Example server action for sign out
+ * Sign out the current user
  */
-export async function signOut() {
+export async function signOutAction() {
   try {
     await auth.api.signOut({
       headers: await headers(),
     });
 
-    redirect("/login");
+    redirect("/sign-in");
   } catch (error) {
-    console.error("Sign out error:", error);
+    console.error("[signOutAction] Error:", error);
     return {
-      success: false,
+      success: false as const,
       error: "Sign out failed",
     };
   }
 }
 
 /**
- * Example server action to get current session
+ * Get the current session
+ * Prefer using getSession() from auth-server.ts in Server Components
  */
-export async function getCurrentSession() {
+export async function getCurrentSessionAction() {
   try {
     const session = await auth.api.getSession({
       headers: await headers(),
     });
 
     return {
-      success: true,
+      success: true as const,
       data: session,
     };
   } catch (error) {
-    console.error("Get session error:", error);
+    console.error("[getCurrentSessionAction] Error:", error);
     return {
-      success: false,
+      success: false as const,
       error: "Failed to get session",
       data: null,
     };

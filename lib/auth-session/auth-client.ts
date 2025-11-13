@@ -1,30 +1,59 @@
 import { createAuthClient } from "better-auth/react";
 import { toast } from "sonner";
-
 import { organizationClient } from "better-auth/client/plugins";
 import { stripeClient } from "@better-auth/stripe/client";
 
+/**
+ * Better Auth Client Configuration
+ * 
+ * Best practices:
+ * - Don't set baseURL (use relative paths for same-origin cookies)
+ * - Always include credentials
+ * - Handle errors gracefully
+ * - Use plugins as needed
+ */
 export const authClient = createAuthClient({
-  plugins: [
-    organizationClient(),
-    stripeClient({
-      subscription: true, //if you want to enable subscription management
-    }),
-  ],
-  // Don't set baseURL - use relative paths to ensure cookies work correctly
+  // Use relative paths for same-origin requests
+  // baseURL is only needed if auth API is on different domain
+  
   fetchOptions: {
-    credentials: "include", // Send cookies with every request
+    credentials: "include", // Include cookies in all requests
     onError: async (context) => {
-      const { response } = context;
-      if (response.status === 429) {
+      const { response, error } = context;
+      
+      // Rate limiting
+      if (response?.status === 429) {
         const retryAfter = response.headers.get("X-Retry-After");
         toast.error(
           `Too many requests. Please try again in ${retryAfter} seconds.`
         );
+        return;
       }
+      
+      // Network errors
+      if (!response) {
+        toast.error("Network error. Please check your connection.");
+        return;
+      }
+      
+      // Other errors
+      console.error("Auth error:", error);
     },
   },
+
+  // Plugins
+  plugins: [
+    organizationClient(),
+    stripeClient({
+      subscription: true,
+    }),
+  ],
 });
+/**
+ * Export commonly used hooks and methods
+ */
+export const { useSession, signIn, signOut, signUp } = authClient;
+
 /**
  * Resend verification email
  * @param email - User's email address
