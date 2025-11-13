@@ -24,16 +24,44 @@ export async function middleware(request: NextRequest) {
   // Get the session token from cookies
   const sessionToken = request.cookies.get("better-auth.session_token")?.value;
 
+  // Log for debugging (only in development)
+  if (process.env.NODE_ENV === "development") {
+    console.log("[Middleware] Path:", request.nextUrl.pathname);
+    console.log("[Middleware] Session:", sessionToken ? "Present" : "Missing");
+  }
+
   // Check if user is authenticated
   if (!sessionToken) {
-    return NextResponse.redirect(new URL("/sign-in", request.url));
+    // Build redirect URL preserving the intended destination
+    const signInUrl = new URL("/sign-in", request.url);
+    signInUrl.searchParams.set("from", request.nextUrl.pathname);
+    return NextResponse.redirect(signInUrl);
   }
 
   // User is authenticated, allow access
   // Role-based authorization happens at the page level
-  return NextResponse.next();
+  const response = NextResponse.next();
+  
+  // Add cache control headers for authenticated pages
+  response.headers.set(
+    "Cache-Control",
+    "no-store, no-cache, must-revalidate, proxy-revalidate"
+  );
+  response.headers.set("Pragma", "no-cache");
+  response.headers.set("Expires", "0");
+  
+  return response;
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/dentist/:path*", "/patient/:path*"],
+  matcher: [
+    "/admin/:path*",
+    "/admin",
+    "/dentist/:path*",
+    "/dentist",
+    "/patient/:path*",
+    "/patient",
+    "/profile/:path*",
+    "/profile"
+  ],
 };
