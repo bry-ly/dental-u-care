@@ -173,7 +173,10 @@ export default async function Page() {
   };
 
   return (
-    <DashboardLayout user={user} role="admin">
+    <DashboardLayout
+      user={{ ...user, role: user.role || "admin" }}
+      role="admin"
+    >
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
         <SectionCards stats={dashboardStats} />
         <div className="px-4 lg:px-6">
