@@ -7,8 +7,7 @@
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
-    "email": "email dev --drc ./components/emails",
-    "seed": "ts-node prisma/seed.ts"
+    "postinstall": "npx prisma generate --no-engine"
   },
   "dependencies": {
     "@base-ui-components/react": "^1.0.0-beta.4",
