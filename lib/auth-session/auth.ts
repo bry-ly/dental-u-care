@@ -46,7 +46,7 @@ export const auth = betterAuth({
     defaultCookieAttributes: {
       sameSite: "lax", // CSRF protection while allowing normal navigation
       path: "/",
-      httpOnly: true, // Prevents XSS attacks
+      // httpOnly is automatically set by Better Auth
       secure: process.env.NODE_ENV === "production", // HTTPS only in production
     },
   },

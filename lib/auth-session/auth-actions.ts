@@ -26,6 +26,7 @@ export async function signInWithEmail(email: string, password: string) {
   try {
     await auth.api.signInEmail({
       body: { email, password },
+      headers: await headers(),
     });
 
     return { success: true as const };
@@ -52,6 +53,7 @@ export async function signUpWithEmail(
   try {
     await auth.api.signUpEmail({
       body: { email, password, name },
+      headers: await headers(),
     });
 
     return { success: true as const };
