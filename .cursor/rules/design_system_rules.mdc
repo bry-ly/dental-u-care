@@ -1,0 +1,311 @@
+---
+alwaysApply: true
+---
+
+# Design System Rules for Dental U-Care
+
+This document provides comprehensive design system rules for integrating Figma designs using the Model Context Protocol.
+
+## 1. Token Definitions
+
+### Color System
+- **Format**: OKLCH color space for better color consistency
+- **Location**: `app/globals.css` (lines 6-112)
+- **Structure**: CSS custom properties with light/dark mode variants
+
+**Color Tokens:**
+```css
+--background: oklch(1.0000 0 0)           /* Pure white */
+--foreground: oklch(0.1884 0.0128 248.5103)  /* Dark text */
+--primary: oklch(0.6723 0.1606 244.9955)     /* Blue primary */
+--secondary: oklch(0.1884 0.0128 248.5103)   /* Dark secondary */
+--muted: oklch(0.9222 0.0013 286.3737)       /* Light gray */
+--accent: oklch(0.9392 0.0166 250.8453)      /* Light accent */
+--destructive: oklch(0.6188 0.2376 25.7658)  /* Red for errors */
+--border: oklch(0.9317 0.0118 231.6594)      /* Border color */
+--input: oklch(0.9809 0.0025 228.7836)      /* Input background */
+```
+
+**Usage in Tailwind:**
+- Use semantic color names: `bg-primary`, `text-foreground`, `border-border`
+- Avoid hardcoded colors
+- Use opacity modifiers: `bg-primary/10`, `text-muted-foreground/50`
+
+### Typography
+- **Font Families**: Defined in CSS variables
+  - `--font-sans: Open Sans, sans-serif` (primary)
+  - `--font-serif: Georgia, serif` (secondary)
+  - `--font-mono: Menlo, monospace` (code)
+- **Location**: `app/globals.css` (lines 39-41, 94-96)
+- **Usage**: Use Tailwind font utilities: `font-sans`, `font-serif`, `font-mono`
+
+### Spacing
+- **Base Unit**: `--spacing: 0.25rem` (4px)
+- **Tailwind Scale**: Standard Tailwind spacing scale (0.25rem increments)
+- **Usage**: `p-4`, `gap-6`, `space-y-4`, etc.
+
+### Border Radius
+- **Base Radius**: `--radius: 1.3rem` (20.8px)
+- **Variants**:
+  - `--radius-sm: calc(var(--radius) - 4px)` ≈ 16.8px
+  - `--radius-md: calc(var(--radius) - 2px)` ≈ 18.8px
+  - `--radius-lg: var(--radius)` = 20.8px
+  - `--radius-xl: calc(var(--radius) + 4px)` ≈ 24.8px
+- **Usage**: Use `rounded-lg` for standard radius, `rounded-xl` for larger elements
+
+### Shadows
+- **Location**: `app/globals.css` (lines 43-56, 98-111)
+- **Variants**: `shadow-xs`, `shadow-sm`, `shadow`, `shadow-md`, `shadow-lg`, `shadow-xl`, `shadow-2xl`
+- **Usage**: `shadow-sm`, `shadow-md`, etc.
+
+## 2. Component Library
+
+### Architecture
+- **Framework**: React 19 with Next.js 15.5.5
+- **Component System**: Shadcn/ui (New York style)
+- **Location**: `components/ui/`
+- **Pattern**: Composition-based components with Radix UI primitives
+
+### Component Structure
+```typescript
+// Standard component pattern
+import { cn } from "@/lib/utils"
+
+function Component({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="component"
+      className={cn("base-classes", className)}
+      {...props}
+    />
+  )
+}
+```
+
+### Key Components
+- **Button**: `components/ui/button.tsx` - Uses CVA for variants
+- **Card**: `components/ui/card.tsx` - Composition with CardHeader, CardContent, etc.
+- **Input**: `components/ui/input.tsx` - Standard input with focus states
+- **Field**: `components/ui/field.tsx` - Form field wrapper with label/content
+- **InputGroup**: `components/ui/input-group.tsx` - Input with addons
+
+### Component Variants
+Components use `class-variance-authority` (CVA) for variant management:
+```typescript
+const buttonVariants = cva(
+  "base-classes",
+  {
+    variants: {
+      variant: { default: "...", outline: "...", ... },
+      size: { default: "h-9 px-4", sm: "h-8 px-3", lg: "h-10 px-6" }
+    }
+  }
+)
+```
+
+## 3. Frameworks & Libraries
+
+### UI Framework
+- **React**: 19.2.0
+- **Next.js**: 15.5.5 (App Router with Turbopack)
+- **TypeScript**: 5.9.3
+
+### Styling
+- **Tailwind CSS**: v4 (PostCSS)
+- **CSS Variables**: For theming (light/dark mode)
+- **Class Variance Authority**: For component variants
+- **Tailwind Merge**: For className merging (`cn` utility)
+
+### UI Primitives
+- **Radix UI**: All interactive components (Dialog, Select, Dropdown, etc.)
+- **Shadcn/ui**: Component library built on Radix UI
+
+### Build System
+- **Bundler**: Turbopack (Next.js built-in)
+- **Package Manager**: npm/yarn (check `package.json`)
+
+## 4. Asset Management
+
+### Images
+- **Framework**: Next.js Image component
+- **Location**: `public/` directory
+- **Usage**: 
+```typescript
+import Image from "next/image"
+<Image src="/path/to/image.png" alt="..." width={100} height={100} />
+```
+
+### Optimization
+- Next.js automatic image optimization
+- Use appropriate formats (WebP, AVIF when supported)
+
+## 5. Icon System
+
+### Primary Icon Library
+- **Lucide React**: `lucide-react` (v0.545.0)
+- **Usage**: `import { Calendar, Clock, User } from "lucide-react"`
+- **Configuration**: Set in `components.json` as `"iconLibrary": "lucide"`
+
+### Secondary Icon Library
+- **Tabler Icons**: `@tabler/icons-react` (v3.35.0)
+- **Usage**: `import { IconDashboard, IconCalendar } from "@tabler/icons-react"`
+- **Naming**: Tabler icons use `Icon` prefix (e.g., `IconDashboard`)
+
+### Icon Usage Pattern
+```typescript
+// Lucide (preferred for UI components)
+import { Calendar, Clock } from "lucide-react"
+<Calendar className="h-4 w-4" />
+
+// Tabler (used in navigation/sidebar)
+import { IconDashboard } from "@tabler/icons-react"
+<IconDashboard />
+```
+
+### Icon Sizing
+- **Small**: `h-3.5 w-3.5` or `h-4 w-4` (14-16px)
+- **Default**: `h-5 w-5` (20px)
+- **Large**: `h-6 w-6` or `h-7 w-7` (24-28px)
+- Use `size-*` utilities when available: `size-4`, `size-5`
+
+## 6. Styling Approach
+
+### CSS Methodology
+- **Utility-First**: Tailwind CSS classes
+- **Component Scoping**: CSS variables for component-specific styles
+- **Global Styles**: `app/globals.css` for design tokens
+
+### Responsive Design
+- **Mobile-First**: Default styles for mobile, use `md:`, `lg:`, `xl:` breakpoints
+- **Breakpoints**: Standard Tailwind breakpoints
+  - `sm`: 640px
+  - `md`: 768px
+  - `lg`: 1024px
+  - `xl`: 1280px
+  - `2xl`: 1536px
+
+### Dark Mode
+- **Implementation**: `next-themes` with CSS variables
+- **Toggle**: Theme provider in `components/provider/theme-provider.tsx`
+- **Usage**: Automatic via CSS variables, no class prefixes needed
+
+### Utility Function
+- **cn()**: Located in `lib/utils.ts`
+- **Purpose**: Merge Tailwind classes with conditional logic
+- **Usage**: `cn("base-classes", condition && "conditional-classes", className)`
+
+## 7. Project Structure
+
+### Directory Organization
+```
+app/                    # Next.js App Router pages
+  (main)/              # Route groups
+  (auth)/              # Auth routes
+  api/                 # API routes
+components/
+  ui/                  # Shadcn/ui components
+  layout/              # Layout components (sidebar, etc.)
+  admin/               # Admin-specific components
+  patient/             # Patient-specific components
+lib/
+  utils.ts             # Utility functions (cn, etc.)
+  actions/             # Server actions
+  auth-session/        # Auth configuration
+```
+
+### Component Naming
+- **Files**: kebab-case (e.g., `booking-form.tsx`)
+- **Components**: PascalCase (e.g., `BookingForm`)
+- **Exports**: Named exports preferred
+
+### File Patterns
+- **Client Components**: `"use client"` directive at top
+- **Server Components**: Default (no directive)
+- **Type Definitions**: Inline with components or separate `types.ts` files
+
+## 8. Figma Integration Guidelines
+
+### Design Token Mapping
+When extracting from Figma:
+1. **Colors**: Convert to OKLCH format, add to `app/globals.css`
+2. **Spacing**: Map to Tailwind spacing scale (4px = 1 unit)
+3. **Typography**: Use existing font families, map sizes to Tailwind text utilities
+4. **Radius**: Map to `--radius` variants (sm, md, lg, xl)
+
+### Component Mapping
+1. **Buttons**: Use `Button` component with appropriate variant
+2. **Cards**: Use `Card` with `CardHeader`, `CardContent`, etc.
+3. **Forms**: Use `Field`, `FieldLabel`, `FieldContent` pattern
+4. **Inputs**: Use `Input` or `InputGroup` for inputs with icons
+5. **Icons**: Use Lucide icons when possible, Tabler for navigation
+
+### Layout Patterns
+- **Container**: `max-w-4xl mx-auto` for centered content
+- **Grid**: Use Tailwind grid utilities: `grid grid-cols-1 md:grid-cols-2 gap-6`
+- **Flex**: Use flex utilities: `flex items-center gap-4`
+- **Spacing**: Consistent vertical spacing: `space-y-6` for sections
+
+### Best Practices
+1. **Consistency**: Always use design tokens, never hardcode values
+2. **Accessibility**: Include proper ARIA labels, focus states
+3. **Responsive**: Mobile-first approach, test all breakpoints
+4. **Performance**: Use Next.js Image, lazy load when appropriate
+5. **Type Safety**: TypeScript interfaces for all props
+
+## 9. Common Patterns
+
+### Form Fields
+```typescript
+<Field>
+  <FieldLabel>
+    Label Text <span className="text-destructive">*</span>
+  </FieldLabel>
+  <FieldContent>
+    <InputGroup>
+      <InputGroupAddon>
+        <Icon className="h-4 w-4" />
+      </InputGroupAddon>
+      <InputGroupInput {...props} />
+    </InputGroup>
+  </FieldContent>
+</Field>
+```
+
+### Cards
+```typescript
+<Card>
+  <CardHeader>
+    <CardTitle>Title</CardTitle>
+    <CardDescription>Description</CardDescription>
+  </CardHeader>
+  <CardContent>
+    {/* Content */}
+  </CardContent>
+</Card>
+```
+
+### Buttons
+```typescript
+<Button variant="default" size="default">
+  <Icon className="h-4 w-4" />
+  Button Text
+</Button>
+```
+
+## 10. Color Reference
+
+### Primary Colors
+- **Primary**: Blue (`oklch(0.6723 0.1606 244.9955)`)
+- **Primary Foreground**: White (`oklch(1.0000 0 0)`)
+
+### Semantic Colors
+- **Destructive**: Red for errors/delete actions
+- **Muted**: Light gray for secondary text
+- **Accent**: Light blue for highlights
+- **Border**: Subtle gray for borders
+
+### Usage Guidelines
+- Use `bg-primary` for primary actions
+- Use `text-muted-foreground` for secondary text
+- Use `border-border` for borders
+- Use `bg-destructive` sparingly for destructive actions
