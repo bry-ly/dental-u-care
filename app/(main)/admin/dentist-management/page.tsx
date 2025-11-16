@@ -73,11 +73,13 @@ export default async function DentistManagementPage() {
       role="admin"
     >
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6 px-4 lg:px-6">
-        <div>
-          <h1 className="text-3xl font-bold">Dentist Management</h1>
-          <p className="text-muted-foreground">
-            Manage all dentists in the system
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Dentist Management</h1>
+            <p className="text-muted-foreground">
+              Manage all dentists in the system
+            </p>
+          </div>
         </div>
 
         <AdminDentistsTable dentists={dentists} />
