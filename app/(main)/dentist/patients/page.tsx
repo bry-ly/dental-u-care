@@ -1,7 +1,7 @@
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { DentistPatientsTable } from "@/components/dentist/patients-table";
 import { requireDentist } from "@/lib/auth-session/auth-server";
-import { prisma } from "@/lib/types/prisma";
+import { safeFindManyAppointments } from "@/lib/utils/appointment-helpers";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
