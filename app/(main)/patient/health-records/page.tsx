@@ -15,6 +15,9 @@ export const metadata: Metadata = {
   title: "Health Records",
 };
 
+// Force dynamic rendering since this page uses authentication (headers)
+export const dynamic = "force-dynamic";
+
 export default async function HealthRecordsPage() {
   const { user } = await requirePatient();
 

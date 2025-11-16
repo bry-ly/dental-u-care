@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   title: "Patient Dashboard",
 };
 
+// Force dynamic rendering since this page uses authentication (headers)
+export const dynamic = "force-dynamic";
+
 export default async function PatientDashboard() {
   // Require patient role - will redirect to appropriate page if not patient
   const { user } = await requirePatient();

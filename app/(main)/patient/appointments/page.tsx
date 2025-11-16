@@ -10,6 +10,9 @@ export const metadata: Metadata = {
   title: "My Appointments",
 };
 
+// Force dynamic rendering since this page uses authentication (headers)
+export const dynamic = "force-dynamic";
+
 interface AppointmentsPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }

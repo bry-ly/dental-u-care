@@ -11,6 +11,9 @@ export const metadata: Metadata = {
   title: "Book Appointment",
 };
 
+// Force dynamic rendering since this page uses authentication (headers)
+export const dynamic = "force-dynamic";
+
 interface BookAppointmentPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
