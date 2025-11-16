@@ -17,7 +17,10 @@ export default async function DentistSchedulePage() {
   const { user } = await requireDentist();
 
   return (
-    <DashboardLayout user={user} role="dentist">
+    <DashboardLayout
+      user={{ ...user, role: user.role || "dentist" }}
+      role="dentist"
+    >
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6 px-4 lg:px-6">
         <div>
           <h1 className="text-3xl font-bold">Manage Schedule</h1>
@@ -29,9 +32,7 @@ export default async function DentistSchedulePage() {
         <Card>
           <CardHeader>
             <CardTitle>Working Hours</CardTitle>
-            <CardDescription>
-              Configure your weekly schedule
-            </CardDescription>
+            <CardDescription>Configure your weekly schedule</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground text-center py-8">

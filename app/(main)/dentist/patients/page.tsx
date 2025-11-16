@@ -41,7 +41,10 @@ export default async function DentistPatientsPage() {
   const patients = Array.from(patientsMap.values());
 
   return (
-    <DashboardLayout user={user} role="dentist">
+    <DashboardLayout
+      user={{ ...user, role: user.role || "dentist" }}
+      role="dentist"
+    >
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6 px-4 lg:px-6">
         <div>
           <h1 className="text-3xl font-bold">Patient Records</h1>

@@ -31,8 +31,11 @@ export default async function DentistSettingsPage() {
   }
 
   return (
-    <DashboardLayout user={user} role="dentist">
-      <UserSettingsContent user={user} />
+    <DashboardLayout
+      user={{ ...user, role: user.role || "dentist" }}
+      role="dentist"
+    >
+      <UserSettingsContent user={{ ...user, role: user.role || "dentist" }} />
     </DashboardLayout>
   );
 }
