@@ -116,7 +116,7 @@ export async function safeFindManyAppointments<
   } catch (error) {
     console.error("[safeFindManyAppointments] Error:", error);
     // Return empty array on error instead of crashing
-    return [] as AppointmentWithRelations<TInclude>;
+    return [] as unknown as AppointmentWithRelations<TInclude>;
   }
 }
 
