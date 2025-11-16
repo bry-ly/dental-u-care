@@ -31,8 +31,11 @@ export default async function UserSettingsPage() {
   }
 
   return (
-    <DashboardLayout user={user} role="patient">
-      <UserSettingsContent user={user} />
+    <DashboardLayout
+      user={{ ...user, role: user.role || "patient" }}
+      role="patient"
+    >
+      <UserSettingsContent user={{ ...user, role: user.role || "patient" }} />
     </DashboardLayout>
   );
 }

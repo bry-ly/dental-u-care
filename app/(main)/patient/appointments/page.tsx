@@ -46,7 +46,10 @@ export default async function AppointmentsPage({
   const showSuccess = params.success === "true";
 
   return (
-    <DashboardLayout user={user} role="patient">
+    <DashboardLayout
+      user={{ ...user, role: user.role || "patient" }}
+      role="patient"
+    >
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6 px-4 lg:px-6">
         <div>
           <h1 className="text-3xl font-bold">My Appointments</h1>
@@ -59,8 +62,8 @@ export default async function AppointmentsPage({
           <Alert className="border-green-200 bg-green-50 dark:bg-green-950/30">
             <CheckCircle className="h-4 w-4 text-green-600" />
             <AlertDescription className="text-green-800 dark:text-green-200">
-              Your appointment has been successfully booked! Check your
-              email for confirmation.
+              Your appointment has been successfully booked! Check your email
+              for confirmation.
             </AlertDescription>
           </Alert>
         )}

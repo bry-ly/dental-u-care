@@ -68,7 +68,10 @@ export default async function BookAppointmentPage({
   const showCanceled = params.canceled === "true";
 
   return (
-    <DashboardLayout user={user} role="patient">
+    <DashboardLayout
+      user={{ ...user, role: user.role || "patient" }}
+      role="patient"
+    >
       {showCanceled && (
         <Alert className="m-4 md:m-8 border-red-200 bg-red-50 dark:bg-red-950/30">
           <XCircle className="h-4 w-4 text-red-600" />

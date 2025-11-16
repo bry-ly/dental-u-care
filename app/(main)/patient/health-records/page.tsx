@@ -37,7 +37,10 @@ export default async function HealthRecordsPage() {
   });
 
   return (
-    <DashboardLayout user={user} role="patient">
+    <DashboardLayout
+      user={{ ...user, role: user.role || "patient" }}
+      role="patient"
+    >
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6 px-4 lg:px-6">
         <div>
           <h1 className="text-3xl font-bold">Health Records</h1>
@@ -62,15 +65,11 @@ export default async function HealthRecordsPage() {
               <p className="text-base">{userDetails?.name}</p>
             </div>
             <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Email
-              </p>
+              <p className="text-sm font-medium text-muted-foreground">Email</p>
               <p className="text-base">{userDetails?.email}</p>
             </div>
             <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Phone
-              </p>
+              <p className="text-sm font-medium text-muted-foreground">Phone</p>
               <p className="text-base">
                 {userDetails?.phone || "Not provided"}
               </p>
@@ -151,10 +150,8 @@ export default async function HealthRecordsPage() {
                           Dr. {appointment.dentist.name}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          {new Date(
-                            appointment.date
-                          ).toLocaleDateString()}{" "}
-                          at {appointment.timeSlot}
+                          {new Date(appointment.date).toLocaleDateString()} at{" "}
+                          {appointment.timeSlot}
                         </p>
                         {appointment.notes && (
                           <p className="text-sm mt-2">
