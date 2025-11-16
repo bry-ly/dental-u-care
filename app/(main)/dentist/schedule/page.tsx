@@ -13,6 +13,9 @@ export const metadata: Metadata = {
   title: "Manage Schedule",
 };
 
+// Force dynamic rendering since this page uses authentication (headers)
+export const dynamic = "force-dynamic";
+
 export default async function DentistSchedulePage() {
   const { user } = await requireDentist();
 

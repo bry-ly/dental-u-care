@@ -4,6 +4,9 @@ import { UserSettingsContent } from "@/components/user/settings-content";
 import { prisma } from "@/lib/types/prisma";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 
+// Force dynamic rendering since this page uses authentication (headers)
+export const dynamic = "force-dynamic";
+
 export default async function DentistSettingsPage() {
   const session = await requireAuth();
 
