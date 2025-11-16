@@ -374,7 +374,7 @@ export default function BookingForm({
     value: string
   ) => {
     const currentDate = getDateTimeValue() || new Date();
-    let newDate = new Date(currentDate);
+    const newDate = new Date(currentDate);
 
     if (type === "hour") {
       const hour = parseInt(value, 10);
