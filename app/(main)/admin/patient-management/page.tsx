@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   title: "Patient Management",
 };
 
+// Force dynamic rendering since this page uses authentication (headers)
+export const dynamic = "force-dynamic";
+
 export default async function PatientManagementPage() {
   const { user } = await requireAdmin();
 

@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   title: "User Management",
 };
 
+// Force dynamic rendering since this page uses authentication (headers)
+export const dynamic = "force-dynamic";
+
 export default async function UserManagementPage() {
   const { user } = await requireAdmin();
 

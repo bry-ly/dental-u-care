@@ -9,6 +9,10 @@ import { prisma } from "@/lib/types/prisma";
 export const metadata: Metadata = {
   title: "Dashboard",
 };
+
+// Force dynamic rendering since this page uses authentication (headers)
+export const dynamic = "force-dynamic";
+
 export default async function Page() {
   // Require admin role - will redirect to home page (/) if not admin
   const { user } = await requireAdmin();

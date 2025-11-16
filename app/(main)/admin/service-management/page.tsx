@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   title: "Service Management",
 };
 
+// Force dynamic rendering since this page uses authentication (headers)
+export const dynamic = "force-dynamic";
+
 export default async function ServiceManagementPage() {
   const { user } = await requireAdmin();
 
