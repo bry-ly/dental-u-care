@@ -5,6 +5,7 @@ import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import type { Metadata } from "next";
 import { requireAdmin } from "@/lib/auth-session/auth-server";
 import { prisma } from "@/lib/types/prisma";
+import { safeFindManyAppointments } from "@/lib/utils/appointment-helpers";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -110,7 +111,8 @@ export default async function Page() {
       },
     }),
     // Fetch recent appointments for table
-    prisma.appointment.findMany({
+    // Use safe find to filter out orphaned appointments
+    safeFindManyAppointments({
       take: 20,
       orderBy: {
         createdAt: "desc",

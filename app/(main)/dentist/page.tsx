@@ -11,6 +11,7 @@ import { Calendar, Clock, Users, CheckCircle } from "lucide-react";
 import Link from "next/link";
 import { requireDentist } from "@/lib/auth-session/auth-server";
 import { prisma } from "@/lib/types/prisma";
+import { safeFindManyAppointments } from "@/lib/utils/appointment-helpers";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -40,7 +41,7 @@ export default async function DentistDashboard() {
     upcomingAppointments,
   ] = await Promise.all([
     // Fetch today's appointments
-    prisma.appointment.findMany({
+    safeFindManyAppointments({
       where: {
         dentistId: user.id,
         date: {
@@ -60,7 +61,7 @@ export default async function DentistDashboard() {
       },
     }),
     // Fetch pending appointments
-    prisma.appointment.findMany({
+    safeFindManyAppointments({
       where: {
         dentistId: user.id,
         status: "pending",

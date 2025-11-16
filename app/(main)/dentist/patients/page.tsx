@@ -15,7 +15,8 @@ export default async function DentistPatientsPage() {
   const { user } = await requireDentist();
 
   // Get all unique patients who have appointments with this dentist
-  const appointments = await prisma.appointment.findMany({
+  // Use safe find to filter out orphaned appointments
+  const appointments = await safeFindManyAppointments({
     take: 200, // Limit to prevent excessive data loading
     where: {
       dentistId: user.id,

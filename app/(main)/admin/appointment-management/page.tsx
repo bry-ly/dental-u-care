@@ -1,7 +1,7 @@
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { AdminAppointmentsTable } from "@/components/admin/appointments-table";
 import { requireAdmin } from "@/lib/auth-session/auth-server";
-import { prisma } from "@/lib/types/prisma";
+import { safeFindManyAppointments } from "@/lib/utils/appointment-helpers";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -15,7 +15,8 @@ export default async function AppointmentManagementPage() {
   const { user } = await requireAdmin();
 
   // Add pagination limit to prevent loading too much data at once
-  const appointments = await prisma.appointment.findMany({
+  // Use safe find to filter out orphaned appointments
+  const appointments = await safeFindManyAppointments({
     take: 100, // Limit to 100 most recent appointments
     include: {
       patient: true,

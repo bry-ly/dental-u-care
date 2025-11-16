@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/types/prisma";
 import { auth } from "@/lib/auth-session/auth";
+import { safeFindManyAppointments } from "@/lib/utils/appointment-helpers";
 
 export async function POST(request: NextRequest) {
   try {
@@ -107,7 +108,7 @@ export async function GET(request: NextRequest) {
     let appointments;
 
     if (role === "patient") {
-      appointments = await prisma.appointment.findMany({
+      appointments = await safeFindManyAppointments({
         take: 100, // Limit to 100 most recent appointments
         where: {
           patientId: userId || session.user.id,
@@ -122,7 +123,7 @@ export async function GET(request: NextRequest) {
         },
       });
     } else if (role === "dentist") {
-      appointments = await prisma.appointment.findMany({
+      appointments = await safeFindManyAppointments({
         take: 100, // Limit to 100 most recent appointments
         where: {
           dentistId: userId || session.user.id,
@@ -138,7 +139,8 @@ export async function GET(request: NextRequest) {
       });
     } else {
       // Admin - get all appointments with pagination limit
-      appointments = await prisma.appointment.findMany({
+      // Use safe find to filter out orphaned appointments
+      appointments = await safeFindManyAppointments({
         take: 100, // Limit to 100 most recent appointments
         include: {
           patient: true,

@@ -1,7 +1,7 @@
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { AppointmentsList } from "@/components/patient/appointments-list";
 import { requirePatient } from "@/lib/auth-session/auth-server";
-import { prisma } from "@/lib/types/prisma";
+import { safeFindManyAppointments } from "@/lib/utils/appointment-helpers";
 import type { Metadata } from "next";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle } from "lucide-react";
@@ -22,7 +22,7 @@ export default async function AppointmentsPage({
 }: AppointmentsPageProps) {
   const { user } = await requirePatient();
 
-  const appointmentsData = await prisma.appointment.findMany({
+  const appointmentsData = await safeFindManyAppointments({
     take: 50, // Limit to 50 most recent appointments
     where: {
       patientId: user.id,

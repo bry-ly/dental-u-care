@@ -1,7 +1,7 @@
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { DentistAppointmentsList } from "@/components/dentist/appointments-list";
 import { requireDentist } from "@/lib/auth-session/auth-server";
-import { prisma } from "@/lib/types/prisma";
+import { safeFindManyAppointments } from "@/lib/utils/appointment-helpers";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 export default async function DentistAppointmentsPage() {
   const { user } = await requireDentist();
 
-  const appointmentsData = await prisma.appointment.findMany({
+  const appointmentsData = await safeFindManyAppointments({
     take: 100, // Limit to 100 most recent appointments
     where: {
       dentistId: user.id,
