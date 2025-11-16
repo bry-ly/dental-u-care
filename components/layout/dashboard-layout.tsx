@@ -10,7 +10,7 @@ interface DashboardLayoutProps {
     id: string;
     name: string;
     email: string;
-    role: string;
+    role: string | null | undefined;
     image?: string | null;
   };
   role: UserRole;
