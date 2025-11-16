@@ -62,6 +62,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type Service = {
   id: string;
@@ -177,6 +185,8 @@ export function AdminServicesTable({ services }: AdminServicesTableProps) {
     pageSize: 10,
   });
   const [isLoading, setIsLoading] = React.useState(false);
+  const [serviceToDelete, setServiceToDelete] =
+    React.useState<Service | null>(null);
 
   const handleServiceAction = async (
     action: () => Promise<{ success: boolean; message: string }>,
@@ -193,6 +203,27 @@ export function AdminServicesTable({ services }: AdminServicesTableProps) {
       }
     } catch (error) {
       toast.error(`Failed to ${actionName}`);
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const confirmDeleteService = async () => {
+    if (!serviceToDelete) return;
+
+    setIsLoading(true);
+    try {
+      const result = await deleteService(serviceToDelete.id);
+      if (result.success) {
+        toast.success(result.message);
+        setServiceToDelete(null);
+        router.refresh();
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      toast.error("Failed to delete service");
       console.error(error);
     } finally {
       setIsLoading(false);
@@ -278,12 +309,7 @@ export function AdminServicesTable({ services }: AdminServicesTableProps) {
           <DropdownMenuSeparator />
           <DropdownMenuItem
             variant="destructive"
-            onClick={() =>
-              handleServiceAction(
-                () => deleteService(row.original.id),
-                "delete service"
-              )
-            }
+            onClick={() => setServiceToDelete(row.original)}
           >
             Delete
           </DropdownMenuItem>
@@ -567,6 +593,72 @@ export function AdminServicesTable({ services }: AdminServicesTableProps) {
           </div>
         </div>
       </div>
+
+      {/* Delete Service Confirmation Dialog */}
+      <Dialog
+        open={!!serviceToDelete}
+        onOpenChange={() => setServiceToDelete(null)}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete Service</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this service? This action cannot
+              be undone.
+            </DialogDescription>
+          </DialogHeader>
+
+          {serviceToDelete && (
+            <div className="space-y-4 py-4">
+              <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+                <div className="flex-1">
+                  <p className="font-medium">{serviceToDelete.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {serviceToDelete.description}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Price: {serviceToDelete.price}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Duration: {serviceToDelete.duration} minutes
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Category: {serviceToDelete.category}
+                  </p>
+                  {serviceToDelete.appointments.length > 0 && (
+                    <p className="text-sm text-amber-600 mt-2">
+                      ⚠️ This service has {serviceToDelete.appointments.length}{" "}
+                      appointment(s). Deleting it may affect those appointments.
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-lg border border-destructive/20">
+                ⚠️ This will permanently delete the service and may affect
+                related appointments.
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setServiceToDelete(null)}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDeleteService}
+              disabled={isLoading}
+            >
+              {isLoading ? "Deleting..." : "Delete Service"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

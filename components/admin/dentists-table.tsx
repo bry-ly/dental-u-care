@@ -13,6 +13,7 @@ import {
 } from "@tabler/icons-react";
 import { User, Mail, Phone, Calendar, Award, Briefcase } from "lucide-react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import {
   updateDentistAvailability,
   deleteDentist,
@@ -64,9 +65,12 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { CreateDentistForm } from "@/components/admin/create-dentist-form";
+import { IconPlus } from "@tabler/icons-react";
 
 type Dentist = {
   id: string;
@@ -198,6 +202,7 @@ type AdminDentistsTableProps = {
 };
 
 export function AdminDentistsTable({ dentists }: AdminDentistsTableProps) {
+  const router = useRouter();
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
@@ -213,6 +218,9 @@ export function AdminDentistsTable({ dentists }: AdminDentistsTableProps) {
   const [selectedDentist, setSelectedDentist] = React.useState<Dentist | null>(
     null
   );
+  const [createDialogOpen, setCreateDialogOpen] = React.useState(false);
+  const [dentistToDelete, setDentistToDelete] =
+    React.useState<Dentist | null>(null);
 
   const handleBulkAvailability = async (isAvailable: boolean) => {
     const selectedRows = table.getFilteredSelectedRowModel().rows;
@@ -229,7 +237,7 @@ export function AdminDentistsTable({ dentists }: AdminDentistsTableProps) {
       if (result.success) {
         toast.success(result.message);
         setRowSelection({});
-        window.location.reload();
+        router.refresh();
       } else {
         toast.error(result.message);
       }
@@ -250,12 +258,33 @@ export function AdminDentistsTable({ dentists }: AdminDentistsTableProps) {
       const result = await action();
       if (result.success) {
         toast.success(result.message);
-        window.location.reload();
+        router.refresh();
       } else {
         toast.error(result.message);
       }
     } catch (error) {
       toast.error(`Failed to ${actionName}`);
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const confirmDeleteDentist = async () => {
+    if (!dentistToDelete) return;
+
+    setIsLoading(true);
+    try {
+      const result = await deleteDentist(dentistToDelete.id);
+      if (result.success) {
+        toast.success(result.message);
+        setDentistToDelete(null);
+        router.refresh();
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      toast.error("Failed to delete dentist");
       console.error(error);
     } finally {
       setIsLoading(false);
@@ -308,14 +337,7 @@ export function AdminDentistsTable({ dentists }: AdminDentistsTableProps) {
           </DropdownMenuItem>
           <DropdownMenuItem
             variant="destructive"
-            onClick={() => {
-              if (confirm("Are you sure you want to delete this dentist?")) {
-                handleSingleAction(
-                  () => deleteDentist(row.original.id),
-                  "delete dentist"
-                );
-              }
-            }}
+            onClick={() => setDentistToDelete(row.original)}
           >
             Delete
           </DropdownMenuItem>
@@ -350,6 +372,10 @@ export function AdminDentistsTable({ dentists }: AdminDentistsTableProps) {
     getFacetedUniqueValues: getFacetedUniqueValues(),
   });
 
+  const handleCreateSuccess = () => {
+    router.refresh();
+  };
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
@@ -364,38 +390,48 @@ export function AdminDentistsTable({ dentists }: AdminDentistsTableProps) {
             className="pl-8"
           />
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm">
-              <IconLayoutColumns />
-              <span className="hidden lg:inline">Columns</span>
-              <IconChevronDown />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            {table
-              .getAllColumns()
-              .filter(
-                (column) =>
-                  typeof column.accessorFn !== "undefined" &&
-                  column.getCanHide()
-              )
-              .map((column) => {
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
-                      column.toggleVisibility(!!value)
-                    }
-                  >
-                    {column.id}
-                  </DropdownMenuCheckboxItem>
-                );
-              })}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => setCreateDialogOpen(true)}
+            size="sm"
+            className="gap-2"
+          >
+            <IconPlus className="size-4" />
+            Create Dentist
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <IconLayoutColumns />
+                <span className="hidden lg:inline">Columns</span>
+                <IconChevronDown />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              {table
+                .getAllColumns()
+                .filter(
+                  (column) =>
+                    typeof column.accessorFn !== "undefined" &&
+                    column.getCanHide()
+                )
+                .map((column) => {
+                  return (
+                    <DropdownMenuCheckboxItem
+                      key={column.id}
+                      className="capitalize"
+                      checked={column.getIsVisible()}
+                      onCheckedChange={(value) =>
+                        column.toggleVisibility(!!value)
+                      }
+                    >
+                      {column.id}
+                    </DropdownMenuCheckboxItem>
+                  );
+                })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       {/* Bulk Actions Toolbar */}
@@ -800,6 +836,74 @@ export function AdminDentistsTable({ dentists }: AdminDentistsTableProps) {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Dentist Dialog */}
+      <CreateDentistForm
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onSuccess={handleCreateSuccess}
+      />
+
+      {/* Delete Dentist Confirmation Dialog */}
+      <Dialog
+        open={!!dentistToDelete}
+        onOpenChange={() => setDentistToDelete(null)}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete Dentist</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this dentist? This action cannot
+              be undone.
+            </DialogDescription>
+          </DialogHeader>
+
+          {dentistToDelete && (
+            <div className="space-y-4 py-4">
+              <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+                <div className="flex-1">
+                  <p className="font-medium">Dr. {dentistToDelete.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {dentistToDelete.email}
+                  </p>
+                  {dentistToDelete.phone && (
+                    <p className="text-sm text-muted-foreground">
+                      {dentistToDelete.phone}
+                    </p>
+                  )}
+                  {dentistToDelete.specialization && (
+                    <p className="text-sm text-muted-foreground">
+                      {dentistToDelete.specialization}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-lg border border-destructive/20">
+                ⚠️ This will permanently delete the dentist and all associated
+                data including appointments.
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDentistToDelete(null)}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDeleteDentist}
+              disabled={isLoading}
+            >
+              {isLoading ? "Deleting..." : "Delete Dentist"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

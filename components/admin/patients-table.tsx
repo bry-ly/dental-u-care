@@ -55,6 +55,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { CreatePatientForm } from "@/components/admin/create-patient-form";
+import { IconPlus } from "@tabler/icons-react";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { deletePatient } from "@/lib/actions/admin-actions";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 
 type Patient = {
@@ -157,7 +170,7 @@ const columns: ColumnDef<Patient>[] = [
   },
   {
     id: "actions",
-    cell: () => (
+    cell: ({ row }) => (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
@@ -170,11 +183,30 @@ const columns: ColumnDef<Patient>[] = [
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-40">
-          <DropdownMenuItem>View Details</DropdownMenuItem>
-          <DropdownMenuItem>Edit Profile</DropdownMenuItem>
-          <DropdownMenuItem>View History</DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => toast.info("View details feature coming soon")}
+          >
+            View Details
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => toast.info("Edit feature coming soon")}
+          >
+            Edit Profile
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => toast.info("View history feature coming soon")}
+          >
+            View History
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem variant="destructive">Delete</DropdownMenuItem>
+          <DropdownMenuItem
+            variant="destructive"
+            onClick={() => {
+              // Will be handled by parent component
+            }}
+          >
+            Delete
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     ),
@@ -186,6 +218,7 @@ type AdminPatientsTableProps = {
 };
 
 export function AdminPatientsTable({ patients }: AdminPatientsTableProps) {
+  const router = useRouter();
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
@@ -197,10 +230,80 @@ export function AdminPatientsTable({ patients }: AdminPatientsTableProps) {
     pageIndex: 0,
     pageSize: 10,
   });
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [createDialogOpen, setCreateDialogOpen] = React.useState(false);
+  const [patientToDelete, setPatientToDelete] =
+    React.useState<Patient | null>(null);
+
+  const confirmDeletePatient = async () => {
+    if (!patientToDelete) return;
+
+    setIsLoading(true);
+    try {
+      const result = await deletePatient(patientToDelete.id);
+      if (result.success) {
+        toast.success(result.message);
+        setPatientToDelete(null);
+        router.refresh();
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      toast.error("Failed to delete patient");
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const actionsColumn: ColumnDef<Patient> = {
+    id: "actions",
+    cell: ({ row }) => (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            className="data-[state=open]:bg-muted text-muted-foreground flex size-8"
+            size="icon"
+            disabled={isLoading}
+          >
+            <IconDotsVertical />
+            <span className="sr-only">Open menu</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-40">
+          <DropdownMenuItem
+            onClick={() => toast.info("View details feature coming soon")}
+          >
+            View Details
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => toast.info("Edit feature coming soon")}
+          >
+            Edit Profile
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => toast.info("View history feature coming soon")}
+          >
+            View History
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            variant="destructive"
+            onClick={() => setPatientToDelete(row.original)}
+          >
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    ),
+  };
+
+  const columnsWithActions = [...columns.slice(0, -1), actionsColumn];
 
   const table = useReactTable({
     data: patients,
-    columns,
+    columns: columnsWithActions,
     state: {
       sorting,
       columnVisibility,
@@ -222,6 +325,10 @@ export function AdminPatientsTable({ patients }: AdminPatientsTableProps) {
     getFacetedUniqueValues: getFacetedUniqueValues(),
   });
 
+  const handleCreateSuccess = () => {
+    router.refresh();
+  };
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
@@ -236,38 +343,48 @@ export function AdminPatientsTable({ patients }: AdminPatientsTableProps) {
             className="pl-8"
           />
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm">
-              <IconLayoutColumns />
-              <span className="hidden lg:inline">Columns</span>
-              <IconChevronDown />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            {table
-              .getAllColumns()
-              .filter(
-                (column) =>
-                  typeof column.accessorFn !== "undefined" &&
-                  column.getCanHide()
-              )
-              .map((column) => {
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
-                      column.toggleVisibility(!!value)
-                    }
-                  >
-                    {column.id}
-                  </DropdownMenuCheckboxItem>
-                );
-              })}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => setCreateDialogOpen(true)}
+            size="sm"
+            className="gap-2"
+          >
+            <IconPlus className="size-4" />
+            Create Patient
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <IconLayoutColumns />
+                <span className="hidden lg:inline">Columns</span>
+                <IconChevronDown />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              {table
+                .getAllColumns()
+                .filter(
+                  (column) =>
+                    typeof column.accessorFn !== "undefined" &&
+                    column.getCanHide()
+                )
+                .map((column) => {
+                  return (
+                    <DropdownMenuCheckboxItem
+                      key={column.id}
+                      className="capitalize"
+                      checked={column.getIsVisible()}
+                      onCheckedChange={(value) =>
+                        column.toggleVisibility(!!value)
+                      }
+                    >
+                      {column.id}
+                    </DropdownMenuCheckboxItem>
+                  );
+                })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       {/* Bulk Actions Toolbar */}
@@ -432,6 +549,69 @@ export function AdminPatientsTable({ patients }: AdminPatientsTableProps) {
           </div>
         </div>
       </div>
+
+      {/* Create Patient Dialog */}
+      <CreatePatientForm
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onSuccess={handleCreateSuccess}
+      />
+
+      {/* Delete Patient Confirmation Dialog */}
+      <Dialog
+        open={!!patientToDelete}
+        onOpenChange={() => setPatientToDelete(null)}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete Patient</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this patient? This action cannot
+              be undone.
+            </DialogDescription>
+          </DialogHeader>
+
+          {patientToDelete && (
+            <div className="space-y-4 py-4">
+              <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+                <div className="flex-1">
+                  <p className="font-medium">{patientToDelete.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {patientToDelete.email}
+                  </p>
+                  {patientToDelete.phone && (
+                    <p className="text-sm text-muted-foreground">
+                      {patientToDelete.phone}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-lg border border-destructive/20">
+                ⚠️ This will permanently delete the patient and all associated
+                data including appointments and payment history.
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setPatientToDelete(null)}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDeletePatient}
+              disabled={isLoading}
+            >
+              {isLoading ? "Deleting..." : "Delete Patient"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

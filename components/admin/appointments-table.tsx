@@ -68,6 +68,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -244,6 +245,8 @@ export function AdminAppointmentsTable({
   const [isLoading, setIsLoading] = React.useState(false);
   const [selectedAppointment, setSelectedAppointment] =
     React.useState<Appointment | null>(null);
+  const [appointmentToDelete, setAppointmentToDelete] =
+    React.useState<Appointment | null>(null);
 
   const formatPrice = (price: number | string): string => {
     if (typeof price === "string") {
@@ -306,6 +309,27 @@ export function AdminAppointmentsTable({
     }
   };
 
+  const confirmDeleteAppointment = async () => {
+    if (!appointmentToDelete) return;
+
+    setIsLoading(true);
+    try {
+      const result = await deleteAppointment(appointmentToDelete.id);
+      if (result.success) {
+        toast.success(result.message);
+        setAppointmentToDelete(null);
+        router.refresh();
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      toast.error("Failed to delete appointment");
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const actionsColumn: ColumnDef<Appointment> = {
     id: "actions",
     cell: ({ row }) => (
@@ -350,12 +374,7 @@ export function AdminAppointmentsTable({
           </DropdownMenuItem>
           <DropdownMenuItem
             variant="destructive"
-            onClick={() =>
-              handleSingleAction(
-                () => deleteAppointment(row.original.id),
-                "delete appointment"
-              )
-            }
+            onClick={() => setAppointmentToDelete(row.original)}
           >
             Delete
           </DropdownMenuItem>
@@ -876,6 +895,66 @@ export function AdminAppointmentsTable({
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Appointment Confirmation Dialog */}
+      <Dialog
+        open={!!appointmentToDelete}
+        onOpenChange={() => setAppointmentToDelete(null)}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete Appointment</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this appointment? This action
+              cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+
+          {appointmentToDelete && (
+            <div className="space-y-4 py-4">
+              <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+                <div className="flex-1">
+                  <p className="font-medium">
+                    {appointmentToDelete.patient?.name || "Patient"}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {appointmentToDelete.service?.name || "Service"}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {new Date(appointmentToDelete.date).toLocaleDateString()}{" "}
+                    {appointmentToDelete.timeSlot}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Status: {appointmentToDelete.status}
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-lg border border-destructive/20">
+                ⚠️ This will permanently delete the appointment and all
+                associated data.
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setAppointmentToDelete(null)}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDeleteAppointment}
+              disabled={isLoading}
+            >
+              {isLoading ? "Deleting..." : "Delete Appointment"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
