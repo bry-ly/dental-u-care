@@ -6,8 +6,11 @@ export default async function AdminSettingsPage() {
   const { user } = await requireAdmin();
 
   return (
-    <DashboardLayout user={user} role="admin">
-      <AdminSettingsContent user={user} />
+    <DashboardLayout
+      user={{ ...user, role: user.role || "admin" }}
+      role="admin"
+    >
+      <AdminSettingsContent user={{ ...user, role: user.role || "admin" }} />
     </DashboardLayout>
   );
 }
