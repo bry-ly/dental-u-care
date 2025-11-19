@@ -14,22 +14,13 @@ import { getSessionCookie } from "better-auth/cookies";
  * Full session validation happens at the page level using auth.api.getSession()
  *
  * Protected routes:
- * - /admin/* - Admin panel (role check in page)
- * - /dentist/* - Dentist portal (role check in page)
- * - /patient/* - Patient portal (role check in page)
+ * - /dashboard/admin/* - Admin panel (role check in page)
+ * - /dashboard/dentist/* - Dentist portal (role check in page)
+ * - /dashboard/patient/* - Patient portal (role check in page)
  * - /profile/* - User profile (any authenticated user)
  */
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
-
-  // Skip middleware for API routes and public paths
-  if (
-    pathname.startsWith("/api/auth") ||
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/static")
-  ) {
-    return NextResponse.next();
-  }
 
   // Optimistic cookie-based session check
   // This only checks for cookie existence, not validity
@@ -45,6 +36,7 @@ export async function middleware(request: NextRequest) {
       console.log("[Middleware] No session cookie found for:", pathname);
     }
 
+    // Recommended pattern: preserve original path in query parameter
     const signInUrl = new URL("/sign-in", request.url);
     signInUrl.searchParams.set("from", pathname);
     return NextResponse.redirect(signInUrl);
@@ -67,13 +59,10 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/admin/:path*",
-    "/admin",
-    "/dentist/:path*",
-    "/dentist",
-    "/patient/:path*",
-    "/patient",
+    // Match all dashboard routes (admin, dentist, patient)
+    // The :path* pattern matches all sub-routes
+    "/dashboard/:path*",
+    // Match profile routes
     "/profile/:path*",
-    "/profile",
   ],
 };
