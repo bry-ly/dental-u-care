@@ -98,7 +98,7 @@ export function NavUser({
             {isAdmin && (
               <>
                 <DropdownMenuItem asChild>
-                  <Link href="/admin" className="cursor-pointer">
+                  <Link href="/dashboard/admin" className="cursor-pointer">
                     <IconCreditCard className="mr-2" />
                     <span>Dashboard</span>
                   </Link>

@@ -37,44 +37,44 @@ const adminData = {
   navMain: [
     {
       title: "Dashboard",
-      url: "/admin",
+      url: "/dashboard/admin",
       icon: IconDashboard,
     },
     {
       title: "Appointments",
-      url: "/admin/appointment-management",
+      url: "/dashboard/admin/appointment-management",
       icon: IconCalendar,
     },
     {
       title: "Patients",
-      url: "/admin/patient-management",
+      url: "/dashboard/admin/patient-management",
       icon: IconUsers,
     },
     {
       title: "Dentists",
-      url: "/admin/dentist-management",
+      url: "/dashboard/admin/dentist-management",
       icon: IconStethoscope,
     },
     {
       title: "Services",
-      url: "/admin/service-management",
+      url: "/dashboard/admin/service-management",
       icon: IconMedicalCross,
     },
     {
       title: "Users",
-      url: "/admin/user-management",
+      url: "/dashboard/admin/user-management",
       icon: IconUserCog,
     },
   ],
   navSecondary: [
     {
       title: "Settings",
-      url: "/admin/settings",
+      url: "/dashboard/admin/settings",
       icon: IconSettings,
     },
     {
       title: "Help & Support",
-      url: "/admin/help-support",
+      url: "/dashboard/admin/help-support",
       icon: IconHelp,
     },
   ],
@@ -96,34 +96,34 @@ const patientData = {
   navMain: [
     {
       title: "Dashboard",
-      url: "/patient",
+      url: "/dashboard/patient",
       icon: IconDashboard,
     },
     {
       title: "Book Appointment",
-      url: "/patient/book-appointment",
+      url: "/dashboard/patient/book-appointment",
       icon: IconCalendar,
     },
     {
       title: "My Appointments",
-      url: "/patient/appointments",
+      url: "/dashboard/patient/appointments",
       icon: IconListDetails,
     },
     {
       title: "Payments",
-      url: "/patient/payments",
+      url: "/dashboard/patient/payments",
       icon: IconFileDescription,
     },
     {
       title: "Health Records",
-      url: "/patient/health-records",
+      url: "/dashboard/patient/health-records",
       icon: IconDatabase,
     },
   ],
   navSecondary: [
     {
       title: "Settings",
-      url: "/patient/settings",
+      url: "/dashboard/patient/settings",
       icon: IconSettings,
     },
     {
@@ -139,29 +139,29 @@ const dentistData = {
   navMain: [
     {
       title: "Dashboard",
-      url: "/dentist",
+      url: "/dashboard/dentist",
       icon: IconDashboard,
     },
     {
       title: "My Appointments",
-      url: "/dentist/appointments",
+      url: "/dashboard/dentist/appointments",
       icon: IconCalendar,
     },
     {
       title: "My Patients",
-      url: "/dentist/patients",
+      url: "/dashboard/dentist/patients",
       icon: IconUsers,
     },
     {
       title: "Schedule",
-      url: "/dentist/schedule",
+      url: "/dashboard/dentist/schedule",
       icon: IconListDetails,
     },
   ],
   navSecondary: [
     {
       title: "Settings",
-      url: "/dentist/settings",
+      url: "/dashboard/dentist/settings",
       icon: IconSettings,
     },
     {
@@ -194,7 +194,7 @@ export function AppSidebar({ user, isAdmin, ...props }: AppSidebarProps) {
         ? dentistData
         : patientData;
   const homeUrl =
-    role === "admin" ? "/admin" : role === "dentist" ? "/dentist" : "/";
+    role === "admin" ? "/dashboard/admin" : role === "dentist" ? "/dashboard/dentist" : role === "patient" ? "/dashboard/patient" : "/";
   return (
     <>
       <Sidebar collapsible="offcanvas" {...props}>
