@@ -15,11 +15,11 @@ export default async function ForbiddenPage() {
   const getDashboardUrl = () => {
     switch (user.role) {
       case "admin":
-        return "/admin";
+        return "/dashboard/admin";
       case "dentist":
-        return "/dentist";
+        return "/dashboard/dentist";
       case "patient":
-        return "/patient";
+        return "/dashboard/patient";
       default:
         return "/profile";
     }
