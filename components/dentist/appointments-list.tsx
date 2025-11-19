@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, Clock, Phone, Mail } from "lucide-react";
 import { toast } from "sonner";
+import { formatTime12Hour } from "@/lib/utils";
 
 type Appointment = {
   id: string;
@@ -191,7 +192,7 @@ export function DentistAppointmentsList({
           </div>
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4 text-muted-foreground" />
-            <span>{appointment.timeSlot}</span>
+            <span>{formatTime12Hour(appointment.timeSlot)}</span>
           </div>
           {appointment.patient.phone && (
             <div className="flex items-center gap-2">
