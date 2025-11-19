@@ -52,7 +52,6 @@ import {
   InputGroupButton,
   InputGroupInput,
 } from "@/components/ui/input-group";
-import { ModeToggle } from "../ui/mode-toggle";
 import { cn } from "@/lib/utils";
 
 type User = {
@@ -347,15 +346,14 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
                 )}
               </form>
             </div>
-            <ModeToggle />
-
+            
             {user ? (
               <>
                 <Button
                   className={cn(isScrolled ? "hidden" : "lg:inline-flex")}
                   asChild
                 >
-                  <Link href="/patient/book-appointment">Book Now</Link>
+                  <Link href="/dashboard/patient/book-appointment">Book Now</Link>
                 </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -390,7 +388,7 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
                     {userIsAdmin && (
                       <>
                         <DropdownMenuItem asChild>
-                          <Link href="/admin" className="cursor-pointer">
+                          <Link href="/dashboard/admin" className="cursor-pointer">
                             <Shield className="mr-2 h-4 w-4" />
                             <span>Dashboard</span>
                           </Link>
@@ -401,7 +399,7 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
                     {user?.role === "dentist" && (
                       <>
                         <DropdownMenuItem asChild>
-                          <Link href="/dentist" className="cursor-pointer">
+                          <Link href="/dashboard/dentist" className="cursor-pointer">
                             <User className="mr-2 h-4 w-4" />
                             <span>Dashboard</span>
                           </Link>
@@ -412,7 +410,7 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
                     {user?.role === "patient" && (
                       <>
                         <DropdownMenuItem asChild>
-                          <Link href="/patient" className="cursor-pointer">
+                          <Link href="/dashboard/patient" className="cursor-pointer">
                             <User className="mr-2 h-4 w-4" />
                             <span>Dashboard</span>
                           </Link>
@@ -551,11 +549,11 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
                         </div>
                       </div>
                       <Button asChild>
-                        <Link href="/patient/book-appointment">Book Now</Link>
+                        <Link href="/dashboard/patient/book-appointment">Book Now</Link>
                       </Button>
                       {userIsAdmin && (
                         <Button variant="outline" asChild>
-                          <Link href="/admin">
+                          <Link href="/dashboard/admin">
                             <Shield className="mr-2 h-4 w-4" />
                             Admin Dashboard
                           </Link>
@@ -563,7 +561,7 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
                       )}
                       {user?.role === "dentist" && (
                         <Button variant="outline" asChild>
-                          <Link href="/dentist">
+                          <Link href="/dashboard/dentist">
                             <User className="mr-2 h-4 w-4" />
                             Dentist Dashboard
                           </Link>
@@ -571,7 +569,7 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
                       )}
                       {user?.role === "patient" && (
                         <Button variant="outline" asChild>
-                          <Link href="/patient">
+                          <Link href="/dashboard/patient">
                             <User className="mr-2 h-4 w-4" />
                             Dashboard
                           </Link>
