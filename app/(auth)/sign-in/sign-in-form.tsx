@@ -55,11 +55,11 @@ export function LoginForm({
             // Determine target based on role
             const target =
               role === "admin"
-                ? "/admin"
+                ? "/dashboard/admin"
                 : role === "dentist"
-                  ? "/dentist"
+                  ? "/dashboard/dentist"
                   : role === "patient"
-                    ? "/patient"
+                    ? "/dashboard/patient"
                     : "/";
 
             const description =
