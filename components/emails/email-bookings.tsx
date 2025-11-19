@@ -14,6 +14,7 @@ export interface DentalInvoiceProps {
   patientName: string;
   patientAddress: string;
   patientCity: string;
+  patientBarangay?: string;
   patientPhone: string;
   patientEmail: string;
   bookingId: string;
@@ -90,7 +91,7 @@ const DentalInvoice: React.FC<DentalInvoiceProps> = (props) => {
                     Baltan Street
                   </Text>
                   <Text className="text-[14px] text-gray-600 m-0">
-                    Puerto Princesa City, Palawan 5300
+                    Puerto Princesa City, Palawan
                   </Text>
                   <Text className="text-[14px] text-gray-600 m-0">
                     Phone: (043) 756-1234
@@ -112,6 +113,11 @@ const DentalInvoice: React.FC<DentalInvoiceProps> = (props) => {
               <Text className="text-[14px] text-gray-600 m-0">
                 {props.patientAddress}
               </Text>
+              {props.patientBarangay && (
+                <Text className="text-[14px] text-gray-600 m-0">
+                  {props.patientBarangay}
+                </Text>
+              )}
               <Text className="text-[14px] text-gray-600 m-0">
                 {props.patientCity}
               </Text>
@@ -289,12 +295,7 @@ const DentalInvoice: React.FC<DentalInvoiceProps> = (props) => {
                 <strong>Payment Status:</strong> {props.paymentStatus}
               </Text>
               <Text className="text-[14px] text-gray-700 m-0 mb-[8px]">
-                <strong>Payment Methods:</strong> Cash, Credit Card, Bank
-                Transfer, GCash, PayMaya
-              </Text>
-              <Text className="text-[14px] text-gray-700 m-0 mb-[8px]">
-                <strong>Bank Details:</strong> BPI - Account #1234567890 (Dental
-                U Care Clinic)
+                <strong>Payment Methods:</strong> Cash, Credit Card, GCash, PayMaya
               </Text>
               <Text className="text-[14px] text-gray-700 m-0 mb-[8px]">
                 <strong>GCash:</strong> 09171234567
@@ -340,7 +341,6 @@ const DentalInvoice: React.FC<DentalInvoiceProps> = (props) => {
             <Section className="px-[32px] py-[16px] bg-gray-50 text-center rounded-b-[8px]">
               <Text className="text-[12px] text-gray-500 m-0">
                 Dental U Care Clinic | Baltan Street, Puerto Princesa City, Palawan
-                  5300
               </Text>
               <Text className="text-[12px] text-gray-500 m-0">
                 © 2025 Dental U Care. All rights reserved. | License
