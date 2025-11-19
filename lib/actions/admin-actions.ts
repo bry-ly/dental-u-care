@@ -1,132 +1,127 @@
 "use server";
 
-import { prisma } from "@/lib/types/prisma";
 import { revalidatePath } from "next/cache";
-import { auth } from "@/lib/auth-session/auth";
-import { Prisma } from "@prisma/client";
-import { headers } from "next/headers";
-
-// Helper to check if user is admin
-async function isAdmin() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user || session.user.role !== "admin") {
-    throw new Error("Unauthorized: Admin access required");
-  }
-
-  return session.user;
-}
+import { apiPost, apiPatch, apiDelete } from "@/lib/utils/api-client";
+import type { Prisma } from "@prisma/client";
 
 // ==================== APPOINTMENT ACTIONS ====================
 
 export async function confirmAppointments(appointmentIds: string[]) {
-  await isAdmin();
-
   try {
-    await prisma.appointment.updateMany({
-      where: { id: { in: appointmentIds } },
-      data: { status: "confirmed" },
+    const response = await apiPost("/api/admin/appointments", {
+      action: "confirm",
+      appointmentIds,
     });
 
+    if (!response.success) {
+      return { success: false, message: response.error || "Failed to confirm appointments" };
+    }
+
     // Revalidate all relevant paths
-    revalidatePath("/admin");
-    revalidatePath("/admin/appointments");
-    revalidatePath("/patient/appointments");
-    revalidatePath("/dentist/appointments");
+    revalidatePath("/dashboard/admin");
+    revalidatePath("/dashboard/admin/appointment-management");
+    revalidatePath("/dashboard/patient/appointments");
+    revalidatePath("/dashboard/dentist/appointments");
 
     return {
       success: true,
-      message: `${appointmentIds.length} appointment(s) confirmed`,
+      message: response.message || `${appointmentIds.length} appointment(s) confirmed`,
     };
   } catch (error) {
-    console.error("Error confirming appointments:", error);
+    console.error("[confirmAppointments] Error:", error);
     return { success: false, message: "Failed to confirm appointments" };
   }
 }
 
-export async function cancelAppointments(appointmentIds: string[]) {
-  await isAdmin();
-
+export async function cancelAppointments(appointmentIds: string[], cancelReason?: string) {
   try {
-    await prisma.appointment.updateMany({
-      where: { id: { in: appointmentIds } },
-      data: { status: "cancelled", cancelReason: "Cancelled by admin" },
+    const response = await apiPost("/api/admin/appointments", {
+      action: "cancel",
+      appointmentIds,
+      cancelReason,
     });
 
+    if (!response.success) {
+      return { success: false, message: response.error || "Failed to cancel appointments" };
+    }
+
     // Revalidate all relevant paths
-    revalidatePath("/admin");
-    revalidatePath("/admin/appointments");
-    revalidatePath("/patient/appointments");
-    revalidatePath("/dentist/appointments");
+    revalidatePath("/dashboard/admin");
+    revalidatePath("/dashboard/admin/appointment-management");
+    revalidatePath("/dashboard/patient/appointments");
+    revalidatePath("/dashboard/dentist/appointments");
 
     return {
       success: true,
-      message: `${appointmentIds.length} appointment(s) cancelled`,
+      message: response.message || `${appointmentIds.length} appointment(s) cancelled`,
     };
   } catch (error) {
-    console.error("Error cancelling appointments:", error);
+    console.error("[cancelAppointments] Error:", error);
     return { success: false, message: "Failed to cancel appointments" };
   }
 }
 
 export async function completeAppointments(appointmentIds: string[]) {
-  await isAdmin();
-
   try {
-    await prisma.appointment.updateMany({
-      where: { id: { in: appointmentIds } },
-      data: { status: "completed" },
+    const response = await apiPost("/api/admin/appointments", {
+      action: "complete",
+      appointmentIds,
     });
 
+    if (!response.success) {
+      return { success: false, message: response.error || "Failed to complete appointments" };
+    }
+
     // Revalidate all relevant paths
-    revalidatePath("/admin");
-    revalidatePath("/admin/appointments");
-    revalidatePath("/patient/appointments");
-    revalidatePath("/dentist/appointments");
+    revalidatePath("/dashboard/admin");
+    revalidatePath("/dashboard/admin/appointment-management");
+    revalidatePath("/dashboard/patient/appointments");
+    revalidatePath("/dashboard/dentist/appointments");
 
     return {
       success: true,
-      message: `${appointmentIds.length} appointment(s) marked as completed`,
+      message: response.message || `${appointmentIds.length} appointment(s) marked as completed`,
     };
   } catch (error) {
-    console.error("Error completing appointments:", error);
+    console.error("[completeAppointments] Error:", error);
     return { success: false, message: "Failed to complete appointments" };
   }
 }
 
 export async function deleteAppointments(appointmentIds: string[]) {
-  await isAdmin();
-
   try {
-    await prisma.appointment.deleteMany({
-      where: { id: { in: appointmentIds } },
+    const response = await apiPost("/api/admin/appointments", {
+      action: "delete",
+      appointmentIds,
     });
 
-    revalidatePath("/admin");
+    if (!response.success) {
+      return { success: false, message: response.error || "Failed to delete appointments" };
+    }
+
+    revalidatePath("/dashboard/admin");
     return {
       success: true,
-      message: `${appointmentIds.length} appointment(s) deleted`,
+      message: response.message || `${appointmentIds.length} appointment(s) deleted`,
     };
   } catch (error) {
-    console.error("Error deleting appointments:", error);
+    console.error("[deleteAppointments] Error:", error);
     return { success: false, message: "Failed to delete appointments" };
   }
 }
 
 export async function deleteAppointment(appointmentId: string) {
-  await isAdmin();
-
   try {
-    await prisma.appointment.delete({
-      where: { id: appointmentId },
-    });
+    const response = await apiDelete(`/api/admin/appointments/${appointmentId}`);
 
-    revalidatePath("/admin");
-    return { success: true, message: "Appointment deleted successfully" };
+    if (!response.success) {
+      return { success: false, message: response.error || "Failed to delete appointment" };
+    }
+
+    revalidatePath("/dashboard/admin");
+    return { success: true, message: response.message || "Appointment deleted successfully" };
   } catch (error) {
-    console.error("Error deleting appointment:", error);
+    console.error("[deleteAppointment] Error:", error);
     return { success: false, message: "Failed to delete appointment" };
   }
 }
@@ -135,23 +130,30 @@ export async function updateAppointment(
   appointmentId: string,
   data: Prisma.AppointmentUpdateInput
 ) {
-  await isAdmin();
-
   try {
-    await prisma.appointment.update({
-      where: { id: appointmentId },
-      data,
-    });
+    // Convert Prisma update input to API request format
+    const updateData: Record<string, unknown> = {};
+    if (data.status) updateData.status = data.status;
+    if (data.cancelReason !== undefined) updateData.cancelReason = data.cancelReason;
+    if (data.date) updateData.date = data.date instanceof Date ? data.date.toISOString() : data.date;
+    if (data.timeSlot !== undefined) updateData.timeSlot = data.timeSlot;
+    if (data.notes !== undefined) updateData.notes = data.notes;
+
+    const response = await apiPatch(`/api/admin/appointments/${appointmentId}`, updateData);
+
+    if (!response.success) {
+      return { success: false, message: response.error || "Failed to update appointment" };
+    }
 
     // Revalidate all relevant paths
-    revalidatePath("/admin");
-    revalidatePath("/admin/appointments");
-    revalidatePath("/patient/appointments");
-    revalidatePath("/dentist/appointments");
+    revalidatePath("/dashboard/admin");
+    revalidatePath("/dashboard/admin/appointment-management");
+    revalidatePath("/dashboard/patient/appointments");
+    revalidatePath("/dashboard/dentist/appointments");
 
-    return { success: true, message: "Appointment updated successfully" };
+    return { success: true, message: response.message || "Appointment updated successfully" };
   } catch (error) {
-    console.error("Error updating appointment:", error);
+    console.error("[updateAppointment] Error:", error);
     return { success: false, message: "Failed to update appointment" };
   }
 }
@@ -162,43 +164,39 @@ export async function updateDentistAvailability(
   dentistIds: string[],
   isAvailable: boolean
 ) {
-  await isAdmin();
-
   try {
-    await prisma.user.updateMany({
-      where: {
-        id: { in: dentistIds },
-        role: "dentist",
-      },
-      data: { isAvailable },
+    const response = await apiPatch("/api/admin/dentists", {
+      dentistIds,
+      isAvailable,
     });
 
-    revalidatePath("/admin/dentist-management");
+    if (!response.success) {
+      return { success: false, message: response.error || "Failed to update dentist availability" };
+    }
+
+    revalidatePath("/dashboard/admin/dentist-management");
     return {
       success: true,
-      message: `${dentistIds.length} dentist(s) updated`,
+      message: response.message || `${dentistIds.length} dentist(s) updated`,
     };
   } catch (error) {
-    console.error("Error updating dentist availability:", error);
+    console.error("[updateDentistAvailability] Error:", error);
     return { success: false, message: "Failed to update dentist availability" };
   }
 }
 
 export async function deleteDentist(dentistId: string) {
-  await isAdmin();
-
   try {
-    await prisma.user.delete({
-      where: {
-        id: dentistId,
-        role: "dentist",
-      },
-    });
+    const response = await apiDelete(`/api/admin/dentists/${dentistId}`);
 
-    revalidatePath("/admin/dentist-management");
-    return { success: true, message: "Dentist deleted successfully" };
+    if (!response.success) {
+      return { success: false, message: response.error || "Failed to delete dentist" };
+    }
+
+    revalidatePath("/dashboard/admin/dentist-management");
+    return { success: true, message: response.message || "Dentist deleted successfully" };
   } catch (error) {
-    console.error("Error deleting dentist:", error);
+    console.error("[deleteDentist] Error:", error);
     return { success: false, message: "Failed to delete dentist" };
   }
 }
@@ -206,42 +204,38 @@ export async function deleteDentist(dentistId: string) {
 // ==================== PATIENT ACTIONS ====================
 
 export async function deletePatients(patientIds: string[]) {
-  await isAdmin();
-
   try {
-    await prisma.user.deleteMany({
-      where: {
-        id: { in: patientIds },
-        role: "patient",
-      },
+    const response = await apiDelete("/api/admin/patients", {
+      body: { patientIds },
     });
 
-    revalidatePath("/admin/patient-management");
+    if (!response.success) {
+      return { success: false, message: response.error || "Failed to delete patients" };
+    }
+
+    revalidatePath("/dashboard/admin/patient-management");
     return {
       success: true,
-      message: `${patientIds.length} patient(s) deleted`,
+      message: response.message || `${patientIds.length} patient(s) deleted`,
     };
   } catch (error) {
-    console.error("Error deleting patients:", error);
+    console.error("[deletePatients] Error:", error);
     return { success: false, message: "Failed to delete patients" };
   }
 }
 
 export async function deletePatient(patientId: string) {
-  await isAdmin();
-
   try {
-    await prisma.user.delete({
-      where: {
-        id: patientId,
-        role: "patient",
-      },
-    });
+    const response = await apiDelete(`/api/admin/patients/${patientId}`);
 
-    revalidatePath("/admin/patient-management");
-    return { success: true, message: "Patient deleted successfully" };
+    if (!response.success) {
+      return { success: false, message: response.error || "Failed to delete patient" };
+    }
+
+    revalidatePath("/dashboard/admin/patient-management");
+    return { success: true, message: response.message || "Patient deleted successfully" };
   } catch (error) {
-    console.error("Error deleting patient:", error);
+    console.error("[deletePatient] Error:", error);
     return { success: false, message: "Failed to delete patient" };
   }
 }
@@ -252,93 +246,76 @@ export async function updateServiceStatus(
   serviceIds: string[],
   isActive: boolean
 ) {
-  await isAdmin();
-
   try {
-    await prisma.service.updateMany({
-      where: { id: { in: serviceIds } },
-      data: { isActive },
+    const response = await apiPatch("/api/admin/services", {
+      serviceIds,
+      isActive,
     });
 
-    revalidatePath("/admin/service-management");
+    if (!response.success) {
+      return { success: false, message: response.error || "Failed to update service status" };
+    }
+
+    revalidatePath("/dashboard/admin/service-management");
     return {
       success: true,
-      message: `${serviceIds.length} service(s) updated`,
+      message: response.message || `${serviceIds.length} service(s) updated`,
     };
   } catch (error) {
-    console.error("Error updating service status:", error);
+    console.error("[updateServiceStatus] Error:", error);
     return { success: false, message: "Failed to update service status" };
   }
 }
 
 export async function deleteServices(serviceIds: string[]) {
-  await isAdmin();
-
   try {
-    await prisma.service.deleteMany({
-      where: { id: { in: serviceIds } },
+    const response = await apiDelete("/api/admin/services", {
+      body: { serviceIds },
     });
 
-    revalidatePath("/admin/service-management");
+    if (!response.success) {
+      return { success: false, message: response.error || "Failed to delete services" };
+    }
+
+    revalidatePath("/dashboard/admin/service-management");
     return {
       success: true,
-      message: `${serviceIds.length} service(s) deleted`,
+      message: response.message || `${serviceIds.length} service(s) deleted`,
     };
   } catch (error) {
-    console.error("Error deleting services:", error);
+    console.error("[deleteServices] Error:", error);
     return { success: false, message: "Failed to delete services" };
   }
 }
 
 export async function deleteService(serviceId: string) {
-  await isAdmin();
-
   try {
-    await prisma.service.delete({
-      where: { id: serviceId },
-    });
+    const response = await apiDelete(`/api/admin/services/${serviceId}`);
 
-    revalidatePath("/admin/service-management");
-    return { success: true, message: "Service deleted successfully" };
+    if (!response.success) {
+      return { success: false, message: response.error || "Failed to delete service" };
+    }
+
+    revalidatePath("/dashboard/admin/service-management");
+    return { success: true, message: response.message || "Service deleted successfully" };
   } catch (error) {
-    console.error("Error deleting service:", error);
+    console.error("[deleteService] Error:", error);
     return { success: false, message: "Failed to delete service" };
   }
 }
 
 export async function duplicateService(serviceId: string) {
-  await isAdmin();
-
   try {
-    const service = await prisma.service.findUnique({
-      where: { id: serviceId },
-    });
+    const response = await apiPost(`/api/admin/services/${serviceId}/duplicate`);
 
-    if (!service) {
-      return { success: false, message: "Service not found" };
+    if (!response.success) {
+      return { success: false, message: response.error || "Failed to duplicate service" };
     }
 
-    // Generate a unique ID for the duplicated service
-    const timestamp = Date.now();
-    const randomSuffix = Math.random().toString(36).substring(2, 7);
-    const newId = `${service.id}-copy-${timestamp}-${randomSuffix}`;
-
-    await prisma.service.create({
-      data: {
-        id: newId,
-        name: `${service.name} (Copy)`,
-        description: service.description,
-        duration: service.duration,
-        price: service.price,
-        category: service.category,
-        isActive: false, // Duplicated services start as inactive
-      },
-    });
-
-    revalidatePath("/admin/service-management");
-    return { success: true, message: "Service duplicated successfully" };
+    revalidatePath("/dashboard/admin/service-management");
+    return { success: true, message: response.message || "Service duplicated successfully" };
   } catch (error) {
-    console.error("Error duplicating service:", error);
+    console.error("[duplicateService] Error:", error);
     return { success: false, message: "Failed to duplicate service" };
   }
 }
@@ -349,62 +326,54 @@ export async function updateUserEmailVerification(
   userIds: string[],
   emailVerified: boolean
 ) {
-  await isAdmin();
-
   try {
-    await prisma.user.updateMany({
-      where: { id: { in: userIds } },
-      data: { emailVerified },
+    const response = await apiPatch("/api/admin/users", {
+      userIds,
+      emailVerified,
     });
 
-    revalidatePath("/admin/user-management");
-    return { success: true, message: `${userIds.length} user(s) updated` };
+    if (!response.success) {
+      return { success: false, message: response.error || "Failed to update email verification" };
+    }
+
+    revalidatePath("/dashboard/admin/user-management");
+    return { success: true, message: response.message || `${userIds.length} user(s) updated` };
   } catch (error) {
-    console.error("Error updating email verification:", error);
+    console.error("[updateUserEmailVerification] Error:", error);
     return { success: false, message: "Failed to update email verification" };
   }
 }
 
 export async function deleteUsers(userIds: string[]) {
-  await isAdmin();
-
   try {
-    // Don't allow deleting admin users
-    await prisma.user.deleteMany({
-      where: {
-        id: { in: userIds },
-        role: { not: "admin" },
-      },
+    const response = await apiDelete("/api/admin/users", {
+      body: { userIds },
     });
 
-    revalidatePath("/admin/user-management");
-    return { success: true, message: `${userIds.length} user(s) deleted` };
+    if (!response.success) {
+      return { success: false, message: response.error || "Failed to delete users" };
+    }
+
+    revalidatePath("/dashboard/admin/user-management");
+    return { success: true, message: response.message || `${userIds.length} user(s) deleted` };
   } catch (error) {
-    console.error("Error deleting users:", error);
+    console.error("[deleteUsers] Error:", error);
     return { success: false, message: "Failed to delete users" };
   }
 }
 
 export async function deleteUser(userId: string) {
-  await isAdmin();
-
   try {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-    });
+    const response = await apiDelete(`/api/admin/users/${userId}`);
 
-    if (user?.role === "admin") {
-      return { success: false, message: "Cannot delete admin users" };
+    if (!response.success) {
+      return { success: false, message: response.error || "Failed to delete user" };
     }
 
-    await prisma.user.delete({
-      where: { id: userId },
-    });
-
-    revalidatePath("/admin/user-management");
-    return { success: true, message: "User deleted successfully" };
+    revalidatePath("/dashboard/admin/user-management");
+    return { success: true, message: response.message || "User deleted successfully" };
   } catch (error) {
-    console.error("Error deleting user:", error);
+    console.error("[deleteUser] Error:", error);
     return { success: false, message: "Failed to delete user" };
   }
 }

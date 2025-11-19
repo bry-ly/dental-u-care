@@ -1,291 +1,182 @@
 "use server";
 
-import { prisma } from "@/lib/types/prisma";
 import { revalidatePath } from "next/cache";
-import { auth } from "@/lib/auth-session/auth";
-
-// Helper to get current user
-async function getCurrentUser() {
-  const session = await auth.api.getSession({
-    headers: await import("next/headers").then((mod) => mod.headers()),
-  });
-
-  if (!session?.user) {
-    throw new Error("Unauthorized: Please login");
-  }
-
-  return session.user;
-}
+import { apiPatch, apiPost, apiGet, apiDelete } from "@/lib/utils/api-client";
+import type {
+  UpdateUserProfileRequest,
+  UploadProfileImageRequest,
+  ChangePasswordRequest,
+  UpdateUserSettingsRequest,
+  UpdateAdminSettingsRequest,
+  UserSettings,
+  AdminSettings,
+} from "@/lib/types/api";
 
 // ==================== USER PROFILE ACTIONS ====================
 
-export async function updateUserProfile(data: {
-  name: string;
-  email: string;
-  phone?: string;
-  address?: string;
-  dateOfBirth?: string;
-}) {
-  const user = await getCurrentUser();
-
+export async function updateUserProfile(data: UpdateUserProfileRequest) {
   try {
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        name: data.name,
-        email: data.email,
-        phone: data.phone || null,
-        address: data.address || null,
-        dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null,
-        updatedAt: new Date(),
-      },
-    });
+    const response = await apiPatch("/api/users/profile", data);
+
+    if (!response.success) {
+      return { success: false, message: response.error || "Failed to update profile" };
+    }
 
     revalidatePath("/patient/settings");
     revalidatePath("/dentist/settings");
     revalidatePath("/admin/settings");
 
-    return { success: true, message: "Profile updated successfully" };
+    return { success: true, message: response.message || "Profile updated successfully" };
   } catch (error) {
-    console.error("Error updating profile:", error);
+    console.error("[updateUserProfile] Error:", error);
     return { success: false, message: "Failed to update profile" };
   }
 }
 
 export async function uploadProfileImage(imageUrl: string) {
-  const user = await getCurrentUser();
-
   try {
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        image: imageUrl,
-        updatedAt: new Date(),
-      },
-    });
+    const data: UploadProfileImageRequest = { imageUrl };
+    const response = await apiPost("/api/users/profile/image", data);
+
+    if (!response.success) {
+      return { success: false, message: response.error || "Failed to upload profile image" };
+    }
 
     revalidatePath("/patient/settings");
     revalidatePath("/dentist/settings");
     revalidatePath("/admin/settings");
 
-    return { success: true, message: "Profile image updated successfully" };
+    return { success: true, message: response.message || "Profile image updated successfully" };
   } catch (error) {
-    console.error("Error uploading profile image:", error);
+    console.error("[uploadProfileImage] Error:", error);
     return { success: false, message: "Failed to upload profile image" };
   }
 }
 
-export async function changePassword(data: {
-  currentPassword: string;
-  newPassword: string;
-}) {
-  await getCurrentUser();
-
+export async function changePassword(data: ChangePasswordRequest) {
   try {
-    // In a real implementation, you would:
-    // 1. Verify the current password against data.currentPassword
-    // 2. Hash the new password (data.newPassword)
-    // 3. Update the password in the account table
+    const response = await apiPost("/api/users/account/change-password", data);
 
-    // For now, we'll just simulate success
-    // You'll need to implement proper password hashing with bcrypt or similar
+    if (!response.success) {
+      return { success: false, message: response.error || "Failed to change password" };
+    }
 
-    console.log(
-      "Password change requested for:",
-      data.currentPassword ? "***" : ""
-    );
-
-    return { success: true, message: "Password changed successfully" };
+    return { success: true, message: response.message || "Password changed successfully" };
   } catch (error) {
-    console.error("Error changing password:", error);
+    console.error("[changePassword] Error:", error);
     return { success: false, message: "Failed to change password" };
   }
-} // ==================== USER SETTINGS ACTIONS ====================
+}
 
-export async function getUserSettings(userId: string) {
+// ==================== USER SETTINGS ACTIONS ====================
+
+export async function getUserSettings(userId: string): Promise<UserSettings | null> {
   try {
-    // For now, return default settings since we don't have a settings table
-    // In a real app, you'd fetch from a UserSettings table using userId
-    console.log("Fetching settings for user:", userId);
+    const response = await apiGet<UserSettings>("/api/users/settings");
 
-    return {
-      emailNotifications: true,
-      smsNotifications: true,
-      appointmentReminders: true,
-      promotionalEmails: false,
-      reminderTiming: "24",
-      profileVisibility: "private",
-      shareData: false,
-      twoFactorAuth: false,
-    };
+    if (!response.success) {
+      console.error("[getUserSettings] Error:", response.error);
+      return null;
+    }
+
+    if (!response.data) {
+      return null;
+    }
+
+    return response.data;
   } catch (error) {
-    console.error("Error getting user settings:", error);
+    console.error("[getUserSettings] Error:", error);
     return null;
   }
 }
 
-export async function updateUserSettings(data: {
-  emailNotifications?: boolean;
-  smsNotifications?: boolean;
-  appointmentReminders?: boolean;
-  promotionalEmails?: boolean;
-  reminderTiming?: string;
-  profileVisibility?: string;
-  shareData?: boolean;
-  twoFactorAuth?: boolean;
-}) {
-  await getCurrentUser();
-
+export async function updateUserSettings(data: UpdateUserSettingsRequest) {
   try {
-    // In a real implementation, you would save these to a UserSettings table
-    // For now, we'll just log and return success
-    console.log("Updating user settings:", Object.keys(data).join(", "));
+    const response = await apiPatch("/api/users/settings", data);
 
-    return { success: true, message: "Settings saved successfully" };
+    if (!response.success) {
+      return { success: false, message: response.error || "Failed to save settings" };
+    }
+
+    return { success: true, message: response.message || "Settings saved successfully" };
   } catch (error) {
-    console.error("Error updating settings:", error);
+    console.error("[updateUserSettings] Error:", error);
     return { success: false, message: "Failed to save settings" };
   }
-} // ==================== ADMIN SETTINGS ACTIONS ====================
+}
 
-export async function getAdminSettings() {
-  const user = await getCurrentUser();
+// ==================== ADMIN SETTINGS ACTIONS ====================
 
-  if (user.role !== "admin") {
-    throw new Error("Unauthorized: Admin access required");
-  }
-
+export async function getAdminSettings(): Promise<AdminSettings | null> {
   try {
-    // In a real app, you'd fetch from a ClinicSettings table
-    // For now, return default settings
-    return {
-      clinicName: "Dental U-Care",
-      clinicEmail: "info@dentalucare.com",
-      clinicPhone: "+1 (555) 123-4567",
-      clinicAddress: "123 Medical Plaza, Suite 100",
-      timezone: "America/New_York",
-      appointmentDuration: "60",
-      bufferTime: "15",
-      maxAdvanceBooking: "90",
-      cancellationDeadline: "24",
-      autoConfirmAppointments: false,
-      emailNotifications: true,
-      smsNotifications: true,
-      appointmentReminders: true,
-      reminderHoursBefore: "24",
-      newBookingNotifications: true,
-      cancellationNotifications: true,
-      requirePaymentUpfront: false,
-      allowPartialPayment: true,
-      depositPercentage: "50",
-      acceptCash: true,
-      acceptCard: true,
-      acceptEWallet: true,
-      twoFactorAuth: false,
-      sessionTimeout: "60",
-      passwordExpiry: "90",
-      loginAttempts: "5",
-    };
+    const response = await apiGet<AdminSettings>("/api/admin/settings");
+
+    if (!response.success) {
+      console.error("[getAdminSettings] Error:", response.error);
+      return null;
+    }
+
+    if (!response.data) {
+      return null;
+    }
+
+    return response.data;
   } catch (error) {
-    console.error("Error getting admin settings:", error);
+    console.error("[getAdminSettings] Error:", error);
     return null;
   }
 }
 
-export async function updateAdminSettings(data: {
-  clinicName?: string;
-  clinicEmail?: string;
-  clinicPhone?: string;
-  clinicAddress?: string;
-  timezone?: string;
-  appointmentDuration?: string;
-  bufferTime?: string;
-  maxAdvanceBooking?: string;
-  cancellationDeadline?: string;
-  autoConfirmAppointments?: boolean;
-  emailNotifications?: boolean;
-  smsNotifications?: boolean;
-  appointmentReminders?: boolean;
-  reminderHoursBefore?: string;
-  newBookingNotifications?: boolean;
-  cancellationNotifications?: boolean;
-  requirePaymentUpfront?: boolean;
-  allowPartialPayment?: boolean;
-  depositPercentage?: string;
-  acceptCash?: boolean;
-  acceptCard?: boolean;
-  acceptEWallet?: boolean;
-  twoFactorAuth?: boolean;
-  sessionTimeout?: string;
-  passwordExpiry?: string;
-  loginAttempts?: string;
-}) {
-  const user = await getCurrentUser();
-
-  if (user.role !== "admin") {
-    throw new Error("Unauthorized: Admin access required");
-  }
-
+export async function updateAdminSettings(data: UpdateAdminSettingsRequest) {
   try {
-    // In a real implementation, save to ClinicSettings table
-    // For now, just log and return success
-    console.log("Updating admin settings:", Object.keys(data).join(", "));
+    const response = await apiPatch("/api/admin/settings", data);
+
+    if (!response.success) {
+      return { success: false, message: response.error || "Failed to save admin settings" };
+    }
 
     revalidatePath("/admin/settings");
-    return { success: true, message: "Admin settings saved successfully" };
+    return { success: true, message: response.message || "Admin settings saved successfully" };
   } catch (error) {
-    console.error("Error updating admin settings:", error);
+    console.error("[updateAdminSettings] Error:", error);
     return { success: false, message: "Failed to save admin settings" };
   }
 }
 
 export async function deleteUserAccount() {
-  const user = await getCurrentUser();
-
-  if (user.role === "admin") {
-    return { success: false, message: "Cannot delete admin accounts" };
-  }
-
   try {
-    await prisma.user.delete({
-      where: { id: user.id },
-    });
+    const response = await apiDelete("/api/users/account");
 
-    return { success: true, message: "Account deleted successfully" };
+    if (!response.success) {
+      return { success: false, message: response.error || "Failed to delete account" };
+    }
+
+    return { success: true, message: response.message || "Account deleted successfully" };
   } catch (error) {
-    console.error("Error deleting account:", error);
+    console.error("[deleteUserAccount] Error:", error);
     return { success: false, message: "Failed to delete account" };
   }
 }
 
 export async function exportUserData() {
-  const user = await getCurrentUser();
-
   try {
-    const userData = await prisma.user.findUnique({
-      where: { id: user.id },
-      include: {
-        appointmentsAsPatient: true,
-        appointmentsAsDentist: true,
-        payments: true,
-        notifications: true,
-      },
-    });
+    const response = await apiGet<string>("/api/users/account/export");
 
-    if (!userData) {
+    if (!response.success) {
+      return { success: false, message: response.error || "User data not found" };
+    }
+
+    if (!response.data) {
       return { success: false, message: "User data not found" };
     }
 
-    // Convert to JSON
-    const dataExport = JSON.stringify(userData, null, 2);
-
     return {
       success: true,
-      message: "Data exported successfully",
-      data: dataExport,
+      message: response.message || "Data exported successfully",
+      data: response.data,
     };
   } catch (error) {
-    console.error("Error exporting data:", error);
+    console.error("[exportUserData] Error:", error);
     return { success: false, message: "Failed to export data" };
   }
 }
