@@ -44,7 +44,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -71,6 +70,10 @@ import {
 } from "@/components/ui/dialog";
 import { CreateDentistForm } from "@/components/admin/create-dentist-form";
 import { IconPlus } from "@tabler/icons-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Field, FieldContent, FieldLabel } from "@/components/ui/field";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 
 type Dentist = {
   id: string;
@@ -311,12 +314,12 @@ export function AdminDentistsTable({ dentists }: AdminDentistsTableProps) {
             View Details
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={() => toast.info("Edit feature coming soon")}
+            onClick={() => setSelectedDentist(row.original)}
           >
             Edit Profile
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={() => toast.info("Schedule feature coming soon")}
+            onClick={() => setSelectedDentist(row.original)}
           >
             View Schedule
           </DropdownMenuItem>
@@ -658,12 +661,19 @@ export function AdminDentistsTable({ dentists }: AdminDentistsTableProps) {
           </DialogHeader>
 
           {selectedDentist && (
-            <div className="space-y-6">
-              {/* Personal Information */}
-              <div className="space-y-3">
-                <h3 className="font-semibold text-lg border-b pb-2">
-                  Personal Information
-                </h3>
+            <Tabs defaultValue="details" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="details">Details</TabsTrigger>
+                <TabsTrigger value="edit">Edit Profile</TabsTrigger>
+                <TabsTrigger value="schedule">Schedule</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="details" className="space-y-6 mt-6">
+                {/* Personal Information */}
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-lg border-b pb-2">
+                    Personal Information
+                  </h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex items-start gap-2">
                     <User className="h-5 w-5 text-muted-foreground mt-0.5" />
@@ -793,48 +803,125 @@ export function AdminDentistsTable({ dentists }: AdminDentistsTableProps) {
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex gap-2 pt-4 border-t">
-                <Button
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => {
-                    setSelectedDentist(null);
-                    toast.info("Edit feature coming soon");
-                  }}
-                >
-                  Edit Profile
-                </Button>
-                <Button
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => {
-                    setSelectedDentist(null);
-                    toast.info("Schedule feature coming soon");
-                  }}
-                >
-                  View Schedule
-                </Button>
-                <Button
-                  variant={selectedDentist.isAvailable ? "outline" : "default"}
-                  className="flex-1"
-                  onClick={() => {
-                    const id = selectedDentist.id;
-                    const newStatus = !selectedDentist.isAvailable;
-                    setSelectedDentist(null);
-                    handleSingleAction(
-                      () => updateDentistAvailability([id], newStatus),
-                      newStatus ? "set available" : "set unavailable"
-                    );
-                  }}
-                  disabled={isLoading}
-                >
-                  {selectedDentist.isAvailable
-                    ? "Set Unavailable"
-                    : "Set Available"}
-                </Button>
-              </div>
-            </div>
+              </TabsContent>
+
+              <TabsContent value="edit" className="space-y-4 mt-6">
+                <div className="space-y-4">
+                  <Field>
+                    <FieldLabel>Full Name</FieldLabel>
+                    <FieldContent>
+                      <Input
+                        defaultValue={selectedDentist.name}
+                        placeholder="Full Name"
+                      />
+                    </FieldContent>
+                  </Field>
+                  <Field>
+                    <FieldLabel>Email</FieldLabel>
+                    <FieldContent>
+                      <Input
+                        type="email"
+                        defaultValue={selectedDentist.email}
+                        placeholder="Email"
+                      />
+                    </FieldContent>
+                  </Field>
+                  <Field>
+                    <FieldLabel>Phone</FieldLabel>
+                    <FieldContent>
+                      <Input
+                        defaultValue={selectedDentist.phone || ""}
+                        placeholder="Phone"
+                      />
+                    </FieldContent>
+                  </Field>
+                  <Field>
+                    <FieldLabel>Specialization</FieldLabel>
+                    <FieldContent>
+                      <Input
+                        defaultValue={selectedDentist.specialization || ""}
+                        placeholder="Specialization"
+                      />
+                    </FieldContent>
+                  </Field>
+                  <Field>
+                    <FieldLabel>Experience</FieldLabel>
+                    <FieldContent>
+                      <Input
+                        defaultValue={selectedDentist.experience || ""}
+                        placeholder="Experience"
+                      />
+                    </FieldContent>
+                  </Field>
+                  <Field>
+                    <FieldLabel>Qualifications</FieldLabel>
+                    <FieldContent>
+                      <Textarea
+                        defaultValue={selectedDentist.qualifications || ""}
+                        placeholder="Qualifications..."
+                        rows={4}
+                      />
+                    </FieldContent>
+                  </Field>
+                </div>
+                <div className="flex justify-end gap-2 pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    onClick={() => setSelectedDentist(null)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      toast.info("Edit functionality will be implemented with API endpoint");
+                      setSelectedDentist(null);
+                    }}
+                  >
+                    Save Changes
+                  </Button>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="schedule" className="space-y-4 mt-6">
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-lg border-b pb-2">
+                    Appointment Schedule
+                  </h3>
+                  {selectedDentist.appointmentsAsDentist.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-8">
+                      No appointments scheduled
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {selectedDentist.appointmentsAsDentist.map((apt) => (
+                        <div
+                          key={apt.id}
+                          className="flex items-center justify-between p-3 bg-muted rounded-lg"
+                        >
+                          <div>
+                            <p className="font-medium">Appointment #{apt.id.slice(0, 8)}</p>
+                            <p className="text-sm text-muted-foreground">
+                              Status: {apt.status}
+                            </p>
+                          </div>
+                          <Badge
+                            variant={
+                              apt.status === "completed"
+                                ? "default"
+                                : apt.status === "cancelled"
+                                ? "destructive"
+                                : "secondary"
+                            }
+                          >
+                            {apt.status}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+            </Tabs>
           )}
         </DialogContent>
       </Dialog>

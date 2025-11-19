@@ -14,12 +14,15 @@ import {
 import { Calendar, Clock, User, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { formatTime12Hour } from "@/lib/utils";
+import { AppointmentStatus } from "@prisma/client";
 import {
   confirmAppointments,
   cancelAppointments,
   completeAppointments,
   deleteAppointments,
   deleteAppointment,
+  updateAppointment,
 } from "@/lib/actions/admin-actions";
 import {
   ColumnDef,
@@ -72,6 +75,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Field, FieldContent, FieldLabel } from "@/components/ui/field";
 
 type Appointment = {
   id: string;
@@ -192,7 +197,9 @@ const columns: ColumnDef<Appointment>[] = [
     cell: ({ row }) => (
       <div>
         <p>{new Date(row.original.date).toLocaleDateString()}</p>
-        <p className="text-xs text-muted-foreground">{row.original.timeSlot}</p>
+        <p className="text-xs text-muted-foreground">
+          {formatTime12Hour(row.original.timeSlot)}
+        </p>
       </div>
     ),
   },
@@ -247,6 +254,18 @@ export function AdminAppointmentsTable({
     React.useState<Appointment | null>(null);
   const [appointmentToDelete, setAppointmentToDelete] =
     React.useState<Appointment | null>(null);
+  const [appointmentToEdit, setAppointmentToEdit] =
+    React.useState<Appointment | null>(null);
+  const [appointmentToReschedule, setAppointmentToReschedule] =
+    React.useState<Appointment | null>(null);
+  
+  // Edit form state
+  const [editStatus, setEditStatus] = React.useState<AppointmentStatus | "">("");
+  const [editNotes, setEditNotes] = React.useState("");
+  
+  // Reschedule form state
+  const [rescheduleDate, setRescheduleDate] = React.useState("");
+  const [rescheduleTimeSlot, setRescheduleTimeSlot] = React.useState("");
 
   const formatPrice = (price: number | string): string => {
     if (typeof price === "string") {
@@ -330,6 +349,62 @@ export function AdminAppointmentsTable({
     }
   };
 
+  const handleEditAppointment = async () => {
+    if (!appointmentToEdit) return;
+
+    setIsLoading(true);
+    try {
+      const result = await updateAppointment(appointmentToEdit.id, {
+        status: editStatus ? (editStatus as AppointmentStatus) : undefined,
+        notes: editNotes !== undefined ? editNotes : undefined,
+      });
+      if (result.success) {
+        toast.success(result.message);
+        setAppointmentToEdit(null);
+        setEditStatus("");
+        setEditNotes("");
+        router.refresh();
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      toast.error("Failed to update appointment");
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRescheduleAppointment = async () => {
+    if (!appointmentToReschedule || !rescheduleDate || !rescheduleTimeSlot) {
+      toast.error("Please select both date and time");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const result = await updateAppointment(appointmentToReschedule.id, {
+        date: new Date(rescheduleDate),
+        timeSlot: rescheduleTimeSlot,
+        status: "rescheduled",
+      });
+      if (result.success) {
+        toast.success(result.message);
+        setAppointmentToReschedule(null);
+        setRescheduleDate("");
+        setRescheduleTimeSlot("");
+        router.refresh();
+      } else {
+        toast.error(result.message);
+      }
+    } catch (error) {
+      toast.error("Failed to reschedule appointment");
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const actionsColumn: ColumnDef<Appointment> = {
     id: "actions",
     cell: ({ row }) => (
@@ -352,12 +427,21 @@ export function AdminAppointmentsTable({
             View Details
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={() => toast.info("Edit feature coming soon")}
+            onClick={() => {
+              setAppointmentToEdit(row.original);
+              setEditStatus(row.original.status as AppointmentStatus);
+              setEditNotes(row.original.notes || "");
+            }}
           >
             Edit
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={() => toast.info("Reschedule feature coming soon")}
+            onClick={() => {
+              setAppointmentToReschedule(row.original);
+              const dateStr = new Date(row.original.date).toISOString().split("T")[0];
+              setRescheduleDate(dateStr);
+              setRescheduleTimeSlot(row.original.timeSlot);
+            }}
           >
             Reschedule
           </DropdownMenuItem>
@@ -767,7 +851,7 @@ export function AdminAppointmentsTable({
                     <div>
                       <p className="text-sm text-muted-foreground">Time</p>
                       <p className="font-medium">
-                        {selectedAppointment.timeSlot}
+                        {formatTime12Hour(selectedAppointment.timeSlot)}
                       </p>
                     </div>
                   </div>
@@ -852,8 +936,14 @@ export function AdminAppointmentsTable({
                       variant="outline"
                       className="flex-1"
                       onClick={() => {
+                        const apt = selectedAppointment;
                         setSelectedAppointment(null);
-                        toast.info("Reschedule feature coming soon");
+                        if (apt) {
+                          setAppointmentToReschedule(apt);
+                          const dateStr = new Date(apt.date).toISOString().split("T")[0];
+                          setRescheduleDate(dateStr);
+                          setRescheduleTimeSlot(apt.timeSlot);
+                        }
                       }}
                     >
                       Reschedule
@@ -898,6 +988,153 @@ export function AdminAppointmentsTable({
         </DialogContent>
       </Dialog>
 
+      {/* Edit Appointment Dialog */}
+      <Dialog
+        open={!!appointmentToEdit}
+        onOpenChange={() => {
+          setAppointmentToEdit(null);
+          setEditStatus("");
+          setEditNotes("");
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Appointment</DialogTitle>
+            <DialogDescription>
+              Update appointment status and notes
+            </DialogDescription>
+          </DialogHeader>
+
+          {appointmentToEdit && (
+            <div className="space-y-4 py-4">
+              <Field>
+                <FieldLabel>Status</FieldLabel>
+                <FieldContent>
+                  <Select 
+                    value={editStatus} 
+                    onValueChange={(value) => setEditStatus(value as AppointmentStatus)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="confirmed">Confirmed</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                      <SelectItem value="rescheduled">Rescheduled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </FieldContent>
+              </Field>
+
+              <Field>
+                <FieldLabel>Notes</FieldLabel>
+                <FieldContent>
+                  <Textarea
+                    value={editNotes}
+                    onChange={(e) => setEditNotes(e.target.value)}
+                    placeholder="Add notes or special requests..."
+                    rows={4}
+                  />
+                </FieldContent>
+              </Field>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setAppointmentToEdit(null);
+                setEditStatus("");
+                setEditNotes("");
+              }}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleEditAppointment} disabled={isLoading}>
+              {isLoading ? "Saving..." : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reschedule Appointment Dialog */}
+      <Dialog
+        open={!!appointmentToReschedule}
+        onOpenChange={() => {
+          setAppointmentToReschedule(null);
+          setRescheduleDate("");
+          setRescheduleTimeSlot("");
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Reschedule Appointment</DialogTitle>
+            <DialogDescription>
+              Select a new date and time for this appointment
+            </DialogDescription>
+          </DialogHeader>
+
+          {appointmentToReschedule && (
+            <div className="space-y-4 py-4">
+              <Field>
+                <FieldLabel>New Date</FieldLabel>
+                <FieldContent>
+                  <Input
+                    type="date"
+                    value={rescheduleDate}
+                    onChange={(e) => setRescheduleDate(e.target.value)}
+                    min={new Date().toISOString().split("T")[0]}
+                  />
+                </FieldContent>
+              </Field>
+
+              <Field>
+                <FieldLabel>New Time Slot</FieldLabel>
+                <FieldContent>
+                  <Input
+                    type="time"
+                    value={rescheduleTimeSlot}
+                    onChange={(e) => setRescheduleTimeSlot(e.target.value)}
+                  />
+                </FieldContent>
+              </Field>
+
+              <div className="bg-muted p-3 rounded-lg text-sm">
+                <p className="font-medium mb-1">Current Schedule:</p>
+                <p className="text-muted-foreground">
+                  {new Date(appointmentToReschedule.date).toLocaleDateString()} at{" "}
+                  {formatTime12Hour(appointmentToReschedule.timeSlot)}
+                </p>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setAppointmentToReschedule(null);
+                setRescheduleDate("");
+                setRescheduleTimeSlot("");
+              }}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleRescheduleAppointment}
+              disabled={isLoading || !rescheduleDate || !rescheduleTimeSlot}
+            >
+              {isLoading ? "Rescheduling..." : "Reschedule"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Delete Appointment Confirmation Dialog */}
       <Dialog
         open={!!appointmentToDelete}
@@ -924,7 +1161,7 @@ export function AdminAppointmentsTable({
                   </p>
                   <p className="text-sm text-muted-foreground">
                     {new Date(appointmentToDelete.date).toLocaleDateString()}{" "}
-                    {appointmentToDelete.timeSlot}
+                    {formatTime12Hour(appointmentToDelete.timeSlot)}
                   </p>
                   <p className="text-sm text-muted-foreground">
                     Status: {appointmentToDelete.status}

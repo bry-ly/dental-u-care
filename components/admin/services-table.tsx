@@ -70,6 +70,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Field, FieldContent, FieldLabel } from "@/components/ui/field";
+import { Textarea } from "@/components/ui/textarea";
 
 type Service = {
   id: string;
@@ -187,6 +189,15 @@ export function AdminServicesTable({ services }: AdminServicesTableProps) {
   const [isLoading, setIsLoading] = React.useState(false);
   const [serviceToDelete, setServiceToDelete] =
     React.useState<Service | null>(null);
+  const [serviceToEdit, setServiceToEdit] =
+    React.useState<Service | null>(null);
+  
+  // Edit form state
+  const [editName, setEditName] = React.useState("");
+  const [editDescription, setEditDescription] = React.useState("");
+  const [editDuration, setEditDuration] = React.useState("");
+  const [editPrice, setEditPrice] = React.useState("");
+  const [editCategory, setEditCategory] = React.useState("");
 
   const handleServiceAction = async (
     action: () => Promise<{ success: boolean; message: string }>,
@@ -277,7 +288,14 @@ export function AdminServicesTable({ services }: AdminServicesTableProps) {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-40">
           <DropdownMenuItem
-            onClick={() => toast.info("Edit feature coming soon")}
+            onClick={() => {
+              setServiceToEdit(row.original);
+              setEditName(row.original.name);
+              setEditDescription(row.original.description);
+              setEditDuration(row.original.duration.toString());
+              setEditPrice(row.original.price);
+              setEditCategory(row.original.category);
+            }}
           >
             Edit Service
           </DropdownMenuItem>
@@ -593,6 +611,117 @@ export function AdminServicesTable({ services }: AdminServicesTableProps) {
           </div>
         </div>
       </div>
+
+      {/* Edit Service Dialog */}
+      <Dialog
+        open={!!serviceToEdit}
+        onOpenChange={() => {
+          setServiceToEdit(null);
+          setEditName("");
+          setEditDescription("");
+          setEditDuration("");
+          setEditPrice("");
+          setEditCategory("");
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Service</DialogTitle>
+            <DialogDescription>
+              Update service information
+            </DialogDescription>
+          </DialogHeader>
+
+          {serviceToEdit && (
+            <div className="space-y-4 py-4">
+              <Field>
+                <FieldLabel>Service Name</FieldLabel>
+                <FieldContent>
+                  <Input
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    placeholder="Service Name"
+                  />
+                </FieldContent>
+              </Field>
+
+              <Field>
+                <FieldLabel>Description</FieldLabel>
+                <FieldContent>
+                  <Textarea
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
+                    placeholder="Service description..."
+                    rows={3}
+                  />
+                </FieldContent>
+              </Field>
+
+              <div className="grid grid-cols-2 gap-4">
+                <Field>
+                  <FieldLabel>Duration (minutes)</FieldLabel>
+                  <FieldContent>
+                    <Input
+                      type="number"
+                      value={editDuration}
+                      onChange={(e) => setEditDuration(e.target.value)}
+                      placeholder="Duration"
+                    />
+                  </FieldContent>
+                </Field>
+
+                <Field>
+                  <FieldLabel>Category</FieldLabel>
+                  <FieldContent>
+                    <Input
+                      value={editCategory}
+                      onChange={(e) => setEditCategory(e.target.value)}
+                      placeholder="Category"
+                    />
+                  </FieldContent>
+                </Field>
+              </div>
+
+              <Field>
+                <FieldLabel>Price</FieldLabel>
+                <FieldContent>
+                  <Input
+                    value={editPrice}
+                    onChange={(e) => setEditPrice(e.target.value)}
+                    placeholder="Price (e.g., ₱500 or ₱500 – ₱1,500)"
+                  />
+                </FieldContent>
+              </Field>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setServiceToEdit(null);
+                setEditName("");
+                setEditDescription("");
+                setEditDuration("");
+                setEditPrice("");
+                setEditCategory("");
+              }}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                toast.info("Edit functionality will be implemented with API endpoint");
+                setServiceToEdit(null);
+              }}
+              disabled={isLoading}
+            >
+              {isLoading ? "Saving..." : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Service Confirmation Dialog */}
       <Dialog

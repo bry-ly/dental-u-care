@@ -73,6 +73,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import Image from "next/image";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Field, FieldContent, FieldLabel } from "@/components/ui/field";
 
 type User = {
   id: string;
@@ -213,6 +215,9 @@ export function AdminUsersTable({ users }: AdminUsersTableProps) {
   const [newRole, setNewRole] = React.useState<string>("");
   const [userToDelete, setUserToDelete] = React.useState<User | null>(null);
   const [showBulkDeleteDialog, setShowBulkDeleteDialog] = React.useState(false);
+  const [resetPasswordUser, setResetPasswordUser] = React.useState<User | null>(null);
+  const [newPassword, setNewPassword] = React.useState("");
+  const [confirmPassword, setConfirmPassword] = React.useState("");
 
   const handleChangeRole = async () => {
     if (!changeRoleUser || !newRole) return;
@@ -369,7 +374,10 @@ export function AdminUsersTable({ users }: AdminUsersTableProps) {
               View Profile
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => toast.info("Edit feature coming soon")}
+              onClick={() => {
+                setSelectedUser(row.original);
+                // Edit will be handled in the details dialog
+              }}
             >
               Edit User
             </DropdownMenuItem>
@@ -395,7 +403,10 @@ export function AdminUsersTable({ users }: AdminUsersTableProps) {
               </DropdownMenuItem>
             )}
             <DropdownMenuItem
-              onClick={() => toast.info("Reset password feature coming soon")}
+              onClick={() => {
+                setSelectedUser(row.original);
+                // Reset password will be handled in the details dialog
+              }}
             >
               Reset Password
             </DropdownMenuItem>
@@ -698,9 +709,15 @@ export function AdminUsersTable({ users }: AdminUsersTableProps) {
           </DialogHeader>
 
           {selectedUser && (
-            <div className="space-y-6">
-              {/* Profile Picture & Basic Info */}
-              <div className="flex items-center gap-4 pb-4 border-b">
+            <Tabs defaultValue="details" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="details">Details</TabsTrigger>
+                <TabsTrigger value="edit">Edit User</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="details" className="space-y-6 mt-6">
+                {/* Profile Picture & Basic Info */}
+                <div className="flex items-center gap-4 pb-4 border-b">
                 {selectedUser.image ? (
                   <Image
                     src={selectedUser.image}
@@ -822,51 +839,138 @@ export function AdminUsersTable({ users }: AdminUsersTableProps) {
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex gap-2 pt-4 border-t">
-                <Button
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => {
-                    setSelectedUser(null);
-                    toast.info("Edit feature coming soon");
-                  }}
-                >
-                  Edit Profile
-                </Button>
-                {!selectedUser.emailVerified && (
+              </TabsContent>
+
+              <TabsContent value="edit" className="space-y-4 mt-6">
+                <div className="space-y-4">
+                  <Field>
+                    <FieldLabel>Full Name</FieldLabel>
+                    <FieldContent>
+                      <Input
+                        defaultValue={selectedUser.name}
+                        placeholder="Full Name"
+                      />
+                    </FieldContent>
+                  </Field>
+                  <Field>
+                    <FieldLabel>Email</FieldLabel>
+                    <FieldContent>
+                      <Input
+                        type="email"
+                        defaultValue={selectedUser.email}
+                        placeholder="Email"
+                      />
+                    </FieldContent>
+                  </Field>
+                </div>
+                <div className="flex justify-end gap-2 pt-4 border-t">
                   <Button
-                    variant="default"
-                    className="flex-1"
-                    onClick={() => {
-                      const id = selectedUser.id;
-                      setSelectedUser(null);
-                      handleSingleAction(
-                        () => updateUserEmailVerification([id], true),
-                        "verify email"
-                      );
-                    }}
-                    disabled={isLoading}
+                    variant="outline"
+                    onClick={() => setSelectedUser(null)}
                   >
-                    Verify Email
+                    Cancel
                   </Button>
-                )}
-                {selectedUser.role !== "admin" && (
                   <Button
-                    variant="destructive"
-                    className="flex-1"
                     onClick={() => {
-                      setUserToDelete(selectedUser);
+                      toast.info("Edit functionality will be implemented with API endpoint");
                       setSelectedUser(null);
                     }}
-                    disabled={isLoading}
                   >
-                    Delete User
+                    Save Changes
                   </Button>
-                )}
-              </div>
-            </div>
+                </div>
+                <div className="pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => {
+                      setResetPasswordUser(selectedUser);
+                      setSelectedUser(null);
+                    }}
+                  >
+                    Reset Password
+                  </Button>
+                </div>
+              </TabsContent>
+            </Tabs>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Reset Password Dialog */}
+      <Dialog
+        open={!!resetPasswordUser}
+        onOpenChange={() => {
+          setResetPasswordUser(null);
+          setNewPassword("");
+          setConfirmPassword("");
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Reset Password</DialogTitle>
+            <DialogDescription>
+              Set a new password for {resetPasswordUser?.name}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <Field>
+              <FieldLabel>New Password</FieldLabel>
+              <FieldContent>
+                <Input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Enter new password"
+                />
+              </FieldContent>
+            </Field>
+            <Field>
+              <FieldLabel>Confirm Password</FieldLabel>
+              <FieldContent>
+                <Input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm new password"
+                />
+              </FieldContent>
+            </Field>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setResetPasswordUser(null);
+                setNewPassword("");
+                setConfirmPassword("");
+              }}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (newPassword !== confirmPassword) {
+                  toast.error("Passwords do not match");
+                  return;
+                }
+                if (newPassword.length < 8) {
+                  toast.error("Password must be at least 8 characters");
+                  return;
+                }
+                toast.info("Reset password functionality will be implemented with API endpoint");
+                setResetPasswordUser(null);
+                setNewPassword("");
+                setConfirmPassword("");
+              }}
+              disabled={isLoading || !newPassword || !confirmPassword}
+            >
+              {isLoading ? "Resetting..." : "Reset Password"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

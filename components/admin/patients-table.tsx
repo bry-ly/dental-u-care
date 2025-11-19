@@ -60,6 +60,11 @@ import { IconPlus } from "@tabler/icons-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { deletePatient } from "@/lib/actions/admin-actions";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { User, Mail, Phone, Calendar, DollarSign } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Field, FieldContent, FieldLabel } from "@/components/ui/field";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -170,7 +175,7 @@ const columns: ColumnDef<Patient>[] = [
   },
   {
     id: "actions",
-    cell: ({ row }) => (
+    cell: () => (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
@@ -234,6 +239,8 @@ export function AdminPatientsTable({ patients }: AdminPatientsTableProps) {
   const [createDialogOpen, setCreateDialogOpen] = React.useState(false);
   const [patientToDelete, setPatientToDelete] =
     React.useState<Patient | null>(null);
+  const [selectedPatient, setSelectedPatient] =
+    React.useState<Patient | null>(null);
 
   const confirmDeletePatient = async () => {
     if (!patientToDelete) return;
@@ -273,17 +280,23 @@ export function AdminPatientsTable({ patients }: AdminPatientsTableProps) {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-40">
           <DropdownMenuItem
-            onClick={() => toast.info("View details feature coming soon")}
+            onClick={() => setSelectedPatient(row.original)}
           >
             View Details
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={() => toast.info("Edit feature coming soon")}
+            onClick={() => {
+              setSelectedPatient(row.original);
+              // Edit will be handled in the details dialog
+            }}
           >
             Edit Profile
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={() => toast.info("View history feature coming soon")}
+            onClick={() => {
+              setSelectedPatient(row.original);
+              // History will be shown in the details dialog
+            }}
           >
             View History
           </DropdownMenuItem>
@@ -549,6 +562,257 @@ export function AdminPatientsTable({ patients }: AdminPatientsTableProps) {
           </div>
         </div>
       </div>
+
+      {/* Patient Details Dialog */}
+      <Dialog
+        open={!!selectedPatient}
+        onOpenChange={() => setSelectedPatient(null)}
+      >
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">Patient Details</DialogTitle>
+            <DialogDescription>
+              Patient ID: {selectedPatient?.id}
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedPatient && (
+            <Tabs defaultValue="details" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="details">Details</TabsTrigger>
+                <TabsTrigger value="edit">Edit Profile</TabsTrigger>
+                <TabsTrigger value="history">History</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="details" className="space-y-6 mt-6">
+                {/* Personal Information */}
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-lg border-b pb-2">
+                    Personal Information
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex items-start gap-2">
+                      <User className="h-5 w-5 text-muted-foreground mt-0.5" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Full Name</p>
+                        <p className="font-medium">{selectedPatient.name}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <Mail className="h-5 w-5 text-muted-foreground mt-0.5" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Email</p>
+                        <p className="font-medium text-sm">{selectedPatient.email}</p>
+                      </div>
+                    </div>
+                    {selectedPatient.phone && (
+                      <div className="flex items-start gap-2">
+                        <Phone className="h-5 w-5 text-muted-foreground mt-0.5" />
+                        <div>
+                          <p className="text-sm text-muted-foreground">Phone</p>
+                          <p className="font-medium">{selectedPatient.phone}</p>
+                        </div>
+                      </div>
+                    )}
+                    {selectedPatient.dateOfBirth && (
+                      <div className="flex items-start gap-2">
+                        <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
+                        <div>
+                          <p className="text-sm text-muted-foreground">Date of Birth</p>
+                          <p className="font-medium">
+                            {new Date(selectedPatient.dateOfBirth).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  {selectedPatient.medicalHistory && (
+                    <div className="mt-3">
+                      <p className="text-sm text-muted-foreground mb-1">Medical History</p>
+                      <p className="text-sm bg-muted p-3 rounded-lg">
+                        {selectedPatient.medicalHistory}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Statistics */}
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-lg border-b pb-2">
+                    Statistics
+                  </h3>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="bg-muted p-4 rounded-lg">
+                      <p className="text-2xl font-bold">
+                        {selectedPatient.appointmentsAsPatient.length}
+                      </p>
+                      <p className="text-sm text-muted-foreground">Total Appointments</p>
+                    </div>
+                    <div className="bg-muted p-4 rounded-lg">
+                      <p className="text-2xl font-bold">
+                        {selectedPatient.appointmentsAsPatient.filter(
+                          (apt) => apt.status === "completed"
+                        ).length}
+                      </p>
+                      <p className="text-sm text-muted-foreground">Completed</p>
+                    </div>
+                    <div className="bg-muted p-4 rounded-lg">
+                      <p className="text-2xl font-bold">
+                        ₱{selectedPatient.payments
+                          .reduce((sum, payment) => sum + payment.amount, 0)
+                          .toFixed(2)}
+                      </p>
+                      <p className="text-sm text-muted-foreground">Total Spent</p>
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="edit" className="space-y-4 mt-6">
+                <div className="space-y-4">
+                  <Field>
+                    <FieldLabel>Full Name</FieldLabel>
+                    <FieldContent>
+                      <Input
+                        defaultValue={selectedPatient.name}
+                        placeholder="Full Name"
+                      />
+                    </FieldContent>
+                  </Field>
+                  <Field>
+                    <FieldLabel>Email</FieldLabel>
+                    <FieldContent>
+                      <Input
+                        type="email"
+                        defaultValue={selectedPatient.email}
+                        placeholder="Email"
+                      />
+                    </FieldContent>
+                  </Field>
+                  <Field>
+                    <FieldLabel>Phone</FieldLabel>
+                    <FieldContent>
+                      <Input
+                        defaultValue={selectedPatient.phone || ""}
+                        placeholder="Phone"
+                      />
+                    </FieldContent>
+                  </Field>
+                  <Field>
+                    <FieldLabel>Date of Birth</FieldLabel>
+                    <FieldContent>
+                      <Input
+                        type="date"
+                        defaultValue={
+                          selectedPatient.dateOfBirth
+                            ? new Date(selectedPatient.dateOfBirth)
+                                .toISOString()
+                                .split("T")[0]
+                            : ""
+                        }
+                      />
+                    </FieldContent>
+                  </Field>
+                  <Field>
+                    <FieldLabel>Medical History</FieldLabel>
+                    <FieldContent>
+                      <Textarea
+                        defaultValue={selectedPatient.medicalHistory || ""}
+                        placeholder="Medical history..."
+                        rows={4}
+                      />
+                    </FieldContent>
+                  </Field>
+                </div>
+                <div className="flex justify-end gap-2 pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    onClick={() => setSelectedPatient(null)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      toast.info("Edit functionality will be implemented with API endpoint");
+                      setSelectedPatient(null);
+                    }}
+                  >
+                    Save Changes
+                  </Button>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="history" className="space-y-4 mt-6">
+                <div className="space-y-3">
+                  <h3 className="font-semibold text-lg border-b pb-2">
+                    Appointment History
+                  </h3>
+                  {selectedPatient.appointmentsAsPatient.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-8">
+                      No appointments found
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {selectedPatient.appointmentsAsPatient.map((apt) => (
+                        <div
+                          key={apt.id}
+                          className="flex items-center justify-between p-3 bg-muted rounded-lg"
+                        >
+                          <div>
+                            <p className="font-medium">Appointment #{apt.id.slice(0, 8)}</p>
+                            <p className="text-sm text-muted-foreground">
+                              Status: {apt.status}
+                            </p>
+                          </div>
+                          <Badge
+                            variant={
+                              apt.status === "completed"
+                                ? "default"
+                                : apt.status === "cancelled"
+                                ? "destructive"
+                                : "secondary"
+                            }
+                          >
+                            {apt.status}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-3 pt-4 border-t">
+                  <h3 className="font-semibold text-lg border-b pb-2">
+                    Payment History
+                  </h3>
+                  {selectedPatient.payments.length === 0 ? (
+                    <p className="text-muted-foreground text-center py-8">
+                      No payments found
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {selectedPatient.payments.map((payment) => (
+                        <div
+                          key={payment.id}
+                          className="flex items-center justify-between p-3 bg-muted rounded-lg"
+                        >
+                          <div>
+                            <p className="font-medium">Payment #{payment.id.slice(0, 8)}</p>
+                            <p className="text-sm text-muted-foreground">
+                              Amount: ₱{payment.amount.toFixed(2)}
+                            </p>
+                          </div>
+                          <DollarSign className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+            </Tabs>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Create Patient Dialog */}
       <CreatePatientForm
