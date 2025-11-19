@@ -93,7 +93,7 @@ export async function requireAdmin() {
   const session = await requireAuth();
   if (session.user?.role !== "admin") {
     const role = session.user?.role;
-    redirect(role === "dentist" ? "/dentist" : role === "patient" ? "/patient" : "/");
+    redirect(role === "dentist" ? "/dashboard/dentist" : role === "patient" ? "/dashboard/patient" : "/");
   }
   return session;
 }
@@ -107,7 +107,7 @@ export async function requireDentist() {
   const session = await requireAuth();
   if (session.user?.role !== "dentist") {
     const role = session.user?.role;
-    redirect(role === "admin" ? "/admin" : role === "patient" ? "/patient" : "/");
+    redirect(role === "admin" ? "/dashboard/admin" : role === "patient" ? "/dashboard/patient" : "/");
   }
   return session;
 }
@@ -121,7 +121,7 @@ export async function requirePatient() {
   const session = await requireAuth();
   if (session.user?.role !== "patient") {
     const role = session.user?.role;
-    redirect(role === "admin" ? "/admin" : role === "dentist" ? "/dentist" : "/");
+    redirect(role === "admin" ? "/dashboard/admin" : role === "dentist" ? "/dashboard/dentist" : "/");
   }
   return session;
 }
@@ -135,7 +135,7 @@ export async function requireStaff() {
   const session = await requireAuth();
   const role = session.user?.role;
   if (role !== "admin" && role !== "dentist") {
-    redirect(role === "patient" ? "/patient" : "/");
+    redirect(role === "patient" ? "/dashboard/patient" : "/");
   }
   return session;
 }
