@@ -22,11 +22,11 @@ export function AuthLayoutRedirect() {
 
         // Redirect based on role
         if (role === "admin") {
-          router.replace("/admin");
+          router.replace("/dashboard/admin");
         } else if (role === "dentist") {
-          router.replace("/dentist");
+          router.replace("/dashboard/dentist");
         } else if (role === "patient") {
-          router.replace("/patient");
+          router.replace("/dashboard/patient");
         }
       }
     };
