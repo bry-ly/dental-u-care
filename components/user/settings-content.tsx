@@ -452,41 +452,6 @@ export function UserSettingsContent({ user }: UserSettingsContentProps) {
               </div>
             </CardContent>
           </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Two-Factor Authentication</CardTitle>
-              <CardDescription>
-                Add an extra layer of security to your account
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Enable 2FA</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Require a verification code in addition to your password
-                  </p>
-                </div>
-                <Switch
-                  checked={twoFactorAuth}
-                  onCheckedChange={setTwoFactorAuth}
-                />
-              </div>
-              {twoFactorAuth && (
-                <div className="rounded-lg border p-4">
-                  <p className="text-sm font-medium">Setup 2FA</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Scan the QR code with your authenticator app or enter the
-                    code manually
-                  </p>
-                  <Button variant="outline" size="sm" className="mt-3">
-                    Configure 2FA
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
         </TabsContent>
 
         {/* Notifications Settings */}
