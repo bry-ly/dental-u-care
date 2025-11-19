@@ -62,17 +62,43 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Generate user ID (MongoDB ObjectId format)
-    const userId = crypto.randomUUID();
+    // Use Better Auth's signup API to properly handle password hashing
+    // This is the same method used in the signup form
+    try {
+      await auth.api.signUpEmail({
+        body: { email, password, name },
+        headers: await headers(),
+      });
+    } catch (error: unknown) {
+      // Better Auth will throw if email already exists or validation fails
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes("already exists") || errorMessage.includes("Email")) {
+        return NextResponse.json(
+          { error: "Email already exists" },
+          { status: 400 }
+        );
+      }
+      throw error;
+    }
 
-    // Create user with emailVerified: true (skip verification)
-    // Better Auth will handle password hashing when the user logs in
-    const user = await prisma.user.create({
+    // Find the newly created user to update with additional fields
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "Failed to create user" },
+        { status: 500 }
+      );
+    }
+
+    // Update user with additional fields and mark email as verified
+    // Also set the role to dentist explicitly
+    const updatedUser = await prisma.user.update({
+      where: { id: user.id },
       data: {
-        id: userId,
-        name,
-        email,
-        emailVerified: true, // Skip email verification
+        emailVerified: true, // Skip email verification for admin-created users
         role: "dentist",
         phone: phone || null,
         address: address || null,
@@ -92,26 +118,15 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Create account with plain password (Better Auth will hash it when used)
-    await prisma.account.create({
-      data: {
-        id: `${user.id}:credential`,
-        userId: user.id,
-        accountId: `${user.id}:credential`,
-        providerId: "credential",
-        password: password, // Plain password - Better Auth handles hashing
-      },
-    });
-
     return NextResponse.json(
       {
         success: true,
         message: "Dentist created successfully",
         user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
+          id: updatedUser.id,
+          name: updatedUser.name,
+          email: updatedUser.email,
+          role: updatedUser.role,
         },
       },
       { status: 201 }

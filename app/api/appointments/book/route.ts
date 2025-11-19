@@ -43,6 +43,7 @@ export async function POST(request: NextRequest) {
           email: string;
           address?: string;
           city?: string;
+          barangay?: string;
           contactNumber?: string;
         };
         appointment: {
@@ -194,6 +195,7 @@ export async function POST(request: NextRequest) {
           dueDate,
           patientName: `${personalInfo.firstName} ${personalInfo.lastName}`,
           patientAddress: personalInfo.address || "N/A",
+          patientBarangay: personalInfo.barangay || undefined,
           patientCity: personalInfo.city || "N/A",
           patientPhone: personalInfo.contactNumber || "N/A",
           patientEmail: personalInfo.email,
