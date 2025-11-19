@@ -19,7 +19,11 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
+import { formatTime12Hour } from "@/lib/utils";
+import { Field, FieldContent, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 
 type Appointment = {
   id: string;
@@ -49,6 +53,9 @@ export function AppointmentsList({ appointments }: AppointmentsListProps) {
   const [isLoading, setIsLoading] = useState<string | null>(null);
   const [selectedAppointment, setSelectedAppointment] =
     useState<Appointment | null>(null);
+  const [rescheduleMode, setRescheduleMode] = useState(false);
+  const [rescheduleDate, setRescheduleDate] = useState("");
+  const [rescheduleTimeSlot, setRescheduleTimeSlot] = useState("");
 
   const upcomingAppointments = appointments.filter(
     (apt) => new Date(apt.date) >= new Date() && apt.status !== "cancelled"
@@ -85,6 +92,44 @@ export function AppointmentsList({ appointments }: AppointmentsListProps) {
     } catch (error) {
       console.error(error);
       toast.error("Failed to cancel appointment");
+    } finally {
+      setIsLoading(null);
+    }
+  };
+
+  const handleRescheduleAppointment = async (appointmentId: string) => {
+    if (!rescheduleDate || !rescheduleTimeSlot) {
+      toast.error("Please select both date and time");
+      return;
+    }
+
+    setIsLoading(appointmentId);
+
+    try {
+      const response = await fetch(`/api/appointments/${appointmentId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          date: rescheduleDate,
+          timeSlot: rescheduleTimeSlot,
+          status: "rescheduled",
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to reschedule appointment");
+      }
+
+      toast.success("Appointment rescheduled successfully");
+      setRescheduleMode(false);
+      setRescheduleDate("");
+      setRescheduleTimeSlot("");
+      window.location.reload();
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to reschedule appointment");
     } finally {
       setIsLoading(null);
     }
@@ -161,7 +206,7 @@ export function AppointmentsList({ appointments }: AppointmentsListProps) {
           </div>
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4 text-muted-foreground" />
-            <span>{appointment.timeSlot}</span>
+            <span>{formatTime12Hour(appointment.timeSlot)}</span>
           </div>
           <div className="flex items-center gap-2">
             <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -197,7 +242,10 @@ export function AppointmentsList({ appointments }: AppointmentsListProps) {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => toast.info("Reschedule feature coming soon")}
+              onClick={() => {
+                setSelectedAppointment(appointment);
+                setRescheduleMode(true);
+              }}
             >
               Reschedule
             </Button>
@@ -351,7 +399,7 @@ export function AppointmentsList({ appointments }: AppointmentsListProps) {
                     <div>
                       <p className="text-sm text-muted-foreground">Time</p>
                       <p className="font-medium">
-                        {selectedAppointment.timeSlot}
+                        {formatTime12Hour(selectedAppointment.timeSlot)}
                       </p>
                     </div>
                   </div>
@@ -422,8 +470,12 @@ export function AppointmentsList({ appointments }: AppointmentsListProps) {
                       variant="outline"
                       className="flex-1"
                       onClick={() => {
-                        setSelectedAppointment(null);
-                        toast.info("Reschedule feature coming soon");
+                        if (selectedAppointment) {
+                          setRescheduleMode(true);
+                          const dateStr = new Date(selectedAppointment.date).toISOString().split("T")[0];
+                          setRescheduleDate(dateStr);
+                          setRescheduleTimeSlot(selectedAppointment.timeSlot);
+                        }
                       }}
                     >
                       Reschedule
@@ -448,6 +500,92 @@ export function AppointmentsList({ appointments }: AppointmentsListProps) {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Reschedule Appointment Dialog */}
+      <Dialog
+        open={rescheduleMode && !!selectedAppointment}
+        onOpenChange={(open) => {
+          if (!open) {
+            setRescheduleMode(false);
+            setRescheduleDate("");
+            setRescheduleTimeSlot("");
+          }
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Reschedule Appointment</DialogTitle>
+            <DialogDescription>
+              Select a new date and time for your appointment
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedAppointment && (
+            <div className="space-y-4 py-4">
+              <Field>
+                <FieldLabel>New Date</FieldLabel>
+                <FieldContent>
+                  <Input
+                    type="date"
+                    value={rescheduleDate}
+                    onChange={(e) => setRescheduleDate(e.target.value)}
+                    min={new Date().toISOString().split("T")[0]}
+                  />
+                </FieldContent>
+              </Field>
+
+              <Field>
+                <FieldLabel>New Time Slot</FieldLabel>
+                <FieldContent>
+                  <Input
+                    type="time"
+                    value={rescheduleTimeSlot}
+                    onChange={(e) => setRescheduleTimeSlot(e.target.value)}
+                  />
+                </FieldContent>
+              </Field>
+
+              <div className="bg-muted p-3 rounded-lg text-sm">
+                <p className="font-medium mb-1">Current Schedule:</p>
+                <p className="text-muted-foreground">
+                  {new Date(selectedAppointment.date).toLocaleDateString()} at{" "}
+                  {formatTime12Hour(selectedAppointment.timeSlot)}
+                </p>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setRescheduleMode(false);
+                setRescheduleDate("");
+                setRescheduleTimeSlot("");
+              }}
+              disabled={isLoading === selectedAppointment?.id}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (selectedAppointment) {
+                  handleRescheduleAppointment(selectedAppointment.id);
+                }
+              }}
+              disabled={
+                isLoading === selectedAppointment?.id ||
+                !rescheduleDate ||
+                !rescheduleTimeSlot
+              }
+            >
+              {isLoading === selectedAppointment?.id
+                ? "Rescheduling..."
+                : "Reschedule"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>

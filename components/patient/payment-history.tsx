@@ -10,6 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CreditCard, Download } from "lucide-react";
+import { formatTime12Hour } from "@/lib/utils";
 
 type Payment = {
   id: string;
@@ -138,7 +139,7 @@ export function PaymentHistory({ payments }: PaymentHistoryProps) {
                         {new Date(
                           payment.appointment.date
                         ).toLocaleDateString()}{" "}
-                        at {payment.appointment.timeSlot}
+                        at {formatTime12Hour(payment.appointment.timeSlot)}
                       </p>
                       <div className="flex items-center gap-2 mt-1">
                         <p className="text-xs text-muted-foreground">

@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import {
   Card,
@@ -23,7 +23,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
-  Calendar,
+  Calendar as CalendarIcon,
   Clock,
   User,
   Mail,
@@ -51,17 +51,18 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { format } from "date-fns";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { formatTime12Hour } from "@/lib/utils";
 import {
   Form,
   FormControl,
@@ -72,15 +73,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import { zipcodes } from "ph-zipcode-lookup";
-import * as phAddress from "select-philippines-address";
+  findPalawanProvince,
+  fetchPalawanCities,
+  fetchBarangays,
+  type City,
+  type Barangay,
+  type Province,
+} from "@/lib/utils/philippine-address-api";
 
 interface BookingFormProps {
   services?: Array<{
@@ -150,7 +149,7 @@ const STEP_CONFIG = [
     title: "Date & Time",
     shortTitle: "Schedule",
     description: "Select appointment date and time",
-    icon: Calendar,
+    icon: CalendarIcon,
   },
   {
     id: 2,
@@ -176,21 +175,18 @@ const STEP_CONFIG = [
 ];
 
 const patientInfoSchema = z.object({
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
-  dateOfBirth: z.string().min(1, "Date of birth is required"),
+  firstName: z.string().trim().min(1, "First name is required"),
+  lastName: z.string().trim().min(1, "Last name is required"),
+  dateOfBirth: z.string().trim().min(1, "Date of birth is required"),
   gender: z.enum(["male", "female", "other"], {
     message: "Please select a gender",
   }),
-  email: z.string().email("Please enter a valid email address"),
-  contactNumber: z.string().min(1, "Phone number is required"),
+  email: z.string().trim().email("Please enter a valid email address"),
+  contactNumber: z.string().trim().min(1, "Phone number is required"),
   preferredContact: z.enum(["email", "sms", "call"]),
   address: z.string().optional(),
-  region: z.string().optional(),
-  province: z.string().optional(),
   city: z.string().optional(),
   barangay: z.string().optional(),
-  postalCode: z.string().optional(),
 });
 
 type PatientInfoFormValues = z.infer<typeof patientInfoSchema>;
@@ -202,21 +198,35 @@ export default function BookingForm({
   dentists: propDentists = [],
   patientId,
 }: BookingFormProps) {
-  const [currentStep, setCurrentStep] = useState(0);
+  // Initialize currentStep from localStorage if available
+  const [currentStep, setCurrentStep] = useState(() => {
+    if (typeof window !== "undefined") {
+      const STORAGE_KEY_INIT = `booking-form-${patientId}`;
+      const saved = localStorage.getItem(STORAGE_KEY_INIT);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          // Restore step if saved in formData, otherwise default to 0
+          if (parsed.currentStep !== undefined && parsed.currentStep >= 0 && parsed.currentStep < STEP_CONFIG.length) {
+            return parsed.currentStep;
+          }
+        } catch (e) {
+          // Ignore parse errors, use default
+        }
+      }
+    }
+    return 0;
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isNewPatient, setIsNewPatient] = useState(true);
   const [showMedicalHistory, setShowMedicalHistory] = useState(false);
   const [bookedDates, setBookedDates] = useState<Date[]>([]);
   const [isLoadingBookedDates, setIsLoadingBookedDates] = useState(false);
-  const [postalCodeOpen, setPostalCodeOpen] = useState(false);
-  const [regions, setRegions] = useState<Array<{ id: number; region_name: string; region_code: string }>>([]);
-  const [provinces, setProvinces] = useState<Array<{ id: number; prov_name: string; prov_code: string; region_code: string }>>([]);
-  const [cities, setCities] = useState<Array<{ id: number; city_name: string; city_code: string; prov_code: string }>>([]);
-  const [barangays, setBarangays] = useState<Array<{ id: number; brgy_name: string; brgy_code: string; city_code: string }>>([]);
-  const [isLoadingRegions, setIsLoadingRegions] = useState(false);
-  const [isLoadingProvinces, setIsLoadingProvinces] = useState(false);
+  const [cities, setCities] = useState<City[]>([]);
+  const [barangays, setBarangays] = useState<Barangay[]>([]);
   const [isLoadingCities, setIsLoadingCities] = useState(false);
   const [isLoadingBarangays, setIsLoadingBarangays] = useState(false);
+  const [palawanProvince, setPalawanProvince] = useState<Province | null>(null);
 
   // Auto-save to localStorage - memoize to prevent unnecessary re-renders
   const STORAGE_KEY = useMemo(() => `booking-form-${patientId}`, [patientId]);
@@ -250,11 +260,8 @@ export default function BookingForm({
       contactNumber: "",
       preferredContact: "email",
       address: "",
-      region: "",
-      province: "",
       city: "",
       barangay: "",
-      postalCode: "",
     },
   });
 
@@ -272,7 +279,6 @@ export default function BookingForm({
     preferredContact: string;
     address: string;
     city: string;
-    postalCode: string;
     medicalConditions: string[];
     otherConditions: string;
     currentMedications: string[];
@@ -302,7 +308,6 @@ export default function BookingForm({
     preferredContact: "email",
     address: "",
     city: "",
-    postalCode: "",
     medicalConditions: [],
     otherConditions: "",
     currentMedications: [],
@@ -356,57 +361,6 @@ export default function BookingForm({
     return undefined;
   };
 
-  const handleDateSelect = (date: Date | undefined) => {
-    if (date) {
-      const dateStr = format(date, "yyyy-MM-dd");
-      const currentTime = formData.preferredTime || "09:00";
-      handleInputChange("preferredDate", dateStr);
-      
-      // Preserve time when date changes
-      if (!formData.preferredTime) {
-        handleInputChange("preferredTime", currentTime);
-      }
-    }
-  };
-
-  const handleTimeChange = (
-    type: "hour" | "minute" | "ampm",
-    value: string
-  ) => {
-    const currentDate = getDateTimeValue() || new Date();
-    const newDate = new Date(currentDate);
-
-    if (type === "hour") {
-      const hour = parseInt(value, 10);
-      const currentHour = newDate.getHours();
-      // Convert 12-hour format to 24-hour format
-      if (currentHour >= 12) {
-        // Currently PM, set PM hour
-        newDate.setHours(hour === 12 ? 12 : hour + 12);
-      } else {
-        // Currently AM, set AM hour
-        newDate.setHours(hour === 12 ? 0 : hour);
-      }
-    } else if (type === "minute") {
-      newDate.setMinutes(parseInt(value, 10));
-    } else if (type === "ampm") {
-      const hours = newDate.getHours();
-      if (value === "AM" && hours >= 12) {
-        newDate.setHours(hours - 12);
-      } else if (value === "PM" && hours < 12) {
-        newDate.setHours(hours + 12);
-      }
-    }
-
-    const dateStr = format(newDate, "yyyy-MM-dd");
-    const timeStr = `${newDate.getHours().toString().padStart(2, "0")}:${newDate
-      .getMinutes()
-      .toString()
-      .padStart(2, "0")}`;
-
-    handleInputChange("preferredDate", dateStr);
-    handleInputChange("preferredTime", timeStr);
-  };
 
   const handleServiceChange = (serviceId: string, qty: number) => {
     setFormData((prev) => {
@@ -591,8 +545,12 @@ export default function BookingForm({
         contactNumber: formData.contactNumber,
         preferredContact: formData.preferredContact,
         address: formData.address,
-        city: formData.city,
-        postalCode: formData.postalCode,
+        city: (() => {
+          const cityCode = patientInfoForm.getValues("city");
+          const selectedCity = cities.find(c => c.code === cityCode);
+          return selectedCity ? `${selectedCity.name}, Palawan` : "Palawan";
+        })(),
+        barangay: patientInfoForm.getValues("barangay") || "",
       },
       medicalHistory:
         showMedicalHistory || formData.hasMedicalUpdates === "yes"
@@ -680,7 +638,13 @@ export default function BookingForm({
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        setFormData((prev) => ({ ...prev, ...parsed }));
+        // Extract currentStep before spreading to formData
+        const { currentStep: savedStep, ...formDataFromStorage } = parsed;
+        setFormData((prev) => ({ ...prev, ...formDataFromStorage }));
+        // Restore currentStep if saved
+        if (savedStep !== undefined && savedStep >= 0 && savedStep < STEP_CONFIG.length) {
+          setCurrentStep(savedStep);
+        }
         // Update form when loading from localStorage
         patientInfoForm.reset({
           firstName: parsed.firstName || "",
@@ -692,7 +656,6 @@ export default function BookingForm({
           preferredContact: parsed.preferredContact || "email",
           address: parsed.address || "",
           city: parsed.city || "",
-          postalCode: parsed.postalCode || "",
         });
       } catch (e) {
         console.error("Failed to load saved form data", e);
@@ -700,36 +663,53 @@ export default function BookingForm({
     }
   }, [STORAGE_KEY]);
 
+  // Track previous step to detect step changes
+  const prevStepRef = useRef(currentStep);
+
   // Sync form values with formData state when form changes
   useEffect(() => {
-    const subscription = patientInfoForm.watch((value, { name }) => {
-      if (name && currentStep === 2) {
-        const fieldValue = value[name as keyof typeof value];
-        if (fieldValue !== undefined) {
-          handleInputChange(name, fieldValue as string);
+    if (currentStep !== 2) return;
+
+    const subscription = patientInfoForm.watch((value) => {
+      // Sync form values to formData when they change
+      Object.entries(value).forEach(([key, val]) => {
+        if (val !== undefined && val !== null) {
+          handleInputChange(key, val as string);
         }
-      }
+      });
     });
     return () => subscription.unsubscribe();
-  }, [patientInfoForm.watch, currentStep]);
+  }, [currentStep, patientInfoForm]);
 
-  // Update form when formData changes externally
+  // Initialize form when step changes to 2 or when formData is loaded from localStorage
   useEffect(() => {
+    const stepChanged = prevStepRef.current !== currentStep;
+    prevStepRef.current = currentStep;
+
     if (currentStep === 2) {
-      patientInfoForm.reset({
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        dateOfBirth: formData.dateOfBirth,
-        gender: formData.gender as "male" | "female" | "other" | undefined,
-        email: formData.email,
-        contactNumber: formData.contactNumber,
-        preferredContact: formData.preferredContact as "email" | "sms" | "call",
-        address: formData.address,
-        city: formData.city,
-        postalCode: formData.postalCode,
-      });
+      const formDataValues = {
+        firstName: formData.firstName || "",
+        lastName: formData.lastName || "",
+        dateOfBirth: formData.dateOfBirth || "",
+        gender: (formData.gender as "male" | "female" | "other" | undefined) || undefined,
+        email: formData.email || "",
+        contactNumber: formData.contactNumber || "",
+        preferredContact: (formData.preferredContact as "email" | "sms" | "call") || "email",
+        address: formData.address || "",
+        city: formData.city || "",
+        barangay: "",
+      };
+
+      // Only reset on step change to avoid interfering with user input
+      // When step changes, always sync formData to form
+      if (stepChanged) {
+        patientInfoForm.reset(formDataValues, {
+          keepErrors: false, // Clear errors on reset
+          keepDirty: false, // Reset dirty state
+        });
+      }
     }
-  }, [currentStep]);
+  }, [currentStep, formData.firstName, formData.lastName, formData.dateOfBirth, formData.gender, formData.email, formData.contactNumber, formData.preferredContact, formData.address, formData.city, patientInfoForm]);
 
   // Fetch booked dates when dentist is selected
   useEffect(() => {
@@ -781,84 +761,31 @@ export default function BookingForm({
     }
   }, [formData.dentistId, currentStep]);
 
-  // Load regions when on address step
+  // Load Palawan province and cities when on address step
   useEffect(() => {
-    const loadRegions = async () => {
-      if (currentStep === 2 && regions.length === 0) {
-        setIsLoadingRegions(true);
+    const loadPalawanData = async () => {
+      if (currentStep === 2 && cities.length === 0) {
         try {
-          const regionsData = await phAddress.regions();
-          setRegions(regionsData);
+          setIsLoadingCities(true);
+          
+          // Find Palawan province
+          const province = await findPalawanProvince();
+          if (province) {
+            setPalawanProvince(province);
+          }
+          
+          // Load all cities and municipalities in Palawan
+          const citiesData = await fetchPalawanCities();
+          setCities(citiesData);
         } catch (error) {
-          console.error("Failed to load regions:", error);
-        } finally {
-          setIsLoadingRegions(false);
-        }
-      }
-    };
-    loadRegions();
-  }, [currentStep, regions.length]);
-
-  // Load provinces when region is selected
-  useEffect(() => {
-    const loadProvinces = async () => {
-      const selectedRegion = patientInfoForm.watch("region");
-      if (selectedRegion && currentStep === 2) {
-        setIsLoadingProvinces(true);
-        try {
-          const allProvinces = await phAddress.provinces();
-          const filteredProvinces = allProvinces.filter(
-            (p: { region_code: string }) => p.region_code === selectedRegion
-          );
-          setProvinces(filteredProvinces);
-          // Reset province, city, and barangay when region changes
-          patientInfoForm.setValue("province", "");
-          patientInfoForm.setValue("city", "");
-          patientInfoForm.setValue("barangay", "");
-          setCities([]);
-          setBarangays([]);
-        } catch (error) {
-          console.error("Failed to load provinces:", error);
-        } finally {
-          setIsLoadingProvinces(false);
-        }
-      } else if (!selectedRegion) {
-        setProvinces([]);
-        setCities([]);
-        setBarangays([]);
-      }
-    };
-    loadProvinces();
-  }, [patientInfoForm.watch("region"), currentStep]);
-
-  // Load cities when province is selected
-  useEffect(() => {
-    const loadCities = async () => {
-      const selectedProvince = patientInfoForm.watch("province");
-      if (selectedProvince && currentStep === 2) {
-        setIsLoadingCities(true);
-        try {
-          const allCities = await phAddress.cities();
-          const filteredCities = allCities.filter(
-            (c: { prov_code: string }) => c.prov_code === selectedProvince
-          );
-          setCities(filteredCities);
-          // Reset city and barangay when province changes
-          patientInfoForm.setValue("city", "");
-          patientInfoForm.setValue("barangay", "");
-          setBarangays([]);
-        } catch (error) {
-          console.error("Failed to load cities:", error);
+          console.error("Failed to load Palawan cities:", error);
         } finally {
           setIsLoadingCities(false);
         }
-      } else if (!selectedProvince) {
-        setCities([]);
-        setBarangays([]);
       }
     };
-    loadCities();
-  }, [patientInfoForm.watch("province"), currentStep]);
+    loadPalawanData();
+  }, [currentStep, cities.length]);
 
   // Load barangays when city is selected
   useEffect(() => {
@@ -867,11 +794,8 @@ export default function BookingForm({
       if (selectedCity && currentStep === 2) {
         setIsLoadingBarangays(true);
         try {
-          const allBarangays = await phAddress.barangays();
-          const filteredBarangays = allBarangays.filter(
-            (b: { city_code?: string; brgy_code?: string }) => b.city_code === selectedCity
-          );
-          setBarangays(filteredBarangays);
+          const barangaysData = await fetchBarangays(selectedCity);
+          setBarangays(barangaysData);
           // Reset barangay when city changes
           patientInfoForm.setValue("barangay", "");
         } catch (error) {
@@ -884,22 +808,23 @@ export default function BookingForm({
       }
     };
     loadBarangays();
-  }, [patientInfoForm.watch("city"), currentStep]);
+  }, [patientInfoForm.watch("city"), currentStep, patientInfoForm]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
+      // Save both formData and currentStep to localStorage
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        ...formData,
+        currentStep,
+      }));
     }, 1000);
     return () => clearTimeout(timer);
-  }, [formData, STORAGE_KEY]);
+  }, [formData, currentStep, STORAGE_KEY]);
 
   const progressPercent = ((currentStep + 1) / STEP_CONFIG.length) * 100;
 
   return (
-    <div className="h-screen flex flex-col bg-background">
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-4xl mx-auto py-6 px-4">
-          <Card className="border shadow-sm">
+    <Card className="border shadow-sm">
             <CardHeader className="space-y-4 pb-4 border-b px-6">
               <div className="space-y-4">
                 <div className="text-center">
@@ -1158,176 +1083,48 @@ export default function BookingForm({
                   </Field>
 
                   <Field>
-                    <FieldLabel className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      Preferred Date & Time{" "}
-                      <span className="text-destructive">*</span>
-                    </FieldLabel>
                     <FieldContent>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "w-full justify-start text-left font-normal",
-                              !getDateTimeValue() && "text-muted-foreground"
-                            )}
-                          >
-                            <Calendar className="mr-2 h-4 w-4" />
-                            {getDateTimeValue() ? (
-                              format(
-                                getDateTimeValue()!,
-                                "PPP hh:mm aa"
-                              )
-                            ) : (
-                              <span>Pick a date and time</span>
-                            )}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <div className="sm:flex">
-                            <CalendarComponent
-                              mode="single"
-                              selected={
-                                formData.preferredDate
-                                  ? new Date(formData.preferredDate)
-                                  : undefined
-                              }
-                              onSelect={handleDateSelect}
-                              disabled={(date) => {
-                                const dateAtMidnight = new Date(date);
-                                dateAtMidnight.setHours(0, 0, 0, 0);
-                                const today = new Date();
-                                today.setHours(0, 0, 0, 0);
-                                
-                                // Disable past dates
-                                if (dateAtMidnight < today) {
-                                  return true;
-                                }
-                                
-                                // Disable booked dates if dentist is selected
-                                if (formData.dentistId && bookedDates.length > 0) {
-                                  return bookedDates.some((bookedDate) => {
-                                    const bookedAtMidnight = new Date(bookedDate);
-                                    bookedAtMidnight.setHours(0, 0, 0, 0);
-                                    return (
-                                      dateAtMidnight.getTime() ===
-                                      bookedAtMidnight.getTime()
-                                    );
-                                  });
-                                }
-                                
-                                return false;
-                              }}
-                              modifiers={{
-                                booked: bookedDates,
-                              }}
-                              modifiersClassNames={{
-                                booked: "[&>button]:line-through opacity-60",
-                              }}
-                              defaultMonth={
-                                formData.preferredDate
-                                  ? new Date(formData.preferredDate)
-                                  : new Date()
-                              }
-                              initialFocus
-                              className="rounded-lg border shadow-sm"
-                            />
-                            <div className="flex flex-col sm:flex-row sm:h-[300px] divide-y sm:divide-y-0 sm:divide-x">
-                              <ScrollArea className="w-64 sm:w-auto">
-                                <div className="flex sm:flex-col p-2">
-                                  {Array.from({ length: 12 }, (_, i) => i + 1)
-                                    .reverse()
-                                    .map((hour) => {
-                                      const dateValue = getDateTimeValue();
-                                      const displayHour = dateValue?.getHours() || 0;
-                                      const isSelected =
-                                        dateValue &&
-                                        displayHour % 12 === (hour % 12 || 12);
-                                      return (
-                                        <Button
-                                          key={hour}
-                                          type="button"
-                                          size="icon"
-                                          variant={isSelected ? "default" : "ghost"}
-                                          className="sm:w-full shrink-0 aspect-square"
-                                          onClick={() =>
-                                            handleTimeChange("hour", hour.toString())
-                                          }
-                                        >
-                                          {hour}
-                                        </Button>
-                                      );
-                                    })}
-                                </div>
-                                <ScrollBar
-                                  orientation="horizontal"
-                                  className="sm:hidden"
-                                />
-                              </ScrollArea>
-                              <ScrollArea className="w-64 sm:w-auto">
-                                <div className="flex sm:flex-col p-2">
-                                  {Array.from({ length: 12 }, (_, i) => i * 5).map(
-                                    (minute) => {
-                                      const dateValue = getDateTimeValue();
-                                      const isSelected =
-                                        dateValue?.getMinutes() === minute;
-                                      return (
-                                        <Button
-                                          key={minute}
-                                          type="button"
-                                          size="icon"
-                                          variant={
-                                            isSelected ? "default" : "ghost"
-                                          }
-                                          className="sm:w-full shrink-0 aspect-square"
-                                          onClick={() =>
-                                            handleTimeChange(
-                                              "minute",
-                                              minute.toString()
-                                            )
-                                          }
-                                        >
-                                          {minute.toString().padStart(2, "0")}
-                                        </Button>
-                                      );
-                                    }
-                                  )}
-                                </div>
-                                <ScrollBar
-                                  orientation="horizontal"
-                                  className="sm:hidden"
-                                />
-                              </ScrollArea>
-                              <ScrollArea className="">
-                                <div className="flex sm:flex-col p-2">
-                                  {["AM", "PM"].map((ampm) => {
-                                    const dateValue = getDateTimeValue();
-                                    const hours = dateValue?.getHours() || 0;
-                                    const isSelected =
-                                      (ampm === "AM" && hours < 12) ||
-                                      (ampm === "PM" && hours >= 12);
-                                    return (
-                                      <Button
-                                        key={ampm}
-                                        type="button"
-                                        size="icon"
-                                        variant={isSelected ? "default" : "ghost"}
-                                        className="sm:w-full shrink-0 aspect-square"
-                                        onClick={() =>
-                                          handleTimeChange("ampm", ampm)
-                                        }
-                                      >
-                                        {ampm}
-                                      </Button>
-                                    );
-                                  })}
-                                </div>
-                              </ScrollArea>
-                            </div>
-                          </div>
-                        </PopoverContent>
-                      </Popover>
+                      <DateTimePicker
+                        date={getDateTimeValue()}
+                        onDateChange={(date) => {
+                          if (date) {
+                            const dateStr = format(date, "yyyy-MM-dd");
+                            const timeStr = format(date, "HH:mm");
+                            handleInputChange("preferredDate", dateStr);
+                            handleInputChange("preferredTime", timeStr);
+                          } else {
+                            handleInputChange("preferredDate", "");
+                            handleInputChange("preferredTime", "");
+                          }
+                        }}
+                        disabled={(date) => {
+                          const dateAtMidnight = new Date(date);
+                          dateAtMidnight.setHours(0, 0, 0, 0);
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          
+                          // Disable past dates
+                          if (dateAtMidnight < today) {
+                            return true;
+                          }
+                          
+                          // Disable booked dates if dentist is selected
+                          if (formData.dentistId && bookedDates.length > 0) {
+                            return bookedDates.some((bookedDate) => {
+                              const bookedAtMidnight = new Date(bookedDate);
+                              bookedAtMidnight.setHours(0, 0, 0, 0);
+                              return (
+                                dateAtMidnight.getTime() ===
+                                bookedAtMidnight.getTime()
+                              );
+                            });
+                          }
+                          
+                          return false;
+                        }}
+                        label="Preferred Date & Time"
+                        required
+                      />
                     </FieldContent>
                   </Field>
 
@@ -1444,23 +1241,85 @@ export default function BookingForm({
                       <FormField
                         control={patientInfoForm.control}
                         name="dateOfBirth"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="flex items-center gap-2">
-                              <Calendar className="h-4 w-4" />
-                              Date of Birth{" "}
-                              <span className="text-destructive">*</span>
-                            </FormLabel>
-                            <FormControl>
-                              <Input
-                                type="date"
-                                autoComplete="bday"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
+                        render={({ field }) => {
+                          // Convert string to Date for Calendar component
+                          const dateValue = field.value
+                            ? new Date(field.value)
+                            : undefined;
+
+                          // Check if date is valid
+                          const isValidDate =
+                            dateValue && !isNaN(dateValue.getTime());
+
+                          return (
+                            <FormItem>
+                              <FormLabel className="flex items-center gap-2">
+                                <CalendarIcon className="h-4 w-4" />
+                                Date of Birth{" "}
+                                <span className="text-destructive">*</span>
+                              </FormLabel>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <FormControl>
+                                    <Button
+                                      variant="outline"
+                                      className={cn(
+                                        "w-full justify-start text-left font-normal",
+                                        !isValidDate && "text-muted-foreground"
+                                      )}
+                                      type="button"
+                                    >
+                                      <CalendarIcon className="mr-2 h-4 w-4" />
+                                      {isValidDate ? (
+                                        format(dateValue, "PPP")
+                                      ) : (
+                                        <span>mm / dd / yyyy</span>
+                                      )}
+                                    </Button>
+                                  </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                  <Calendar
+                                    mode="single"
+                                    captionLayout="dropdown"
+                                    selected={isValidDate ? dateValue : undefined}
+                                    onSelect={(date) => {
+                                      if (date) {
+                                        // Format as YYYY-MM-DD for input type="date" compatibility
+                                        const formattedDate = format(
+                                          date,
+                                          "yyyy-MM-dd"
+                                        );
+                                        field.onChange(formattedDate);
+                                      } else {
+                                        field.onChange("");
+                                      }
+                                    }}
+                                    disabled={(date) => {
+                                      // Disable future dates
+                                      const today = new Date();
+                                      today.setHours(23, 59, 59, 999);
+                                      if (date > today) return true;
+
+                                      // Disable dates too far in the past (e.g., more than 150 years ago)
+                                      const minDate = new Date();
+                                      minDate.setFullYear(
+                                        minDate.getFullYear() - 150
+                                      );
+                                      if (date < minDate) return true;
+
+                                      return false;
+                                    }}
+                                    fromYear={new Date().getFullYear() - 150}
+                                    toYear={new Date().getFullYear()}
+                                    initialFocus
+                                  />
+                                </PopoverContent>
+                              </Popover>
+                              <FormMessage />
+                            </FormItem>
+                          );
+                        }}
                       />
 
                       <FormField
@@ -1603,323 +1462,92 @@ export default function BookingForm({
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <FormField
                             control={patientInfoForm.control}
-                            name="region"
-                            render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>
-                                    Region <span className="text-muted-foreground">(Optional)</span>
-                                  </FormLabel>
-                                  <Select
-                                    onValueChange={field.onChange}
-                                    value={field.value}
-                                    disabled={isLoadingRegions}
-                                  >
-                                    <FormControl>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Select region" />
-                                      </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                      {isLoadingRegions ? (
-                                        <div className="p-2 text-center text-sm text-muted-foreground">
-                                          Loading regions...
-                                        </div>
-                                      ) : (
-                                        regions.map((region) => (
-                                          <SelectItem key={region.id} value={region.region_code}>
-                                            {region.region_name}
-                                          </SelectItem>
-                                        ))
-                                      )}
-                                    </SelectContent>
-                                  </Select>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                          />
-
-                          <FormField
-                            control={patientInfoForm.control}
-                            name="province"
-                            render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>
-                                    Province <span className="text-muted-foreground">(Optional)</span>
-                                  </FormLabel>
-                                  <Select
-                                    onValueChange={field.onChange}
-                                    value={field.value}
-                                    disabled={!patientInfoForm.watch("region") || isLoadingProvinces}
-                                  >
-                                    <FormControl>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Select province" />
-                                      </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                      {isLoadingProvinces ? (
-                                        <div className="p-2 text-center text-sm text-muted-foreground">
-                                          Loading provinces...
-                                        </div>
-                                      ) : provinces.length === 0 ? (
-                                        <div className="p-2 text-center text-sm text-muted-foreground">
-                                          Select a region first
-                                        </div>
-                                      ) : (
-                                        provinces.map((province) => (
-                                          <SelectItem key={province.id} value={province.prov_code}>
-                                            {province.prov_name}
-                                          </SelectItem>
-                                        ))
-                                      )}
-                                    </SelectContent>
-                                  </Select>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                          />
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormField
-                            control={patientInfoForm.control}
                             name="city"
                             render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>
-                                    City/Municipality{" "}
-                                    <span className="text-muted-foreground">(Optional)</span>
-                                  </FormLabel>
-                                  <Select
-                                    onValueChange={field.onChange}
-                                    value={field.value}
-                                    disabled={
-                                      !patientInfoForm.watch("province") || isLoadingCities
-                                    }
-                                  >
-                                    <FormControl>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Select city/municipality" />
-                                      </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                      {isLoadingCities ? (
-                                        <div className="p-2 text-center text-sm text-muted-foreground">
-                                          Loading cities...
-                                        </div>
-                                      ) : cities.length === 0 ? (
-                                        <div className="p-2 text-center text-sm text-muted-foreground">
-                                          Select a province first
-                                        </div>
-                                      ) : (
-                                        cities.map((city) => (
-                                          <SelectItem key={city.id} value={city.city_code}>
-                                            {city.city_name}
-                                          </SelectItem>
-                                        ))
-                                      )}
-                                    </SelectContent>
-                                  </Select>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
+                              <FormItem>
+                                <FormLabel>
+                                  City/Municipality{" "}
+                                  <span className="text-muted-foreground">(Optional)</span>
+                                </FormLabel>
+                                <Select
+                                  onValueChange={field.onChange}
+                                  value={field.value}
+                                  disabled={isLoadingCities}
+                                >
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select city/municipality" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {isLoadingCities ? (
+                                      <div className="p-2 text-center text-sm text-muted-foreground">
+                                        Loading cities...
+                                      </div>
+                                    ) : cities.length === 0 ? (
+                                      <div className="p-2 text-center text-sm text-muted-foreground">
+                                        No cities available
+                                      </div>
+                                    ) : (
+                                      cities.map((city) => (
+                                        <SelectItem key={city.code} value={city.code}>
+                                          {city.name}
+                                        </SelectItem>
+                                      ))
+                                    )}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
                           />
 
                           <FormField
                             control={patientInfoForm.control}
                             name="barangay"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>
-                                    Barangay <span className="text-muted-foreground">(Optional)</span>
-                                  </FormLabel>
-                                  <Select
-                                    onValueChange={field.onChange}
-                                    value={field.value}
-                                    disabled={
-                                      !patientInfoForm.watch("city") || isLoadingBarangays
-                                    }
-                                  >
-                                    <FormControl>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Select barangay" />
-                                      </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                      {isLoadingBarangays ? (
-                                        <div className="p-2 text-center text-sm text-muted-foreground">
-                                          Loading barangays...
-                                        </div>
-                                      ) : barangays.length === 0 ? (
-                                        <div className="p-2 text-center text-sm text-muted-foreground">
-                                          Select a city first
-                                        </div>
-                                      ) : (
-                                        barangays.map((barangay) => (
-                                          <SelectItem key={barangay.id} value={barangay.brgy_code || barangay.city_code || String(barangay.id)}>
-                                            {barangay.brgy_name}
-                                          </SelectItem>
-                                        ))
-                                      )}
-                                    </SelectContent>
-                                  </Select>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                          />
-                        </div>
-
-                        <FormField
-                          control={patientInfoForm.control}
-                          name="postalCode"
-                          render={({ field }) => {
-                              const handleSearch = (searchValue: string) => {
-                                if (!searchValue) return [];
-                                
-                                const results: Array<{ code: string; location: string }> = [];
-                                
-                                // Try to find by postal code
-                                if (/^\d{4}$/.test(searchValue.trim())) {
-                                  const location = zipcodes.findLocation(searchValue.trim());
-                                  if (location) {
-                                    results.push({
-                                      code: searchValue.trim(),
-                                      location,
-                                    });
-                                  }
-                                }
-                                
-                                // Try to find by location name
-                                const zipcode = zipcodes.findZipcode(searchValue);
-                                if (zipcode) {
-                                  const location = zipcodes.findLocation(zipcode);
-                                  if (location) {
-                                    results.push({
-                                      code: zipcode,
-                                      location,
-                                    });
-                                  }
-                                }
-                                
-                                return results;
-                              };
-
-                              const searchResults = field.value
-                                ? handleSearch(field.value)
-                                : [];
-
-                              const isFourDigitCode = field.value
-                                ? /^\d{4}$/.test(field.value.trim())
-                                : false;
-
-                              const postalCodeRegex = /^\d{4}$/;
-
-                              return (
-                                <FormItem>
-                                  <FormLabel className="flex items-center gap-2">
-                                    <MapPin className="h-4 w-4" />
-                                    Postal Code
-                                  </FormLabel>
-                                  <Popover
-                                    open={postalCodeOpen}
-                                    onOpenChange={setPostalCodeOpen}
-                                  >
-                                    <PopoverTrigger asChild>
-                                      <FormControl>
-                                        <Button
-                                          variant="outline"
-                                          role="combobox"
-                                          className={cn(
-                                            "w-full justify-between font-normal",
-                                            !field.value && "text-muted-foreground"
-                                          )}
-                                        >
-                                          {field.value ? (
-                                            <span>
-                                              {field.value}
-                                              {searchResults.length > 0 &&
-                                                ` - ${searchResults[0].location}`}
-                                            </span>
-                                          ) : (
-                                            <span>Search postal code or location</span>
-                                          )}
-                                          <MapPin className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                        </Button>
-                                      </FormControl>
-                                    </PopoverTrigger>
-                                    <PopoverContent
-                                      className="w-[var(--radix-popover-trigger-width)] p-0"
-                                      align="start"
-                                    >
-                                      <Command>
-                                        <CommandInput
-                                          placeholder="Search by postal code (e.g., 5300) or location..."
-                                          value={field.value || ""}
-                                          onValueChange={(value) => {
-                                            field.onChange(value);
-                                            // If it's a 4-digit code, try to find location
-                                            if (postalCodeRegex.test(value)) {
-                                              const location = zipcodes.findLocation(value);
-                                              if (location) {
-                                                setPostalCodeOpen(false);
-                                              }
-                                            }
-                                          }}
-                                        />
-                                        <CommandList>
-                                          <CommandEmpty>
-                                            No postal code found. Try typing a 4-digit code or
-                                            location name.
-                                          </CommandEmpty>
-                                          {searchResults.length > 0 && (
-                                            <CommandGroup heading="Results">
-                                              {searchResults.map((result) => (
-                                                <CommandItem
-                                                  key={result.code}
-                                                  value={result.code}
-                                                  onSelect={() => {
-                                                    field.onChange(result.code);
-                                                    setPostalCodeOpen(false);
-                                                  }}
-                                                >
-                                                  <div className="flex flex-col">
-                                                    <span className="font-medium">
-                                                      {result.code}
-                                                    </span>
-                                                    <span className="text-xs text-muted-foreground">
-                                                      {result.location}
-                                                    </span>
-                                                  </div>
-                                                </CommandItem>
-                                              ))}
-                                            </CommandGroup>
-                                          )}
-                                          {field.value &&
-                                            isFourDigitCode &&
-                                            searchResults.length === 0 && (
-                                              <CommandGroup>
-                                                <CommandItem
-                                                  value={field.value}
-                                                  onSelect={() => {
-                                                    setPostalCodeOpen(false);
-                                                  }}
-                                                >
-                                                  Use postal code: {field.value}
-                                                </CommandItem>
-                                              </CommandGroup>
-                                            )}
-                                        </CommandList>
-                                      </Command>
-                                    </PopoverContent>
-                                  </Popover>
-                                  <FormMessage />
-                                </FormItem>
-                              );
-                            }}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>
+                                  Barangay <span className="text-muted-foreground">(Optional)</span>
+                                </FormLabel>
+                                <Select
+                                  onValueChange={field.onChange}
+                                  value={field.value}
+                                  disabled={!patientInfoForm.watch("city") || isLoadingBarangays}
+                                >
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select barangay" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {isLoadingBarangays ? (
+                                      <div className="p-2 text-center text-sm text-muted-foreground">
+                                        Loading barangays...
+                                      </div>
+                                    ) : barangays.length === 0 ? (
+                                      <div className="p-2 text-center text-sm text-muted-foreground">
+                                        {patientInfoForm.watch("city") 
+                                          ? "No barangays available" 
+                                          : "Select a city first"}
+                                      </div>
+                                    ) : (
+                                      barangays.map((barangay) => (
+                                        <SelectItem key={barangay.code} value={barangay.code}>
+                                          {barangay.name}
+                                        </SelectItem>
+                                      ))
+                                    )}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
                           />
                         </div>
                       </div>
                     </div>
+                  </div>
                 </Form>
               )}
 
@@ -2050,12 +1678,12 @@ export default function BookingForm({
                     </FieldContent>
                   </Field>
 
-                  <Field>
+                    <Field>
                     <FieldLabel>Last Dental Visit</FieldLabel>
                     <FieldContent>
                       <InputGroup>
                         <InputGroupAddon>
-                          <Calendar className="h-4 w-4" />
+                          <CalendarIcon className="h-4 w-4" />
                         </InputGroupAddon>
                         <InputGroupInput
                           type="date"
@@ -2104,7 +1732,7 @@ export default function BookingForm({
                     {/* Appointment Details */}
                     <div className="p-5 rounded-lg border bg-card">
                       <h4 className="font-semibold text-sm mb-4 flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-primary" />
+                        <CalendarIcon className="h-4 w-4 text-primary" />
                         Appointment Details
                       </h4>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
@@ -2126,7 +1754,9 @@ export default function BookingForm({
                           <p className="text-xs text-muted-foreground mb-1">
                             Time
                           </p>
-                          <p className="font-medium">{formData.preferredTime}</p>
+                          <p className="font-medium">
+                            {formatTime12Hour(formData.preferredTime)}
+                          </p>
                         </div>
                         <div>
                           <p className="text-xs text-muted-foreground mb-1">
@@ -2414,22 +2044,5 @@ export default function BookingForm({
             </form>
           </CardContent>
         </Card>
-      </div>
-      
-      {/* Footer Badges */}
-      <div className="border-t bg-muted/30 py-3 shrink-0">
-        <div className="max-w-4xl mx-auto px-4 flex flex-wrap justify-center items-center gap-4">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Shield className="h-3.5 w-3.5 text-primary" />
-            <span>Secure & HIPAA Compliant</span>
-          </div>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <CheckCircle className="h-3.5 w-3.5 text-primary" />
-            <span>Secure Payment</span>
-          </div>
-        </div>
-      </div>
-      </div>
-    </div>
   );
 }

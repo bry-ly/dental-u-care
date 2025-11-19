@@ -54,6 +54,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { formatTime12Hour } from "@/lib/utils"
 
 type PatientAppointment = {
   id: string
@@ -145,7 +146,9 @@ const columns: ColumnDef<PatientAppointment>[] = [
     cell: ({ row }) => (
       <div>
         <p>{new Date(row.original.date).toLocaleDateString()}</p>
-        <p className="text-xs text-muted-foreground">{row.original.timeSlot}</p>
+        <p className="text-xs text-muted-foreground">
+          {formatTime12Hour(row.original.timeSlot)}
+        </p>
       </div>
     ),
   },
