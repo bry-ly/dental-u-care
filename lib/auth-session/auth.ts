@@ -1,12 +1,8 @@
 import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { Resend } from "resend";
-import ForgotPasswordEmail from "@/components/emails/reset-password";
-import VerificationEmail from "@/components/emails/email-verification";
 import { prisma } from "@/lib/types/prisma";
-
-const resend = new Resend(process.env.RESEND_API_KEY!);
+import { sendAuthEmail } from "@/lib/email/send-email";
 
 /**
  * Better Auth Configuration
@@ -61,26 +57,31 @@ export const auth = betterAuth({
     requireEmailVerification: true,
     autoSignIn: false, // Don't auto sign-in until email verified
     sendResetPassword: async ({ user, url }) => {
-      await resend.emails.send({
-        from: `${process.env.EMAIL_SENDER_NAME || "Dental U Care"} <${process.env.EMAIL_SENDER_ADDRESS || "send@dentalucare.tech"}>`,
+      await sendAuthEmail({
+        type: "reset-password",
         to: user.email,
-        subject: "Reset your password",
-        react: ForgotPasswordEmail({ username: user.name, resetUrl: url }),
+        username: user.name,
+        url,
+        userEmail: user.email,
       });
     },
   },
 
   // Email verification
   emailVerification: {
+    sendOnSignUp: true,
+    autoSendVerificationEmail: true,
     sendVerificationEmail: async ({ user, url }) => {
-      await resend.emails.send({
-        from: `${process.env.EMAIL_SENDER_NAME || "Dental U Care"} <${process.env.EMAIL_SENDER_ADDRESS || "send@dentalucare.tech"}>`,
+      // Add redirect parameter to verification URL to redirect after verification
+      const baseURL = process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+      const redirectUrl = new URL(url);
+      redirectUrl.searchParams.set("redirect", `${baseURL}/dashboard/patient`);
+      
+      await sendAuthEmail({
+        type: "verification",
         to: user.email,
-        subject: "Verify your email",
-        react: VerificationEmail({
-          username: user.name,
-          verificationUrl: url,
-        }),
+        username: user.name,
+        url: redirectUrl.toString(),
       });
     },
   },
@@ -101,7 +102,7 @@ export const auth = betterAuth({
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      prompt: "select_account", // Always show account selector
+      prompt: "select_account consent", // Always show account selector
       
     },
   },
@@ -115,6 +116,14 @@ export const auth = betterAuth({
         data: { role: "patient" },
       });
     }
+  },
+
+  // Auto sign in after email verification
+  onAfterEmailVerification: async ({ user }: { user: { id: string; email: string; emailVerified: boolean } }) => {
+    // Better Auth automatically creates a session after email verification
+    // This hook is called after the email is verified
+    // The user should already be signed in at this point
+    console.log("Email verified for user:", user.email);
   },
 
   // Plugins (nextCookies must be last)
