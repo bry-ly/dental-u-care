@@ -43,9 +43,28 @@ export function NavUser({
   const router = useRouter();
 
   const handleSignOut = async () => {
-    await authClient.signOut();
-    toast.success("Signed out successfully");
-    router.push("/sign-in");
+    try {
+      // Wait for signOut to complete before redirecting
+      await authClient.signOut({
+        fetchOptions: {
+          onSuccess: () => {
+            // Clear any client-side cache
+            router.refresh();
+            // Show success message
+            toast.success("Signed out successfully");
+            // Redirect to sign-in page
+            router.push("/sign-in");
+          },
+          onError: (ctx) => {
+            console.error("Logout error:", ctx.error);
+            toast.error("Failed to sign out. Please try again.");
+          },
+        },
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Failed to sign out. Please try again.");
+    }
   };
 
   return (
