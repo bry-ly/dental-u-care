@@ -1,12 +1,6 @@
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { requireDentist } from "@/lib/auth-session/auth-server";
+import { ScheduleManager } from "@/components/dentist/schedule-manager";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -32,17 +26,7 @@ export default async function DentistSchedulePage() {
           </p>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Working Hours</CardTitle>
-            <CardDescription>Configure your weekly schedule</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground text-center py-8">
-              Schedule management feature coming soon
-            </p>
-          </CardContent>
-        </Card>
+        <ScheduleManager dentistId={user.id} />
       </div>
     </DashboardLayout>
   );
