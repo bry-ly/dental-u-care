@@ -52,6 +52,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
+import { DateTimePickerWithAvailability } from "@/components/ui/date-time-picker-with-availability";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -1084,57 +1085,87 @@ export default function BookingForm({
 
                   <Field>
                     <FieldContent>
-                      <DateTimePicker
-                        date={getDateTimeValue()}
-                        onDateChange={(date) => {
-                          if (date) {
-                            const dateStr = format(date, "yyyy-MM-dd");
-                            const timeStr = format(date, "HH:mm");
-                            handleInputChange("preferredDate", dateStr);
-                            handleInputChange("preferredTime", timeStr);
-                          } else {
-                            handleInputChange("preferredDate", "");
-                            handleInputChange("preferredTime", "");
-                          }
-                        }}
-                        disabled={(date) => {
-                          const dateAtMidnight = new Date(date);
-                          dateAtMidnight.setHours(0, 0, 0, 0);
-                          const today = new Date();
-                          today.setHours(0, 0, 0, 0);
-                          
-                          // Disable past dates
-                          if (dateAtMidnight < today) {
-                            return true;
-                          }
-                          
-                          // Disable booked dates if dentist is selected
-                          if (formData.dentistId && bookedDates.length > 0) {
-                            return bookedDates.some((bookedDate) => {
-                              const bookedAtMidnight = new Date(bookedDate);
-                              bookedAtMidnight.setHours(0, 0, 0, 0);
-                              return (
-                                dateAtMidnight.getTime() ===
-                                bookedAtMidnight.getTime()
-                              );
-                            });
-                          }
-                          
-                          return false;
-                        }}
-                        label="Preferred Date & Time"
-                        required
-                      />
+                      {formData.dentistId ? (
+                        <DateTimePickerWithAvailability
+                          date={getDateTimeValue()}
+                          onDateChange={(date) => {
+                            if (date) {
+                              const dateStr = format(date, "yyyy-MM-dd");
+                              const timeStr = format(date, "HH:mm");
+                              handleInputChange("preferredDate", dateStr);
+                              handleInputChange("preferredTime", timeStr);
+                            } else {
+                              handleInputChange("preferredDate", "");
+                              handleInputChange("preferredTime", "");
+                            }
+                          }}
+                          disabled={(date) => {
+                            const dateAtMidnight = new Date(date);
+                            dateAtMidnight.setHours(0, 0, 0, 0);
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            
+                            // Disable past dates
+                            if (dateAtMidnight < today) {
+                              return true;
+                            }
+                            
+                            return false;
+                          }}
+                          label="Preferred Date & Time"
+                          required
+                          dentistId={formData.dentistId}
+                        />
+                      ) : (
+                        <DateTimePicker
+                          date={getDateTimeValue()}
+                          onDateChange={(date) => {
+                            if (date) {
+                              const dateStr = format(date, "yyyy-MM-dd");
+                              const timeStr = format(date, "HH:mm");
+                              handleInputChange("preferredDate", dateStr);
+                              handleInputChange("preferredTime", timeStr);
+                            } else {
+                              handleInputChange("preferredDate", "");
+                              handleInputChange("preferredTime", "");
+                            }
+                          }}
+                          disabled={(date) => {
+                            const dateAtMidnight = new Date(date);
+                            dateAtMidnight.setHours(0, 0, 0, 0);
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            
+                            // Disable past dates
+                            if (dateAtMidnight < today) {
+                              return true;
+                            }
+                            
+                            return false;
+                          }}
+                          label="Preferred Date & Time"
+                          required
+                        />
+                      )}
                     </FieldContent>
                   </Field>
 
-                  <Alert>
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>
-                      We&apos;ll confirm your appointment time based on
-                      availability
-                    </AlertDescription>
-                  </Alert>
+                  {formData.dentistId ? (
+                    <Alert>
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        Available time slots are shown based on the dentist&apos;s
+                        schedule. Please select a date to see available times.
+                      </AlertDescription>
+                    </Alert>
+                  ) : (
+                    <Alert>
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        Please select a dentist first to see available time slots
+                      </AlertDescription>
+                    </Alert>
+                  )}
                 </div>
               )}
 

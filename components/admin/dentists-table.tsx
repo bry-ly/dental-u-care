@@ -221,9 +221,47 @@ export function AdminDentistsTable({ dentists }: AdminDentistsTableProps) {
   const [selectedDentist, setSelectedDentist] = React.useState<Dentist | null>(
     null
   );
+
+  // Initialize edit form data when dentist is selected
+  React.useEffect(() => {
+    if (selectedDentist) {
+      setEditFormData({
+        name: selectedDentist.name,
+        email: selectedDentist.email,
+        phone: selectedDentist.phone || "",
+        specialization: selectedDentist.specialization || "",
+        qualifications: selectedDentist.qualifications || "",
+        experience: selectedDentist.experience || "",
+        password: "",
+        confirmPassword: "",
+      });
+      setShowPassword(false);
+    }
+  }, [selectedDentist]);
   const [createDialogOpen, setCreateDialogOpen] = React.useState(false);
   const [dentistToDelete, setDentistToDelete] =
     React.useState<Dentist | null>(null);
+  const [editFormData, setEditFormData] = React.useState<{
+    name: string;
+    email: string;
+    phone: string;
+    specialization: string;
+    qualifications: string;
+    experience: string;
+    password: string;
+    confirmPassword: string;
+  }>({
+    name: "",
+    email: "",
+    phone: "",
+    specialization: "",
+    qualifications: "",
+    experience: "",
+    password: "",
+    confirmPassword: "",
+  });
+  const [showPassword, setShowPassword] = React.useState(false);
+  const [isSaving, setIsSaving] = React.useState(false);
 
   const handleBulkAvailability = async (isAvailable: boolean) => {
     const selectedRows = table.getFilteredSelectedRowModel().rows;
@@ -806,80 +844,245 @@ export function AdminDentistsTable({ dentists }: AdminDentistsTableProps) {
               </TabsContent>
 
               <TabsContent value="edit" className="space-y-4 mt-6">
-                <div className="space-y-4">
-                  <Field>
-                    <FieldLabel>Full Name</FieldLabel>
-                    <FieldContent>
-                      <Input
-                        defaultValue={selectedDentist.name}
-                        placeholder="Full Name"
-                      />
-                    </FieldContent>
-                  </Field>
-                  <Field>
-                    <FieldLabel>Email</FieldLabel>
-                    <FieldContent>
-                      <Input
-                        type="email"
-                        defaultValue={selectedDentist.email}
-                        placeholder="Email"
-                      />
-                    </FieldContent>
-                  </Field>
-                  <Field>
-                    <FieldLabel>Phone</FieldLabel>
-                    <FieldContent>
-                      <Input
-                        defaultValue={selectedDentist.phone || ""}
-                        placeholder="Phone"
-                      />
-                    </FieldContent>
-                  </Field>
-                  <Field>
-                    <FieldLabel>Specialization</FieldLabel>
-                    <FieldContent>
-                      <Input
-                        defaultValue={selectedDentist.specialization || ""}
-                        placeholder="Specialization"
-                      />
-                    </FieldContent>
-                  </Field>
-                  <Field>
-                    <FieldLabel>Experience</FieldLabel>
-                    <FieldContent>
-                      <Input
-                        defaultValue={selectedDentist.experience || ""}
-                        placeholder="Experience"
-                      />
-                    </FieldContent>
-                  </Field>
-                  <Field>
-                    <FieldLabel>Qualifications</FieldLabel>
-                    <FieldContent>
-                      <Textarea
-                        defaultValue={selectedDentist.qualifications || ""}
-                        placeholder="Qualifications..."
-                        rows={4}
-                      />
-                    </FieldContent>
-                  </Field>
-                </div>
-                <div className="flex justify-end gap-2 pt-4 border-t">
-                  <Button
-                    variant="outline"
-                    onClick={() => setSelectedDentist(null)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      toast.info("Edit functionality will be implemented with API endpoint");
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    if (!selectedDentist) return;
+
+                    setIsSaving(true);
+                    try {
+                      // Validate passwords if provided
+                      if (editFormData.password) {
+                        if (editFormData.password !== editFormData.confirmPassword) {
+                          toast.error("Passwords don't match", {
+                            description: "Please make sure both passwords are the same.",
+                          });
+                          setIsSaving(false);
+                          return;
+                        }
+
+                        if (editFormData.password.length < 8) {
+                          toast.error("Password too short", {
+                            description: "Password must be at least 8 characters long.",
+                          });
+                          setIsSaving(false);
+                          return;
+                        }
+                      }
+
+                      const response = await fetch(
+                        `/api/admin/dentists/${selectedDentist.id}`,
+                        {
+                          method: "PATCH",
+                          headers: {
+                            "Content-Type": "application/json",
+                          },
+                          body: JSON.stringify({
+                            name: editFormData.name,
+                            email: editFormData.email,
+                            phone: editFormData.phone || null,
+                            specialization: editFormData.specialization || null,
+                            qualifications: editFormData.qualifications || null,
+                            experience: editFormData.experience || null,
+                            password: editFormData.password || undefined,
+                            confirmPassword: editFormData.confirmPassword || undefined,
+                          }),
+                        }
+                      );
+
+                      const data = await response.json();
+
+                      if (!response.ok) {
+                        toast.error("Failed to update dentist", {
+                          description: data.error || "Please try again.",
+                        });
+                        return;
+                      }
+
+                      toast.success("Dentist updated successfully!");
                       setSelectedDentist(null);
-                    }}
-                  >
-                    Save Changes
-                  </Button>
-                </div>
+                      router.refresh();
+                    } catch (error) {
+                      console.error("Error updating dentist:", error);
+                      toast.error("An unexpected error occurred", {
+                        description: "Please try again later.",
+                      });
+                    } finally {
+                      setIsSaving(false);
+                    }
+                  }}
+                >
+                  <div className="space-y-4">
+                    <Field>
+                      <FieldLabel>Full Name</FieldLabel>
+                      <FieldContent>
+                        <Input
+                          value={editFormData.name}
+                          onChange={(e) =>
+                            setEditFormData((prev) => ({
+                              ...prev,
+                              name: e.target.value,
+                            }))
+                          }
+                          placeholder="Full Name"
+                          required
+                        />
+                      </FieldContent>
+                    </Field>
+                    <Field>
+                      <FieldLabel>Email</FieldLabel>
+                      <FieldContent>
+                        <Input
+                          type="email"
+                          value={editFormData.email}
+                          onChange={(e) =>
+                            setEditFormData((prev) => ({
+                              ...prev,
+                              email: e.target.value,
+                            }))
+                          }
+                          placeholder="Email"
+                          required
+                        />
+                      </FieldContent>
+                    </Field>
+                    <Field>
+                      <FieldLabel>Phone</FieldLabel>
+                      <FieldContent>
+                        <Input
+                          value={editFormData.phone}
+                          onChange={(e) =>
+                            setEditFormData((prev) => ({
+                              ...prev,
+                              phone: e.target.value,
+                            }))
+                          }
+                          placeholder="Phone"
+                        />
+                      </FieldContent>
+                    </Field>
+                    <Field>
+                      <FieldLabel>Specialization</FieldLabel>
+                      <FieldContent>
+                        <Input
+                          value={editFormData.specialization}
+                          onChange={(e) =>
+                            setEditFormData((prev) => ({
+                              ...prev,
+                              specialization: e.target.value,
+                            }))
+                          }
+                          placeholder="Specialization"
+                        />
+                      </FieldContent>
+                    </Field>
+                    <Field>
+                      <FieldLabel>Experience (Years)</FieldLabel>
+                      <FieldContent>
+                        <Input
+                          type="number"
+                          value={editFormData.experience}
+                          onChange={(e) =>
+                            setEditFormData((prev) => ({
+                              ...prev,
+                              experience: e.target.value,
+                            }))
+                          }
+                          placeholder="Experience"
+                        />
+                      </FieldContent>
+                    </Field>
+                    <Field>
+                      <FieldLabel>Qualifications</FieldLabel>
+                      <FieldContent>
+                        <Textarea
+                          value={editFormData.qualifications}
+                          onChange={(e) =>
+                            setEditFormData((prev) => ({
+                              ...prev,
+                              qualifications: e.target.value,
+                            }))
+                          }
+                          placeholder="Qualifications..."
+                          rows={4}
+                        />
+                      </FieldContent>
+                    </Field>
+
+                    <div className="border-t pt-4 space-y-4">
+                      <div className="text-sm font-medium">Change Password (Optional)</div>
+                      <Field>
+                        <FieldLabel>New Password</FieldLabel>
+                        <FieldContent>
+                          <div className="relative">
+                            <Input
+                              type={showPassword ? "text" : "password"}
+                              value={editFormData.password}
+                              onChange={(e) =>
+                                setEditFormData((prev) => ({
+                                  ...prev,
+                                  password: e.target.value,
+                                }))
+                              }
+                              placeholder="Leave empty to keep current password"
+                              minLength={8}
+                            />
+                            <button
+                              type="button"
+                              aria-label={showPassword ? "Hide password" : "Show password"}
+                              onClick={() => setShowPassword((s) => !s)}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center p-1 text-sm opacity-70 hover:opacity-100"
+                            >
+                              {showPassword ? "👁️" : "👁️‍🗨️"}
+                            </button>
+                          </div>
+                        </FieldContent>
+                      </Field>
+                      <Field>
+                        <FieldLabel>Confirm Password</FieldLabel>
+                        <FieldContent>
+                          <Input
+                            type="password"
+                            value={editFormData.confirmPassword}
+                            onChange={(e) =>
+                              setEditFormData((prev) => ({
+                                ...prev,
+                                confirmPassword: e.target.value,
+                              }))
+                            }
+                            placeholder="Confirm new password"
+                            minLength={8}
+                          />
+                        </FieldContent>
+                      </Field>
+                    </div>
+                  </div>
+                  <div className="flex justify-end gap-2 pt-4 border-t">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setSelectedDentist(null);
+                        setEditFormData({
+                          name: "",
+                          email: "",
+                          phone: "",
+                          specialization: "",
+                          qualifications: "",
+                          experience: "",
+                          password: "",
+                          confirmPassword: "",
+                        });
+                      }}
+                      disabled={isSaving}
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={isSaving}>
+                      {isSaving ? "Saving..." : "Save Changes"}
+                    </Button>
+                  </div>
+                </form>
               </TabsContent>
 
               <TabsContent value="schedule" className="space-y-4 mt-6">
