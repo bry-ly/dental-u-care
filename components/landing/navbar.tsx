@@ -95,12 +95,26 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
   const handleSignOut = async () => {
     setShowLogoutDialog(false);
     try {
-      await authClient.signOut();
-      toast.success("Signed out successfully");
-      router.push("/sign-in");
-      router.refresh();
-    } catch {
-      toast.error("Failed to sign out");
+      // Wait for signOut to complete before redirecting
+      await authClient.signOut({
+        fetchOptions: {
+          onSuccess: () => {
+            // Clear any client-side cache
+            router.refresh();
+            // Show success message
+            toast.success("Signed out successfully");
+            // Redirect to sign-in page
+            router.push("/sign-in");
+          },
+          onError: (ctx) => {
+            console.error("Logout error:", ctx.error);
+            toast.error("Failed to sign out. Please try again.");
+          },
+        },
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Failed to sign out. Please try again.");
     }
   };
 
@@ -346,14 +360,16 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
                 )}
               </form>
             </div>
-            
+
             {user ? (
               <>
                 <Button
                   className={cn(isScrolled ? "hidden" : "lg:inline-flex")}
                   asChild
                 >
-                  <Link href="/dashboard/patient/book-appointment">Book Now</Link>
+                  <Link href="/dashboard/patient/book-appointment">
+                    Book Now
+                  </Link>
                 </Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -388,7 +404,10 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
                     {userIsAdmin && (
                       <>
                         <DropdownMenuItem asChild>
-                          <Link href="/dashboard/admin" className="cursor-pointer">
+                          <Link
+                            href="/dashboard/admin"
+                            className="cursor-pointer"
+                          >
                             <Shield className="mr-2 h-4 w-4" />
                             <span>Dashboard</span>
                           </Link>
@@ -399,7 +418,10 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
                     {user?.role === "dentist" && (
                       <>
                         <DropdownMenuItem asChild>
-                          <Link href="/dashboard/dentist" className="cursor-pointer">
+                          <Link
+                            href="/dashboard/dentist"
+                            className="cursor-pointer"
+                          >
                             <User className="mr-2 h-4 w-4" />
                             <span>Dashboard</span>
                           </Link>
@@ -410,7 +432,10 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
                     {user?.role === "patient" && (
                       <>
                         <DropdownMenuItem asChild>
-                          <Link href="/dashboard/patient" className="cursor-pointer">
+                          <Link
+                            href="/dashboard/patient"
+                            className="cursor-pointer"
+                          >
                             <User className="mr-2 h-4 w-4" />
                             <span>Dashboard</span>
                           </Link>
@@ -549,7 +574,9 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
                         </div>
                       </div>
                       <Button asChild>
-                        <Link href="/dashboard/patient/book-appointment">Book Now</Link>
+                        <Link href="/dashboard/patient/book-appointment">
+                          Book Now
+                        </Link>
                       </Button>
                       {userIsAdmin && (
                         <Button variant="outline" asChild>
