@@ -34,7 +34,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           disableTransitionOnChange
         >
           {children}
-          <Toaster position="top-right" />
+          <Toaster position="top-right" richColors />
         </ThemeProvider>
       </body>
     </html>
