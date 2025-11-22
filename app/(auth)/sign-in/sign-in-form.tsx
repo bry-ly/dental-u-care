@@ -11,10 +11,18 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { authClient } from "@/lib/auth-session/auth-client";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signInSchema, type SignInInput } from "@/lib/validations/auth";
@@ -147,17 +155,87 @@ export function LoginForm({
     }
   }
 
+  const [showErrorDialog, setShowErrorDialog] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  // Check for error in URL params (from OAuth callback)
+  useEffect(() => {
+    const checkUserAndHandleErrors = async () => {
+      if (typeof window === "undefined") return;
+
+      const params = new URLSearchParams(window.location.search);
+      const error = params.get("error");
+      const message = params.get("message");
+      const check = params.get("check");
+
+      // If we need to check user existence after Google OAuth
+      if (check === "google") {
+        try {
+          const response = await fetch("/api/auth/check-user-exists");
+          const data = await response.json();
+
+          if (!data.exists) {
+            // User doesn't exist
+            setErrorMessage(
+              data.message || "No account found with this email address. Please sign up first or use a different email."
+            );
+            setShowErrorDialog(true);
+            // Clean up URL
+            window.history.replaceState({}, "", window.location.pathname);
+          } else {
+            // User exists, redirect to dashboard
+            const role = data.user?.role || "patient";
+            const target =
+              role === "admin"
+                ? "/dashboard/admin"
+                : role === "dentist"
+                  ? "/dashboard/dentist"
+                  : "/dashboard/patient";
+            window.location.href = target;
+          }
+        } catch (error) {
+          console.error("Error checking user existence:", error);
+          setErrorMessage("An error occurred. Please try again.");
+          setShowErrorDialog(true);
+          window.history.replaceState({}, "", window.location.pathname);
+        }
+        return;
+      }
+
+      // Handle direct error parameters
+      if (error) {
+        if (error === "USER_NOT_FOUND" || error.includes("user") || error.includes("email")) {
+          setErrorMessage(
+            message || "No account found with this email address. Please sign up first or use a different email."
+          );
+          setShowErrorDialog(true);
+          // Clean up URL
+          window.history.replaceState({}, "", window.location.pathname);
+        } else {
+          // Handle other OAuth errors
+          setErrorMessage(
+            message || "An error occurred during Google sign-in. Please try again."
+          );
+          setShowErrorDialog(true);
+          window.history.replaceState({}, "", window.location.pathname);
+        }
+      }
+    };
+
+    checkUserAndHandleErrors();
+  }, []);
+
   async function handleGoogleSignIn() {
     try {
       setIsGoogleLoading(true);
 
       // Google OAuth redirects to Google, then back to /api/auth/callback/google
       // Better Auth handles the callback and creates/updates the session
-      // The onAfterSignUp hook in auth.ts ensures new users get the "patient" role
-      // After callback, users are redirected to root "/"
-      // The auth layout then redirects to role-specific dashboard
+      // After callback, we'll check if user exists before allowing access
       await authClient.signIn.social({
         provider: "google",
+        callbackURL: "/sign-in?check=google", // Redirect to sign-in to check user
+        errorCallbackURL: "/sign-in?error=OAUTH_ERROR",
       });
 
       // This will cause a redirect, so code after this won't execute
@@ -366,6 +444,33 @@ export function LoginForm({
         </Field>
         </FieldGroup>
       </form>
+
+      {/* Error Dialog for Google Login */}
+      <Dialog open={showErrorDialog} onOpenChange={setShowErrorDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-destructive" />
+              Account Not Found
+            </DialogTitle>
+            <DialogDescription className="pt-2">
+              {errorMessage ||
+                "No account found with this email address. Please sign up first or use a different email."}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowErrorDialog(false)}
+            >
+              Close
+            </Button>
+            <Button asChild>
+              <Link href="/sign-up">Sign Up</Link>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Form>
   );
 }

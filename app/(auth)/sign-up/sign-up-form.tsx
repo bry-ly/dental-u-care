@@ -299,9 +299,6 @@ export function SignupForm({
                     )}
                   </button>
                 </div>
-                <FieldDescription className="text-xs leading-tight">
-                  Must be at least 8 characters with uppercase, lowercase, number, and special character.
-                </FieldDescription>
                 <FormMessage />
               </Field>
             )}
