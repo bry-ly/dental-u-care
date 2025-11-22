@@ -3,7 +3,7 @@ import { prisma } from "@/lib/types/prisma";
 import { auth } from "@/lib/auth-session/auth";
 import { Resend } from "resend";
 import { createElement } from "react";
-import DentalInvoice from "@/components/emails/email-bookings";
+import AppointmentConfirmation from "@/components/emails/email-confirmation";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -128,22 +128,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Send confirmation email to patient with professional invoice template
-    // Generate invoice number
-    const invoiceNumber = `INV-${Date.now()}-${Math.random().toString(36).substring(7).toUpperCase()}`;
-    const invoiceDate = new Date().toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-    const dueDate = new Date(
-      Date.now() + 30 * 24 * 60 * 60 * 1000
-    ).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-
+    // Send confirmation email to patient
     // Format appointment date and time
     const formattedAppointmentDate = new Date(
       appointment.date
@@ -154,78 +139,60 @@ export async function POST(request: NextRequest) {
       day: "numeric",
     });
 
-    // Calculate next appointment (6 months from now for regular checkup)
-    const nextApptDate = new Date(appointment.date);
-    nextApptDate.setMonth(nextApptDate.getMonth() + 6);
-    const nextAppointmentDate = nextApptDate.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+    // Format time to 12-hour format
+    const formatTime12Hour = (time24: string): string => {
+      const [hours, minutes] = time24.split(":");
+      const hour = parseInt(hours, 10);
+      const ampm = hour >= 12 ? "PM" : "AM";
+      const displayHour = hour % 12 || 12;
+      return `${displayHour}:${minutes} ${ampm}`;
+    };
 
-    // Calculate total duration (assuming each service takes 60 minutes)
+    const formattedTime = formatTime12Hour(appointment.time);
+
+    // Calculate total duration (sum of all service durations)
     const totalDuration = services
       .filter((s) => s.qty > 0)
-      .reduce((sum, s) => sum + s.qty * 60, 0);
+      .reduce((sum, s) => {
+        // Try to get duration from service, default to 60 minutes
+        const serviceDuration = 60; // Default duration
+        return sum + s.qty * serviceDuration;
+      }, 0);
 
-    // Calculate financial totals
-    const subtotal = services
-      .filter((s) => s.qty > 0)
-      .reduce((sum, s) => sum + s.total, 0);
-    const tax = subtotal * 0.12; // 12% tax
-    const totalDue = subtotal + tax;
-
-    // Filter services with qty > 0 for email
-    const activeServices = services.filter((s) => s.qty > 0);
+    // Get reason for visit
+    const reasonForVisit =
+      specialRequests ||
+      services
+        .filter((s) => s.qty > 0)
+        .map((s) => s.description)
+        .join(", ");
 
     try {
-      console.log("Attempting to send email to:", personalInfo.email);
-      console.log(
-        "From address:",
-        `${process.env.EMAIL_SENDER_NAME} <${process.env.EMAIL_SENDER_ADDRESS}>`
-      );
+      console.log("Attempting to send confirmation email to:", personalInfo.email);
 
       const emailResult = await resend.emails.send({
-        from: `${process.env.EMAIL_SENDER_NAME} <${process.env.EMAIL_SENDER_ADDRESS}>`,
+        from: `${process.env.EMAIL_SENDER_NAME || "Dental U Care"} <${process.env.EMAIL_SENDER_ADDRESS || "send@dentalucare.tech"}>`,
         to: personalInfo.email,
-        subject: `Appointment Confirmation - Invoice #${invoiceNumber}`,
-        react: createElement(DentalInvoice, {
-          invoiceNumber,
-          invoiceDate,
-          dueDate,
+        subject: `Appointment Confirmation - ${formattedAppointmentDate}`,
+        react: createElement(AppointmentConfirmation, {
           patientName: `${personalInfo.firstName} ${personalInfo.lastName}`,
-          patientAddress: personalInfo.address || "N/A",
-          patientBarangay: personalInfo.barangay || undefined,
-          patientCity: personalInfo.city || "N/A",
-          patientPhone: personalInfo.contactNumber || "N/A",
-          patientEmail: personalInfo.email,
-          bookingId: createdAppointments[0]?.id || "PENDING",
           appointmentDate: formattedAppointmentDate,
-          appointmentTime: appointment.time,
+          appointmentTime: formattedTime,
           doctorName: appointment.dentistName,
-          treatmentRoom: "Room 1",
           appointmentDuration: `${totalDuration} minutes`,
-          reasonForVisit:
-            specialRequests ||
-            services
-              .filter((s) => s.qty > 0)
-              .map((s) => s.description)
-              .join(", "),
-          pdfDownloadUrl: `${process.env.NEXT_PUBLIC_APP_URL}/patient/appointments`,
-          paymentStatus: "Pending Payment",
-          nextAppointmentDate,
-          nextAppointmentTime: appointment.time,
-          nextAppointmentPurpose: "Regular Dental Checkup & Cleaning",
-          services: activeServices,
-          subtotal,
-          tax,
-          totalDue,
+          reasonForVisit,
+          bookingId: createdAppointments[0]?.id || "PENDING",
+          patientEmail: personalInfo.email,
+          patientPhone: personalInfo.contactNumber,
+          clinicPhone: process.env.CLINIC_PHONE || "(043) 756-1234",
+          clinicEmail: process.env.CLINIC_EMAIL || "info@dentalucare.com",
+          clinicAddress: process.env.CLINIC_ADDRESS || "Baltan Street, Puerto Princesa City, Palawan",
         }),
       });
 
-      console.log("Email sent successfully:", emailResult);
+      console.log("Confirmation email sent successfully:", emailResult);
     } catch (emailError) {
-      console.error("Error sending email:", emailError);
+      console.error("Error sending confirmation email:", emailError);
       console.error(
         "Email error details:",
         JSON.stringify(emailError, null, 2)

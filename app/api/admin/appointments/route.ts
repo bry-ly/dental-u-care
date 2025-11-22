@@ -1,12 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/types/prisma";
 import { auth } from "@/lib/auth-session/auth";
+import { Resend } from "resend";
+import { createElement } from "react";
+import AppointmentConfirmation from "@/components/emails/email-confirmation";
+import AppointmentCancellation from "@/components/emails/email-cancellation";
 import type {
   ConfirmAppointmentsRequest,
   CancelAppointmentsRequest,
   CompleteAppointmentsRequest,
   DeleteAppointmentsRequest,
 } from "@/lib/types/api";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+// Helper function to format time to 12-hour format
+function formatTime12Hour(time24: string): string {
+  const [hours, minutes] = time24.split(":");
+  const hour = parseInt(hours, 10);
+  const ampm = hour >= 12 ? "PM" : "AM";
+  const displayHour = hour % 12 || 12;
+  return `${displayHour}:${minutes} ${ampm}`;
+}
+
+// Helper function to format date
+function formatDate(date: Date): string {
+  return date.toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
 
 /**
  * Helper to check if user is admin
@@ -43,10 +68,51 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      // Get appointments with relations for email
+      const appointments = await prisma.appointment.findMany({
+        where: { id: { in: appointmentIds } },
+        include: {
+          patient: true,
+          dentist: true,
+          service: true,
+        },
+      });
+
       await prisma.appointment.updateMany({
         where: { id: { in: appointmentIds } },
         data: { status: "confirmed" },
       });
+
+      // Send confirmation emails
+      for (const appointment of appointments) {
+        try {
+          const appointmentDate = formatDate(appointment.date);
+          const appointmentTime = formatTime12Hour(appointment.timeSlot);
+          const reasonForVisit = appointment.service.name;
+
+          await resend.emails.send({
+            from: `${process.env.EMAIL_SENDER_NAME || "Dental U Care"} <${process.env.EMAIL_SENDER_ADDRESS || "send@dentalucare.tech"}>`,
+            to: appointment.patient.email,
+            subject: `Appointment Confirmed - ${appointmentDate}`,
+            react: createElement(AppointmentConfirmation, {
+              patientName: appointment.patient.name,
+              appointmentDate,
+              appointmentTime,
+              doctorName: appointment.dentist.name,
+              appointmentDuration: "60 minutes", // Default duration
+              reasonForVisit,
+              bookingId: appointment.id,
+              patientEmail: appointment.patient.email,
+              patientPhone: appointment.patient.phone || undefined,
+              clinicPhone: process.env.CLINIC_PHONE || "(043) 756-1234",
+              clinicEmail: process.env.CLINIC_EMAIL || "info@dentalucare.com",
+              clinicAddress: process.env.CLINIC_ADDRESS || "Baltan Street, Puerto Princesa City, Palawan",
+            }),
+          });
+        } catch (emailError) {
+          console.error(`Error sending confirmation email for appointment ${appointment.id}:`, emailError);
+        }
+      }
 
       return NextResponse.json({
         success: true,
@@ -64,6 +130,16 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      // Get appointments with relations for email
+      const appointments = await prisma.appointment.findMany({
+        where: { id: { in: appointmentIds } },
+        include: {
+          patient: true,
+          dentist: true,
+          service: true,
+        },
+      });
+
       await prisma.appointment.updateMany({
         where: { id: { in: appointmentIds } },
         data: {
@@ -71,6 +147,36 @@ export async function POST(request: NextRequest) {
           cancelReason: cancelReason || "Cancelled by admin",
         },
       });
+
+      // Send cancellation emails
+      for (const appointment of appointments) {
+        try {
+          const appointmentDate = formatDate(appointment.date);
+          const appointmentTime = formatTime12Hour(appointment.timeSlot);
+          const reasonForVisit = appointment.service.name;
+
+          await resend.emails.send({
+            from: `${process.env.EMAIL_SENDER_NAME || "Dental U Care"} <${process.env.EMAIL_SENDER_ADDRESS || "send@dentalucare.tech"}>`,
+            to: appointment.patient.email,
+            subject: `Appointment Cancelled - ${appointmentDate}`,
+            react: createElement(AppointmentCancellation, {
+              patientName: appointment.patient.name,
+              appointmentDate,
+              appointmentTime,
+              doctorName: appointment.dentist.name,
+              reasonForVisit,
+              cancelReason: cancelReason || "Cancelled by admin",
+              bookingId: appointment.id,
+              patientEmail: appointment.patient.email,
+              clinicPhone: process.env.CLINIC_PHONE || "(043) 756-1234",
+              clinicEmail: process.env.CLINIC_EMAIL || "info@dentalucare.com",
+              clinicAddress: process.env.CLINIC_ADDRESS || "Baltan Street, Puerto Princesa City, Palawan",
+            }),
+          });
+        } catch (emailError) {
+          console.error(`Error sending cancellation email for appointment ${appointment.id}:`, emailError);
+        }
+      }
 
       return NextResponse.json({
         success: true,
