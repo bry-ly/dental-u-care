@@ -52,7 +52,6 @@ import {
   InputGroupButton,
   InputGroupInput,
 } from "@/components/ui/input-group";
-import { ModeToggle } from "../ui/mode-toggle";
 import { cn } from "@/lib/utils";
 
 type User = {
@@ -347,8 +346,7 @@ const Navbar = ({ user, isAdmin: userIsAdmin }: NavbarProps) => {
                 )}
               </form>
             </div>
-            <ModeToggle />
-
+            
             {user ? (
               <>
                 <Button
